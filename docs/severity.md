@@ -31,6 +31,32 @@ Decision rules:
 6. **Healthy-state findings are always info** and only emitted when the check
    actually saw the underlying data (enforced by `tests/contract.test.js`).
 
+## Urgency is a separate axis
+
+Severity answers "how bad is this". Urgency answers "does a human have to act
+on it now". They usually agree, and where they do not, grading by severity alone
+is how a report teaches people to stop reading it: a scheduled scrub, a single
+corrected ECC error and a disk with hours of writes left all look alarming in
+raw output, and two of them need nothing from you yet.
+
+Every finding therefore carries a derived urgency — `now`, `watch` or `fyi`:
+
+| Urgency | Meaning | How it is decided |
+|---|---|---|
+| **now** | A human should act today | The code is on the reviewed list in `src/severities.js` **and** its severity is high |
+| **watch** | Worth knowing, worth a look soon | Everything else above `info` |
+| **fyi** | Context | `info` |
+
+Two rules keep it honest:
+
+1. **Membership is a reviewed list, not `severity === "high"`.** A code joins
+   after its grading is reviewed, so a future high finding cannot claim a
+   deadline nobody agreed to, and a plugin's own code can never be `now`.
+2. **Urgency never changes the score.** The score is the run-over-run memory
+   (trend, NEW/FIXED); urgency only decides what gets called out. The report
+   lists the whole `now` set: a machine can have a full disk and a degraded
+   array at once, and one "start here" line used to hide the second.
+
 ## Documented exceptions
 
 - `security/no-firewall` stays **info**: most desktop installs sit behind a

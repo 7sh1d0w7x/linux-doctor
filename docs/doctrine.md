@@ -51,6 +51,10 @@ finding. A wrong finding is worse than no finding, because people act on it.
   golden snapshots keep them from drifting apart.
 - **The numbers are auditable.** The health score is `100 − Σ penalties` with a
   printed breakdown, reproducible from the JSON envelope published via `--schema`.
+- **Severity and urgency are separate axes.** [docs/severity.md](severity.md)
+  grades how bad a finding is; urgency (`now` / `watch` / `fyi`) decides what is
+  called out, comes from a reviewed list of codes rather than from severity, and
+  never re-grades the score.
 
 ## What a new check has to clear
 

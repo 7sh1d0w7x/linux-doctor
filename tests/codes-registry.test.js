@@ -134,7 +134,7 @@ export const REGISTRY = {
   "gpu/skipped": { sev: ["info"], cat: "graphics" }, // evidence: null allowed (data absence)
   "gpu/software-rendering": { sev: ["medium"], cat: "graphics" },
   // hardware
-  "hardware/ecc": { sev: ["medium", "high"], cat: "hardware" },
+  "hardware/ecc": { sev: ["info", "medium", "high"], cat: "hardware" },
   "hardware/mce": { sev: ["high"], cat: "hardware" },
   "hardware/ok": { sev: ["info"], cat: "hardware" },
   "hardware/skipped": { sev: ["info"], cat: "hardware" },

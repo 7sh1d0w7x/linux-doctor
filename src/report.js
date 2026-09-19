@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { readFileSync } from "node:fs";
 
-import { SEV_ORDER, SEV_LABEL, countBySeverity } from "./severities.js";
+import { SEV_ORDER, SEV_LABEL, countBySeverity, needsYouNow } from "./severities.js";
 import { cleanStreak } from "./history.js";
 
 export { SEV_ORDER, SEV_LABEL, countBySeverity };
@@ -200,17 +200,30 @@ export async function renderReport(findings, { aiSummary, system, score, scoreDe
   }
 
   // The single most useful action, called out between the summary and the
-  // details: status → change → act.
+  // details: status → change → act. Next to it, the whole urgency set: a
+  // machine can have two things that need a human now (a full disk and a
+  // degraded array), and one START HERE line used to hide the second. The set
+  // comes from the finding codes, not from severity, so an unknown code can
+  // never claim a deadline (see severities.js).
   const next = pickNextAction(ordered);
+  const alsoNow = needsYouNow(ordered).filter((f) => !next || f !== next.finding);
+  const callout = [];
   if (next) {
     const label = isTTY ? `${A.green}${A.bold}▶ START HERE${A.reset}` : "▶ START HERE";
     const step = `#${next.n} ${next.finding.title}`;
     const hint = clamp(firstSentence(next.finding.fix));
+    callout.push(`${label}   ${step}`, `${" ".repeat(13)}${hint}`, "");
+  }
+  if (alsoNow.length > 0) {
+    const label = isTTY ? `${A.bold}▶ NEEDS YOU NOW${A.reset}` : "▶ NEEDS YOU NOW";
+    const items = alsoNow.map((f) => `#${ordered.indexOf(f) + 1} ${clamp(f.title, 60)}`);
+    callout.push(`${label}   ${items.join("  ·  ")}`, "");
+  }
+  if (callout.length > 0) {
     // First severity-section header is where the details begin; everything
-    // before it is the summary block. When no section exists (no findings),
-    // pickNextAction already returned null.
+    // before it is the summary block.
     const firstSectionIdx = out.findIndex((l) => l.startsWith(SEV_LABEL[ordered[0].severity]));
-    out.splice(firstSectionIdx >= 0 ? firstSectionIdx : out.length, 0, `${label}   ${step}`, `${" ".repeat(13)}${hint}`, "");
+    out.splice(firstSectionIdx >= 0 ? firstSectionIdx : out.length, 0, ...callout);
   }
 
   out.push("──────────────────────────────");

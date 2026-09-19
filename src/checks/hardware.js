@@ -47,7 +47,8 @@ export const hardware = defineCheck({
     );
     const all = journalLines(ker.stdout, { tail: 40 });
     const mceLines = all.filter((l) => classifyHardwareLine(l) === "mce").slice(-5);
-    const edcLines = all.filter((l) => classifyHardwareLine(l) === "ecc").slice(-5);
+    const edcAll = all.filter((l) => classifyHardwareLine(l) === "ecc");
+    const edcLines = edcAll.slice(-5);
 
     if (mceLines.length > 0) {
       findings.push(finding({
@@ -60,22 +61,32 @@ export const hardware = defineCheck({
         confidence: "high",
       }));
     } else if (edcLines.length > 0) {
-      // EDAC reports two very different events with the same vocabulary. A CE
-      // is a bit flip the controller corrected — watch it. A UE went
-      // uncorrected — that memory was wrong, so it is data loss, not a
-      // warning. Same root cause, so the same code; the severity is not.
+      // EDAC reports three very different situations with the same vocabulary.
+      // A UE went uncorrected (data loss). Repeated CEs mean a DIMM is going.
+      // One CE in a week is ECC doing its job, and our own detail said so
+      // while the severity disagreed: it dropped 8 points for normal
+      // operation, the kind of grading that teaches people to stop reading.
       const uncorrected = edcLines.some((l) => /\bUE\b|uncorrected|unrecoverable/i.test(l));
+      const repeated = edcAll.length >= 2;
       findings.push(finding({
-        severity: uncorrected ? "high" : "medium",
+        severity: uncorrected ? "high" : repeated ? "medium" : "info",
         code: "hardware/ecc",
-        title: uncorrected ? "Uncorrected memory errors (ECC)" : "Corrected hardware errors (ECC)",
+        title: uncorrected
+          ? "Uncorrected memory errors (ECC)"
+          : repeated
+            ? "Repeated corrected memory errors (ECC)"
+            : "A corrected memory error (ECC)",
         detail: uncorrected
           ? "The memory controller reported an uncorrected error: a bit flip it could not fix. Whatever that memory held was wrong, and the module is the suspect. Treat this as data loss, not as a warning to watch."
-          : "The memory controller detected and corrected some bit-flip errors. Occasional ones are normal and ECC is doing its job, but frequent ones suggest a DIMM is starting to fail.",
+          : repeated
+            ? "The memory controller corrected several bit-flip errors in the last week. ECC handled them, but a rising rate points at a DIMM on its way out, so worth a memory test rather than a wait."
+            : "The memory controller corrected one bit-flip error in the last week. A single one is ECC doing its job, not a fault. It is listed so you can see it if it starts repeating.",
         evidence: edcLines.join("\n"),
         fix: uncorrected
           ? "Back up your data now. Run a memory test (Memtest86+ from your boot menu), reseat the suspect DIMM, and replace it if the test fails."
-          : "If these repeat often, test the memory (Memtest86+) and reseat or replace the suspect DIMM.",
+          : repeated
+            ? "Test the memory (Memtest86+), then reseat or replace the suspect DIMM."
+            : null,
         confidence: uncorrected ? "high" : "medium",
       }));
     } else if (logReadable) {

@@ -42,3 +42,42 @@ export const SEV_ESCALATE_FROM = { high: 2, medium: 4, info: Number.POSITIVE_INF
 export function countBySeverity(findings) {
   return SEV_ORDER.map((s) => ({ severity: s, count: findings.filter((f) => f.severity === s).length }));
 }
+
+/**
+ * Urgency, which is not severity. Severity says how bad a finding is; urgency
+ * says whether a human has to act on it now. A degraded array that has run out
+ * of redundancy and a full disk are "now"; a single corrected ECC error and a
+ * pile of pending updates are not, however alarming their wording looks.
+ * Grading everything by "how far from normal" is how a report teaches people
+ * to stop reading it.
+ *
+ * Membership is an explicit list on purpose. Deriving it from
+ * `severity === "high"` would let every future high finding claim a deadline
+ * nobody reviewed it for, and would let an unknown (plugin) code into the
+ * callout. A code joins this list when its grading is reviewed, the same way
+ * the rest of the rubric was.
+ */
+const NOW_CODES = new Set([
+  "disk/full", // nothing can be written; services start failing
+  "inodes/full", // same failure mode, different counter
+  "raid/degraded", // one more disk and the data is gone
+  "smart/failing", // the drive is saying it is about to die
+  "fs/io-errors", // the filesystem is losing writes
+  "fs/btrfs-errors",
+  "fs/readonly-remount",
+  "hardware/mce", // uncorrected hardware fault
+  "hardware/ecc", // only at high: an uncorrected error is data loss
+  "certs/critical", // the endpoint stops trusting you when it expires
+]);
+
+/** "now" | "watch" | "fyi" for one finding. Unknown codes are never "now". */
+export function urgencyOf(finding) {
+  if (!finding || finding.severity === "info") return "fyi";
+  if (NOW_CODES.has(finding.code) && finding.severity === "high") return "now";
+  return "watch";
+}
+
+/** Every finding that needs a human now, in report order. */
+export function needsYouNow(findings) {
+  return (findings || []).filter((f) => urgencyOf(f) === "now");
+}

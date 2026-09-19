@@ -1588,15 +1588,36 @@ test("hardware: the MCE banks boot line is not a machine check exception", async
   assert.equal(findings[0].severity, "info");
 });
 
-test("hardware: a real EDAC CE error is still reported", async () => {
+test("hardware: a single corrected (CE) memory error is routine, not a penalty", async () => {
+  // One corrected bit flip over seven days is ECC doing its job. Reporting it
+  // at medium made the score drop for normal operation, which is how a report
+  // teaches people to stop reading it. It is still shown, as a note to watch.
   const ctx = stubCtx({
     "command -v journalctl 2>/dev/null": "/usr/bin/journalctl\n",
     'journalctl -k --since "-7 days" --no-pager -o short 2>/dev/null | grep -iE "mce|machine check|hardware error|edac|corrected error|ecc error"': "Aug 14 09:41:05 bazzite kernel: EDAC MC0: 1 CE memory read error on CPU_SrcID#0_MC#0_Chan#0_DIMM#0\n",
   });
   const findings = await hardware.run(ctx);
-  const med = findings.filter((f) => f.severity === "medium");
-  assert.equal(med.length, 1);
-  assert.equal(med[0].code, "hardware/ecc");
+  assert.equal(findings.length, 1);
+  assert.equal(findings[0].code, "hardware/ecc");
+  assert.equal(findings[0].severity, "info");
+  assert.match(findings[0].title, /corrected/i);
+  assert.equal(findings[0].fix, null, "a routine correction is not an action");
+});
+
+test("hardware: repeated corrected (CE) memory errors are a medium finding", async () => {
+  // "Occasional ones are normal, but frequent ones suggest a DIMM is starting
+  // to fail" — the check's own words. Two in a week is no longer occasional.
+  const ctx = stubCtx({
+    'journalctl -k --since "-7 days" --no-pager -o short 2>/dev/null | grep -iE "mce|machine check|hardware error|edac|corrected error|ecc error"': [
+      "Aug 14 09:41:05 bazzite kernel: EDAC MC0: 1 CE memory read error on CPU_SrcID#0_MC#0_Chan#0_DIMM#0",
+      "Aug 15 11:02:44 bazzite kernel: EDAC MC0: 1 CE memory read error on CPU_SrcID#0_MC#0_Chan#0_DIMM#0",
+    ].join("\n") + "\n",
+  });
+  const findings = await hardware.run(ctx);
+  assert.equal(findings.length, 1);
+  assert.equal(findings[0].code, "hardware/ecc");
+  assert.equal(findings[0].severity, "medium");
+  assert.match(findings[0].fix, /Memtest/i);
 });
 
 test("luks: encrypted system is informational", async () => {
