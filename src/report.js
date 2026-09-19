@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { readFileSync } from "node:fs";
 
-import { SEV_ORDER, SEV_LABEL, countBySeverity, needsYouNow } from "./severities.js";
+import { SEV_ORDER, SEV_LABEL, countBySeverity, needsYouNow, urgencyOf } from "./severities.js";
 import { cleanStreak } from "./history.js";
 
 export { SEV_ORDER, SEV_LABEL, countBySeverity };
@@ -240,17 +240,28 @@ export async function renderReport(findings, { aiSummary, system, score, scoreDe
 export function renderTodo(findings) {
   const out = [];
   out.push("# linux-doctor --todo");
-  out.push("# Steps to fix the issues found, in priority order.");
+  out.push("# Steps to fix the issues found: needs-a-human-now first, then worst first.");
   out.push("");
+  // Urgency leads, severity follows. A 7-day certificate is a higher severity
+  // than nothing, but it is not what you drop today for; the steps that do
+  // have to happen now come first, and inside each tier the report's own order
+  // survives (stable sort).
+  const rank = { now: 0, watch: 1, fyi: 2 };
+  const ordered = findings
+    .filter((f) => SEV_ORDER.includes(f.severity))
+    .map((f, i) => ({ f, i }))
+    .sort((a, b) =>
+      rank[urgencyOf(a.f)] - rank[urgencyOf(b.f)] ||
+      SEV_ORDER.indexOf(a.f.severity) - SEV_ORDER.indexOf(b.f.severity) ||
+      a.i - b.i)
+    .map((x) => x.f);
   let n = 0;
-  for (const sev of SEV_ORDER) {
-    for (const f of findings.filter((x) => x.severity === sev)) {
-      if (!f.fix) continue;
-      n += 1;
-      out.push(`${n}. [${sev}] ${f.title}`);
-      out.push(`   ${f.fix}`);
-      out.push("");
-    }
+  for (const f of ordered) {
+    if (!f.fix) continue;
+    n += 1;
+    out.push(`${n}. [${f.severity}] ${f.title}`);
+    out.push(`   ${f.fix}`);
+    out.push("");
   }
   if (n === 0) out.push("Nothing to fix — no findings came with an action.");
   return out.join("\n");

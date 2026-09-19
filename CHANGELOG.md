@@ -201,6 +201,11 @@ All notable changes to Linux Doctor are documented here. The format follows
   Membership is a reviewed list of codes: an unknown or plugin code can never be
   `now`, urgency never re-grades the score, and the rubric is in
   [docs/severity.md](docs/severity.md).
+- **`--todo` leads with the urgent steps.** The list claims to be "in priority
+  order" and used to order by severity alone; the findings that need a human now
+  come first. A deadline is not urgency: an expiring certificate or a disk
+  filling up has a date, not a slope, so they stay watch items with a date
+  rather than crowding out the things to do today.
 - **Two public documents about trust rather than features.**
   [docs/limitations.md](docs/limitations.md) lists what the tool does not
   detect and every false positive it has shipped and fixed, with the regression

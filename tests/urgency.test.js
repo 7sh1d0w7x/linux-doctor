@@ -17,7 +17,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 import { urgencyOf, needsYouNow } from "../src/severities.js";
-import { renderReport } from "../src/report.js";
+import { renderReport, renderTodo } from "../src/report.js";
 
 const f = (code, severity, extra = {}) => ({ id: 1, check: code.split("/")[0], code, severity, title: `${code} (${severity})`, detail: null, evidence: null, fix: `fix ${code}`, ...extra });
 
@@ -45,6 +45,27 @@ test("urgency: an unknown (plugin) code is never 'now'", () => {
   // never reviewed for it.
   assert.equal(urgencyOf(f("myplugin/whatever", "high")), "watch");
   assert.equal(urgencyOf(f("raid/scrub-stuck", "high")), "watch");
+});
+
+test("urgency: a certificate with days left is a deadline, not 'next hour'", () => {
+  // The cost of an expiring cert is a step at expiry, not a slope now: seven
+  // days out you schedule the renewal, you do not drop what you are doing. It
+  // is a watch item with a date, and the finding text carries the date.
+  assert.equal(urgencyOf(f("certs/critical", "high")), "watch");
+});
+
+test("urgency: --todo puts the 'now' set first, whatever order it arrived in", () => {
+  const findings = [
+    f("certs/critical", "high"), // arrives first in report order, but has a date
+    f("disk/full", "high"), // a deadline now
+    f("services/failed", "medium"),
+  ];
+  const lines = renderTodo(findings)
+    .split("\n")
+    .filter((l) => /^\d+\./.test(l));
+  assert.match(lines[0], /disk\/full/, `first step should be the urgent one, got: ${lines[0]}`);
+  assert.match(lines[1], /certs\/critical/);
+  assert.match(lines[2], /services\/failed/);
 });
 
 test("urgency: needsYouNow returns the whole set, in report order", () => {

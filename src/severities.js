@@ -55,7 +55,9 @@ export function countBySeverity(findings) {
  * `severity === "high"` would let every future high finding claim a deadline
  * nobody reviewed it for, and would let an unknown (plugin) code into the
  * callout. A code joins this list when its grading is reviewed, the same way
- * the rest of the rubric was.
+ * the rest of the rubric was. A deadline is not urgency: an expiring
+ * certificate or a disk filling up have a date, not a slope, so they are a
+ * watch item with a date rather than a "drop what you are doing".
  */
 const NOW_CODES = new Set([
   "disk/full", // nothing can be written; services start failing
@@ -67,7 +69,6 @@ const NOW_CODES = new Set([
   "fs/readonly-remount",
   "hardware/mce", // uncorrected hardware fault
   "hardware/ecc", // only at high: an uncorrected error is data loss
-  "certs/critical", // the endpoint stops trusting you when it expires
 ]);
 
 /** "now" | "watch" | "fyi" for one finding. Unknown codes are never "now". */
