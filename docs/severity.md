@@ -52,7 +52,11 @@ Two rules keep it honest:
 1. **Membership is a reviewed list, not `severity === "high"`.** A code joins
    after its grading is reviewed, so a future high finding cannot claim a
    deadline nobody agreed to, and a plugin's own code can never be `now`.
-2. **Urgency never changes the score.** The score is the run-over-run memory
+2. **A deadline is not urgency.** An expiring certificate or a disk filling up
+   has a date, not a slope: it is a `watch` item carrying its date, not
+   something to drop today for. `now` means the cost of waiting rises sharply
+   right now, usually because the remaining margin is gone.
+3. **Urgency never changes the score.** The score is the run-over-run memory
    (trend, NEW/FIXED); urgency only decides what gets called out. The report
    lists the whole `now` set: a machine can have a full disk and a degraded
    array at once, and one "start here" line used to hide the second.
