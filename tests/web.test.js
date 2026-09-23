@@ -248,6 +248,28 @@ test("web: /api/report is cached; ?refresh=1 bypasses the TTL", async () => {
   }
 });
 
+
+test("web: a stale report is served instantly and revalidated in the background", async () => {
+  let calls = 0;
+  const collect = async () => {
+    calls += 1;
+    return { generatedAt: "t" + calls, system: {}, findings: [{ severity: "info", title: `run ${calls}` }] };
+  };
+  const server = await startWeb({ collect, open: false, port: 0, quiet: true, reportTtlMs: 40 });
+  const base = `http://127.0.0.1:${server.address().port}`;
+  try {
+    await (await fetch(base + "/api/report")).json(); // first paint blocks on the scan
+    await new Promise((r) => setTimeout(r, 70)); // let the TTL expire
+    const stale = await (await fetch(base + "/api/report")).json();
+    assert.equal(stale.findings[0].title, "run 1", "the stale body is served instantly, not a blocking scan");
+    await new Promise((r) => setTimeout(r, 70)); // let the background scan finish
+    const fresh = await (await fetch(base + "/api/report")).json();
+    assert.equal(fresh.findings[0].title, "run 2", "the next poll sees the revalidated report");
+  } finally {
+    server.close();
+  }
+});
+
 test("web: an explicit Re-run (?save=1) records history; polls never do", async () => {
   const saves = [];
   const collect = async (save) => {

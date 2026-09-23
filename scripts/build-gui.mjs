@@ -152,7 +152,7 @@ ${css}
         </div>
         <div class="filters" id="filters" role="group" aria-label="Severity filter"></div>
         <input id="search" type="search" placeholder="Filter findings…  (code:disk/full)" autocomplete="off" spellcheck="false" aria-label="Filter findings — prefix with code: to filter by stable code">
-    <button id="autorefresh" class="toolbtn on" title="Auto-refresh every 20s">Auto</button>
+    <button id="autorefresh" class="toolbtn on" title="Auto-refresh every 5s">Auto</button>
     <button id="expandall" class="toolbtn">Expand all</button>
     <button id="densitybtn" class="toolbtn" title="Toggle compact density" aria-pressed="false">Density</button>
     <button id="checksmatrixbtn" class="toolbtn" title="See every check and its result">Checks</button>

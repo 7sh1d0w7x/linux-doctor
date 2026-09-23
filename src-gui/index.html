@@ -1065,7 +1065,7 @@ body.compact #report { gap: 14px; }
         </div>
         <div class="filters" id="filters" role="group" aria-label="Severity filter"></div>
         <input id="search" type="search" placeholder="Filter findings…  (code:disk/full)" autocomplete="off" spellcheck="false" aria-label="Filter findings — prefix with code: to filter by stable code">
-    <button id="autorefresh" class="toolbtn on" title="Auto-refresh every 20s">Auto</button>
+    <button id="autorefresh" class="toolbtn on" title="Auto-refresh every 5s">Auto</button>
     <button id="expandall" class="toolbtn">Expand all</button>
     <button id="densitybtn" class="toolbtn" title="Toggle compact density" aria-pressed="false">Density</button>
     <button id="checksmatrixbtn" class="toolbtn" title="See every check and its result">Checks</button>
@@ -1199,7 +1199,7 @@ function catIcon(cat, size) {
 }
 const SEV_NAMES = { high: "High severity", medium: "Medium severity", info: "Informational" };
 const THEME_ORDER = ["light", "dark", "terminal", "auto"];
-const POLL_MS = 20000;
+const POLL_MS = 5000;
 /* Category grouping: known check categories in display order; anything
    unmapped (plugins, older payloads) lands under "other". */
 const CATEGORY_ORDER = ["system", "software", "security", "network", "updates", "hardware", "data", "other"];
@@ -1732,7 +1732,7 @@ function syncAutoPausedUI() {
   autoBtn.classList.toggle("paused", paused && autoRefresh);
   if (!autoRefresh) autoBtn.title = "Auto-refresh off \u2014 click to enable";
   else if (paused) autoBtn.title = "Paused \u2014 clear filter/search or collapse cards to resume";
-  else autoBtn.title = "Auto-refresh every 20s";
+  else autoBtn.title = "Auto-refresh every 5s";
   autoBtn.setAttribute("aria-pressed", String(autoRefresh));
   autoBtn.setAttribute("aria-label", autoBtn.title);
 }

@@ -53,12 +53,12 @@ function isLoopbackOrigin(origin) {
   }
 }
 
-export async function startWeb({ collect, history = () => [], checkList = async () => [], schedule = () => timerStatus(), port = 43901, open = true, quiet = false, render = (d) => d }) {
+export async function startWeb({ collect, history = () => [], checkList = async () => [], schedule = () => timerStatus(), port = 43901, open = true, quiet = false, render = (d) => d, reportTtlMs = 10000 }) {
   // A short report cache with single-flight. GETs need no Origin, so without
   // this any web page could <img src="127.0.0.1:43901/api/report"> and force
   // a full scan per request. Concurrent/repeated hits share one scan; the
   // dashboard's explicit "Re-run" sends ?refresh=1 to bypass the TTL.
-  const REPORT_TTL_MS = 10000;
+  const REPORT_TTL_MS = reportTtlMs;
   let reportCache = { at: 0, body: null };
   let reportInflight = null;
   const server = http.createServer(async (req, res) => {
@@ -79,10 +79,23 @@ export async function startWeb({ collect, history = () => [], checkList = async 
         // save=1 comes from an explicit Re-run; it must record history and
         // therefore never be served from (or stored as) a plain poll cache.
         const save = url.searchParams.get("save") === "1";
-        const fresh = reportCache.body !== null && Date.now() - reportCache.at < REPORT_TTL_MS;
+        const hasCache = reportCache.body !== null;
+        const fresh = hasCache && Date.now() - reportCache.at < REPORT_TTL_MS;
         let body;
         if (!refresh && !save && fresh) {
           body = reportCache.body;
+        } else if (!refresh && !save && hasCache) {
+          // Stale-while-revalidate: a background poll answers instantly with
+          // the last report and regenerates behind it, so the UI never waits on
+          // a full scan. The next poll picks up the new report.
+          body = reportCache.body;
+          if (!reportInflight) {
+            reportInflight = (async () => {
+              const data = await collect(false);
+              const out = render(data);
+              reportCache = { at: Date.now(), body: typeof out === "string" ? out : JSON.stringify(out) };
+            })().catch(() => {}).finally(() => { reportInflight = null; });
+          }
         } else {
           if (!reportInflight) {
             reportInflight = (async () => {

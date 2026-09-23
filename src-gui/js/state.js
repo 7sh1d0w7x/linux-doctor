@@ -36,7 +36,7 @@ function catIcon(cat, size) {
 }
 const SEV_NAMES = { high: "High severity", medium: "Medium severity", info: "Informational" };
 const THEME_ORDER = ["light", "dark", "terminal", "auto"];
-const POLL_MS = 20000;
+const POLL_MS = 5000;
 /* Category grouping: known check categories in display order; anything
    unmapped (plugins, older payloads) lands under "other". */
 const CATEGORY_ORDER = ["system", "software", "security", "network", "updates", "hardware", "data", "other"];

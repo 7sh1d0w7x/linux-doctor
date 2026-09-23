@@ -27,7 +27,7 @@ function syncAutoPausedUI() {
   autoBtn.classList.toggle("paused", paused && autoRefresh);
   if (!autoRefresh) autoBtn.title = "Auto-refresh off \u2014 click to enable";
   else if (paused) autoBtn.title = "Paused \u2014 clear filter/search or collapse cards to resume";
-  else autoBtn.title = "Auto-refresh every 20s";
+  else autoBtn.title = "Auto-refresh every 5s";
   autoBtn.setAttribute("aria-pressed", String(autoRefresh));
   autoBtn.setAttribute("aria-label", autoBtn.title);
 }
