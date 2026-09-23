@@ -34,6 +34,8 @@ import { bringup } from "../src/checks/bringup.js";
 import { wayland } from "../src/checks/wayland.js";
 import { backup } from "../src/checks/backup.js";
 import { hardware } from "../src/checks/hardware.js";
+import { packages } from "../src/checks/packages.js";
+import { fstrim } from "../src/checks/fstrim.js";
 import { smart } from "../src/checks/smart.js";
 import { luks } from "../src/checks/luks.js";
 import { audio } from "../src/checks/audio.js";
@@ -1534,6 +1536,7 @@ test("hardware: an uncorrected (UE) memory error is high, not medium", async () 
 test("hardware: clean kernel log is informational", async () => {
   const ctx = stubCtx({
     "command -v journalctl 2>/dev/null": "/usr/bin/journalctl\n",
+    "command -v journalctl 2>/dev/null": "/usr/bin/journalctl\n",
     'journalctl -k --since "-7 days" --no-pager -o short 2>/dev/null | grep -iE "mce|machine check|hardware error|edac|corrected error|ecc error"': "",
   });
   const findings = await hardware.run(ctx);
@@ -1576,6 +1579,7 @@ test("hardware: boot separators alone are NOT hardware errors", async () => {
 test("hardware: the MCE banks boot line is not a machine check exception", async () => {
   const ctx = stubCtx({
     "command -v journalctl 2>/dev/null": "/usr/bin/journalctl\n",
+    "command -v journalctl 2>/dev/null": "/usr/bin/journalctl\n",
     'journalctl -k --since "-7 days" --no-pager -o short 2>/dev/null | grep -iE "mce|machine check|hardware error|edac|corrected error|ecc error"': [
       "Aug 13 03:11:22 bazzite kernel: mce: CPU supports 32 MCE banks",
       "Aug 13 03:11:22 bazzite kernel: mce: CPU supports 32 MCE banks",
@@ -1609,6 +1613,7 @@ test("hardware: repeated corrected (CE) memory errors are a medium finding", asy
   // "Occasional ones are normal, but frequent ones suggest a DIMM is starting
   // to fail" — the check's own words. Two in a week is no longer occasional.
   const ctx = stubCtx({
+    "command -v journalctl 2>/dev/null": "/usr/bin/journalctl\n",
     'journalctl -k --since "-7 days" --no-pager -o short 2>/dev/null | grep -iE "mce|machine check|hardware error|edac|corrected error|ecc error"': [
       "Aug 14 09:41:05 bazzite kernel: EDAC MC0: 1 CE memory read error on CPU_SrcID#0_MC#0_Chan#0_DIMM#0",
       "Aug 15 11:02:44 bazzite kernel: EDAC MC0: 1 CE memory read error on CPU_SrcID#0_MC#0_Chan#0_DIMM#0",

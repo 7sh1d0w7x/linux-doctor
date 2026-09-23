@@ -75,6 +75,7 @@ export const REGISTRY = {
   "bringup/driver": { sev: ["medium"], cat: "hardware" },
   "bringup/firmware": { sev: ["medium"], cat: "hardware" },
   "bringup/ok": { sev: ["info"], cat: "hardware" },
+  "bringup/skipped": { sev: ["info"], cat: "hardware" },
   "bringup/usb": { sev: ["medium"], cat: "hardware" },
   "bluetooth/stopped": { sev: ["medium"], cat: "hardware" },
   // containerdisk / containers

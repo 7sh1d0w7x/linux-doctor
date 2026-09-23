@@ -240,6 +240,67 @@ export const packages = defineCheck({
       return findings;
     }
 
+    // openSUSE — verify installed package dependencies. `-D` is the dry run;
+    // without it zypper would try to fix what it finds.
+    if (pkg === "zypper" || family === "suse") {
+      const verify = await ctx.run("zypper --non-interactive verify -D 2>&1");
+      const diag = lines(verify.stdout || "")
+        .filter((l) => !/are satisfied|loading repository data|reading installed packages/i.test(l))
+        .join("\n");
+      if (/not satisfied|broken|nothing provides|conflict|missing/i.test(diag) && diag.trim() !== "") {
+        findings.push(finding({
+          severity: "high",
+          code: "packages/broken",
+          title: "Package manager reports broken dependencies",
+          detail: "`zypper verify` reports unmet dependencies, which block updates.",
+          evidence: diag.split("\n").slice(0, 3).join("\n"),
+          fix: "Check `sudo zypper verify` (without -D) to see and fix the details.",
+          confidence: "medium",
+        }));
+        return findings;
+      }
+      if (!verify.ok) return findings;
+      findings.push(finding({
+        severity: "info",
+        code: "packages/ok",
+        title: "Package manager is healthy",
+        detail: "Dependencies of all installed packages are satisfied. zypper is ready for updates.",
+        evidence: "zypper verify: ok",
+        fix: null,
+        confidence: "high",
+      }));
+      return findings;
+    }
+
+    // Void — xbps package database consistency. Read-only.
+    if (pkg === "xbps" || family === "void") {
+      const pkgdb = await ctx.run("xbps-pkgdb -a 2>&1");
+      const out = String(pkgdb.stdout || "");
+      if (/error|broken|mismatch|missing/i.test(out) && out.trim() !== "") {
+        findings.push(finding({
+          severity: "high",
+          code: "packages/broken",
+          title: "Package database has errors",
+          detail: "`xbps-pkgdb -a` reports inconsistencies in the package database.",
+          evidence: lines(out).slice(0, 3).join("\n"),
+          fix: "Check `xbps-pkgdb -a` and reinstall the affected packages.",
+          confidence: "medium",
+        }));
+        return findings;
+      }
+      if (!pkgdb.ok) return findings;
+      findings.push(finding({
+        severity: "info",
+        code: "packages/ok",
+        title: "Package manager is healthy",
+        detail: "The xbps package database is consistent.",
+        evidence: "xbps-pkgdb -a: ok",
+        fix: null,
+        confidence: "high",
+      }));
+      return findings;
+    }
+
     // Unknown family — nothing to say
     return findings;
   },

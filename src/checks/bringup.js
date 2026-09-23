@@ -117,19 +117,34 @@ export const bringup = defineCheck({
       );
     }
 
-    if (findings.length === 0 && logReadable) {
-      findings.push(
-        finding({
-          severity: "info",
-          code: "bringup/ok",
-          title: "No bring-up problems found",
-          detail:
-            "No firmware load failures or USB enumeration errors were found in this boot's kernel log, and the controllers we check have drivers bound.",
-          evidence: "firmware: none · usb: none · unbound controllers: none",
-          fix: null,
-          confidence: "high",
-        })
-      );
+    if (findings.length === 0) {
+      if (logReadable) {
+        findings.push(
+          finding({
+            severity: "info",
+            code: "bringup/ok",
+            title: "No bring-up problems found",
+            detail:
+              "No firmware load failures or USB enumeration errors were found in this boot's kernel log, and the controllers we check have drivers bound.",
+            evidence: "firmware: none · usb: none · unbound controllers: none",
+            fix: null,
+            confidence: "high",
+          })
+        );
+      } else {
+        findings.push(
+          finding({
+            severity: "info",
+            code: "bringup/skipped",
+            title: "Bring-up check partial",
+            detail:
+              "The kernel log is not readable (`journalctl` unavailable), so firmware and USB bring-up could not be checked. Only the driver check ran.",
+            evidence: "journalctl: not found",
+            fix: null,
+            confidence: "high",
+          })
+        );
+      }
     }
 
     return findings;

@@ -8,6 +8,11 @@ All notable changes to Linux Doctor are documented here. The format follows
 
 ### Added
 
+- **Package-health checks for openSUSE and Void.** `packages` covered apt,
+  dnf and pacman only, so those two families got no package-manager check at
+  all. openSUSE uses `zypper verify -D` (the dry run, so it cannot fix
+  anything) and Void uses `xbps-pkgdb -a`; both read-only.
+
 - **A bring-up check for devices that never appear.** `hardware` looks for
   errors on devices that are working; this looks at the devices that are
   missing. Three causes, one story: firmware the kernel could not load
