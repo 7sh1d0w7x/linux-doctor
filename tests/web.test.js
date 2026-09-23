@@ -299,6 +299,36 @@ test("web: a Re-run is never swallowed by an in-flight background poll", async (
   }
 });
 
+
+test("web: a refresh during a background scan gets a body, not an empty response", async () => {
+  // The background scan resolved to undefined. Sharing its single-flight with
+  // the blocking path served that undefined as an empty body ("Unexpected end
+  // of JSON input" in the dashboard) and poisoned the cache with it.
+  let releaseBg;
+  let calls = 0;
+  const collect = async () => {
+    calls += 1;
+    if (calls === 2) await new Promise((r) => { releaseBg = r; }); // hold the background scan
+    return { generatedAt: "t" + calls, system: {}, findings: [{ severity: "info", title: `run ${calls}` }] };
+  };
+  const server = await startWeb({ collect, open: false, port: 0, quiet: true, reportTtlMs: 10 });
+  const base = `http://127.0.0.1:${server.address().port}`;
+  try {
+    await (await fetch(base + "/api/report")).json(); // first paint: calls=1
+    await new Promise((r) => setTimeout(r, 30)); // TTL expires
+    fetch(base + "/api/report"); // stale poll -> background scan (held), calls=2
+    await new Promise((r) => setTimeout(r, 20)); // let it start
+    const refresh = fetch(base + "/api/report?refresh=1"); // must get the held scan's body
+    await new Promise((r) => setTimeout(r, 20));
+    if (releaseBg) releaseBg();
+    const text = await (await refresh).text();
+    assert.ok(text.length > 0, "the refresh must not be served an empty body");
+    assert.ok(Array.isArray(JSON.parse(text).findings), `expected a report, got: ${text.slice(0, 80)}`);
+  } finally {
+    server.close();
+  }
+});
+
 test("web: an explicit Re-run (?save=1) records history; polls never do", async () => {
   const saves = [];
   const collect = async (save) => {

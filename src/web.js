@@ -61,6 +61,21 @@ export async function startWeb({ collect, history = () => [], checkList = async 
   const REPORT_TTL_MS = reportTtlMs;
   let reportCache = { at: 0, body: null };
   let reportInflight = null;
+  // Single-flight a non-saving scan. It always resolves to the body string, so
+  // a blocking request that arrives while a background scan is in flight gets
+  // that scan's body instead of `undefined` (which reached res.end() as an
+  // empty response: "Unexpected end of JSON input" in the dashboard).
+  const startScan = () => {
+    if (reportInflight) return reportInflight;
+    reportInflight = (async () => {
+      const data = await collect(false);
+      const out = render(data);
+      const body = typeof out === "string" ? out : JSON.stringify(out);
+      reportCache = { at: Date.now(), body };
+      return body;
+    })().finally(() => { reportInflight = null; });
+    return reportInflight;
+  };
   const server = http.createServer(async (req, res) => {
     if (!isLoopbackHost(req.headers.host)) {
       res.writeHead(403, { "Content-Type": "text/plain" });
@@ -79,7 +94,7 @@ export async function startWeb({ collect, history = () => [], checkList = async 
         // save=1 comes from an explicit Re-run; it must record history and
         // therefore never be served from (or stored as) a plain poll cache.
         const save = url.searchParams.get("save") === "1";
-        const hasCache = reportCache.body !== null;
+        const hasCache = typeof reportCache.body === "string";
         const fresh = hasCache && Date.now() - reportCache.at < REPORT_TTL_MS;
         let body;
         if (!refresh && !save && fresh) {
@@ -97,24 +112,10 @@ export async function startWeb({ collect, history = () => [], checkList = async 
           // the last report and regenerates behind it, so the UI never waits on
           // a full scan. The next poll picks up the new report.
           body = reportCache.body;
-          if (!reportInflight) {
-            reportInflight = (async () => {
-              const data = await collect(false);
-              const out = render(data);
-              reportCache = { at: Date.now(), body: typeof out === "string" ? out : JSON.stringify(out) };
-            })().catch(() => {}).finally(() => { reportInflight = null; });
-          }
+          startScan().catch(() => {});
         } else {
-          // First paint or an explicit non-saving refresh: single-flight scan.
-          if (!reportInflight) {
-            reportInflight = (async () => {
-              const data = await collect(false);
-              const out = render(data);
-              return typeof out === "string" ? out : JSON.stringify(out);
-            })().finally(() => { reportInflight = null; });
-          }
-          body = await reportInflight;
-          reportCache = { at: Date.now(), body };
+          // First paint or an explicit non-saving refresh: block on a scan.
+          body = await startScan();
         }
         res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" });
         res.end(body);
