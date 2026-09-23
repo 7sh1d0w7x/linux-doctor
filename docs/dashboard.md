@@ -62,7 +62,7 @@ time, plus the recommended next step with **Copy fix**, **Dismiss**, and
 **Report** actions. Every card header carries a quiet `code` pill — click it
 to copy the stable code, or type `code:<prefix>` in search to filter by it.
 Hit **Re-run checks** for a fresh report. The dashboard **auto-refreshes**
-every 20s — it pauses while you are reading (searching, filtering, or with a
+every 5s — it pauses while you are reading (searching, filtering, or with a
 finding expanded) so your place is never reset, and the Auto button shows
 its paused state. **Re-run records the run in history** (the trend and the
 new/fixed diff move); the background auto-refresh deliberately does **not**,
