@@ -84,7 +84,15 @@ export async function startWeb({ collect, history = () => [], checkList = async 
         let body;
         if (!refresh && !save && fresh) {
           body = reportCache.body;
-        } else if (!refresh && !save && hasCache) {
+        } else if (save) {
+          // An explicit Re-run records history and must never be satisfied by
+          // an in-flight background poll, which does not save: run it on its
+          // own, then refresh the cache.
+          const data = await collect(true);
+          const out = render(data);
+          body = typeof out === "string" ? out : JSON.stringify(out);
+          reportCache = { at: Date.now(), body };
+        } else if (!refresh && hasCache) {
           // Stale-while-revalidate: a background poll answers instantly with
           // the last report and regenerates behind it, so the UI never waits on
           // a full scan. The next poll picks up the new report.
@@ -97,15 +105,16 @@ export async function startWeb({ collect, history = () => [], checkList = async 
             })().catch(() => {}).finally(() => { reportInflight = null; });
           }
         } else {
+          // First paint or an explicit non-saving refresh: single-flight scan.
           if (!reportInflight) {
             reportInflight = (async () => {
-              const data = await collect(save);
+              const data = await collect(false);
               const out = render(data);
               return typeof out === "string" ? out : JSON.stringify(out);
             })().finally(() => { reportInflight = null; });
           }
           body = await reportInflight;
-          if (!save) reportCache = { at: Date.now(), body };
+          reportCache = { at: Date.now(), body };
         }
         res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" });
         res.end(body);

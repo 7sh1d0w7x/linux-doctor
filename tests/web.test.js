@@ -270,6 +270,35 @@ test("web: a stale report is served instantly and revalidated in the background"
   }
 });
 
+
+test("web: a Re-run is never swallowed by an in-flight background poll", async () => {
+  // The SWR background scan calls collect(false). Sharing its single-flight
+  // with the blocking path meant a Re-run arriving during a background poll
+  // awaited that non-saving scan and never recorded history.
+  const saves = [];
+  let releaseBg;
+  const collect = async (save) => {
+    saves.push(save);
+    if (saves.length === 2) await new Promise((r) => { releaseBg = r; }); // hold the background scan
+    return { generatedAt: "t" + saves.length, system: {}, findings: [] };
+  };
+  const server = await startWeb({ collect, open: false, port: 0, quiet: true, reportTtlMs: 10 });
+  const base = `http://127.0.0.1:${server.address().port}`;
+  try {
+    await fetch(base + "/api/report"); // first paint: collect(false)
+    await new Promise((r) => setTimeout(r, 30)); // let the TTL expire
+    const bg = fetch(base + "/api/report"); // stale poll -> background scan (held)
+    await new Promise((r) => setTimeout(r, 20)); // let the background scan start
+    const rerun = fetch(base + "/api/report?refresh=1&save=1"); // must save on its own
+    await new Promise((r) => setTimeout(r, 20));
+    if (releaseBg) releaseBg();
+    await Promise.all([bg, rerun]);
+    assert.deepEqual(saves, [false, false, true], `a Re-run must save even during a background poll: ${JSON.stringify(saves)}`);
+  } finally {
+    server.close();
+  }
+});
+
 test("web: an explicit Re-run (?save=1) records history; polls never do", async () => {
   const saves = [];
   const collect = async (save) => {
