@@ -8,6 +8,11 @@ import { join } from "node:path";
 import { createServer } from "node:net";
 import { startWeb } from "../src/web.js";
 
+// /api/ignore and /api/history/clear write the config and history files. Point
+// both at throwaway paths so a test never touches the developer's real ones.
+process.env.LINUX_DOCTOR_CONFIG = join(tmpdir(), `ld-web-test-config-${process.pid}.json`);
+process.env.LINUX_DOCTOR_HISTORY = join(tmpdir(), `ld-web-test-history-${process.pid}.json`);
+
 // Raw request helper — fetch() treats Host and Origin as forbidden header
 // names, and these tests must control both headers exactly.
 function rawRequest(port, path, { method = "GET", headers = {}, body = null } = {}) {
@@ -222,6 +227,41 @@ test("web /api/schedule defaults to the real timer probe with a stable shape", a
     for (const k of ["installed", "enabled", "active", "systemd"]) {
       assert.equal(typeof body.schedule[k], "boolean", `schedule.${k} is a boolean`);
     }
+  } finally {
+    server.close();
+  }
+});
+
+
+test("web: /api/ignore lists the patterns and edits them", async () => {
+  const { addIgnore } = await import("../src/ignore.js");
+  addIgnore("Volatile title");
+  const server = await startWeb({ collect: async () => ({ generatedAt: "", system: {}, findings: [] }), open: false, port: 0, quiet: true });
+  const base = `http://127.0.0.1:${server.address().port}`;
+  try {
+    const listed = await (await fetch(base + "/api/ignore")).json();
+    assert.ok(listed.patterns.includes("Volatile title"), `expected the pattern: ${JSON.stringify(listed)}`);
+    assert.ok(String(listed.path).endsWith(".json"), "the config path is reported");
+
+    const del = await (await fetch(base + "/api/ignore", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pattern: "Volatile title", remove: true }) })).json();
+    assert.equal(del.ok, true);
+    const after = await (await fetch(base + "/api/ignore")).json();
+    assert.ok(!after.patterns.includes("Volatile title"), "the pattern is gone");
+  } finally {
+    server.close();
+  }
+});
+
+test("web: /api/history/clear empties the history", async () => {
+  const { saveRun, loadHistory } = await import("../src/history.js");
+  saveRun({ at: new Date().toISOString(), score: 50, counts: {}, findings: [] });
+  assert.ok(loadHistory().length > 0, "precondition: a run is stored");
+  const server = await startWeb({ collect: async () => ({ generatedAt: "", system: {}, findings: [] }), history: loadHistory, open: false, port: 0, quiet: true });
+  const base = `http://127.0.0.1:${server.address().port}`;
+  try {
+    const res = await (await fetch(base + "/api/history/clear", { method: "POST" })).json();
+    assert.equal(res.ok, true);
+    assert.equal(loadHistory().length, 0, "history is cleared");
   } finally {
     server.close();
   }

@@ -255,3 +255,16 @@
 .sched .sched-note { white-space: nowrap; }
 .sched .mono { font-family: var(--mono); font-size: 11px; }
 .sched .toolbtn { margin-left: auto; }
+
+/* Ignore list (Checks modal) + Clear history (History ledger): the persistent
+   state the GUI can otherwise only set via Dismiss. */
+.ig-row { display: flex; align-items: center; gap: 10px; padding: 7px 2px; border-top: 1px solid var(--border); font-size: 13px; }
+.ig-v { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ig-kind { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.ig-remove, .ledger-clear {
+  height: 26px; padding: 0 10px; border-radius: 7px; border: 1px solid var(--border);
+  background: var(--card); color: var(--text); font-weight: 600; font-size: 12px; cursor: pointer;
+}
+.ig-remove:hover, .ledger-clear:hover { border-color: var(--red); color: var(--red); }
+.ledger-head { display: flex; align-items: baseline; gap: 10px; }
+.ledger-clear { margin-left: auto; color: var(--muted); }

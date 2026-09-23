@@ -77,11 +77,28 @@ function checksMatrixHtml(data, checks) {
     body;
 }
 
+/* The persistent state the GUI can otherwise only set (Dismiss) lives here:
+   the ignore list, with a remove for each entry and the config path. */
+function ignoredSectionHtml(ig) {
+  const rows = [];
+  for (const p of ig.patterns || []) rows.push({ kind: "title", v: p });
+  for (const c of ig.codes || []) rows.push({ kind: "code", v: c });
+  const list = rows.length
+    ? rows.map((r) =>
+        '<div class="ig-row"><span class="ig-v">' + esc(r.v) + '</span>' +
+        '<span class="ig-kind">' + (r.kind === "code" ? "code" : "title") + '</span>' +
+        '<button class="ig-remove" data-ig-remove="' + esc(r.v) + '" data-ig-kind="' + r.kind + '">Remove</button></div>'
+      ).join("")
+    : '<div class="mx-sub">Nothing is ignored. Dismiss a finding to hide it here.</div>';
+  return '<div class="mx-head" style="margin-top:20px">Ignored findings</div>' +
+    '<div class="mx-sub">Dismissed findings and patterns, saved to <code>' + esc(ig.path || "~/.config/linux-doctor/config.json") + '</code></div>' + list;
+}
+
 async function openChecksMatrix() {
   openModal('<div class="mx-head">All checks</div><div class="mx-sub">Loading\u2026</div>', "All checks");
   const checks = STATIC_DATA ? [] : await fetchChecks();
-  openModal(checksMatrixHtml(lastReportData || {}, checks), "All checks");
-
+  const ignore = await fetchIgnore();
+  openModal(checksMatrixHtml(lastReportData || {}, checks) + ignoredSectionHtml(ignore), "All checks");
 }
 
 function gotoFinding(check, code) {
@@ -105,7 +122,18 @@ function setupChecksMatrix() {
   // Deep-link rows: mouse and keyboard share one persistent handler.
   const body = $("#modal-body");
   if (!body) return;
-  body.addEventListener("click", (e) => {
+  body.addEventListener("click", async (e) => {
+    const rm = e.target.closest("[data-ig-remove]");
+    if (rm && isModalOpen()) {
+      rm.disabled = true;
+      const payload = rm.dataset.igKind === "code"
+        ? { code: rm.dataset.igRemove, remove: true }
+        : { pattern: rm.dataset.igRemove, remove: true };
+      const ok = await editIgnore(payload);
+      showToast(ok ? "Removed from ignore list" : "Could not remove");
+      if (ok) openChecksMatrix();
+      return;
+    }
     const row = e.target.closest("[data-goto-check]");
     if (!row || !isModalOpen()) return;
     gotoFinding(row.dataset.gotoCheck, row.dataset.gotoCode);

@@ -8,10 +8,11 @@ import { readFileSync } from "node:fs";
 import { atomicWrite } from "./fsx.js";
 import { exec } from "node:child_process";
 import { dirname } from "node:path";
-import { addIgnore } from "./ignore.js";
+import { addIgnore, addIgnoreCode, removeIgnore, removeIgnoreCode } from "./ignore.js";
 import { loadConfig, configFile } from "./config.js";
 import { DEFAULT_THRESHOLDS, coerceThreshold } from "./thresholds.js";
 import { timerStatus } from "./units.js";
+import { clearHistory } from "./history.js";
 import { shq } from "./utils.js";
 
 /**
@@ -154,12 +155,30 @@ export async function startWeb({ collect, history = () => [], checkList = async 
       }
       return;
     }
+    if (url.pathname === "/api/ignore" && req.method === "GET") {
+      const cfg = loadConfig();
+      res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" });
+      res.end(JSON.stringify({
+        patterns: Array.isArray(cfg.ignore) ? cfg.ignore : [],
+        codes: Array.isArray(cfg.ignoreCodes) ? cfg.ignoreCodes : [],
+        path: configFile(),
+      }));
+      return;
+    }
+    if (url.pathname === "/api/history/clear" && req.method === "POST") {
+      const ok = clearHistory();
+      res.writeHead(ok ? 200 : 500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok }));
+      return;
+    }
     if (url.pathname === "/api/ignore" && req.method === "POST") {
       let body = "";
       for await (const chunk of req) body += chunk;
       try {
-        const pattern = JSON.parse(body || "{}").pattern;
-        const ok = addIgnore(pattern);
+        const { pattern, code, remove } = JSON.parse(body || "{}");
+        const ok = code
+          ? (remove ? removeIgnoreCode(code) : addIgnoreCode(code))
+          : (remove ? removeIgnore(pattern) : addIgnore(pattern));
         res.writeHead(ok ? 200 : 400, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ ok }));
       } catch {

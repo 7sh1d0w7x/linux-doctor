@@ -88,3 +88,48 @@ async function loadCategoryMap() {
   }
   return checksCategoryMap;
 }
+
+/* Ignore list + history clearing. The desktop shell's loopback service answers
+   the same shapes on 17321; in the browser the dashboard serves them directly.
+   Both are best-effort: a missing route leaves the section empty, never throws. */
+async function fetchIgnore() {
+  if (STATIC_DATA) return { patterns: [], codes: [], path: "" };
+  if (isDesktop()) {
+    try {
+      const res = await fetch("http://127.0.0.1:17321/api/ignore", { cache: "no-store" });
+      if (res.ok) return await res.json();
+    } catch {}
+  }
+  try {
+    const res = await fetch("/api/ignore", { cache: "no-store" });
+    if (res.ok) return await res.json();
+  } catch {}
+  return { patterns: [], codes: [], path: "" };
+}
+
+async function postJson(url, payload) {
+  try {
+    const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    return res.ok && (await res.json()).ok !== false;
+  } catch {
+    return false;
+  }
+}
+
+async function editIgnore(payload) {
+  if (isDesktop() && await postJson("http://127.0.0.1:17321/api/ignore", payload)) return true;
+  return postJson("/api/ignore", payload);
+}
+
+async function clearHistoryApi() {
+  const tryPost = async (url) => {
+    try {
+      const res = await fetch(url, { method: "POST" });
+      return res.ok && (await res.json()).ok !== false;
+    } catch {
+      return false;
+    }
+  };
+  if (isDesktop() && await tryPost("http://127.0.0.1:17321/api/history/clear")) return true;
+  return tryPost("/api/history/clear");
+}

@@ -8,6 +8,13 @@ All notable changes to Linux Doctor are documented here. The format follows
 
 ### Added
 
+- **The dashboard can manage persistent state now.** The ignore list was
+  write-only from the GUI (Dismiss), so a dismissed finding could not be seen
+  or undone once the toast was gone; the Checks modal lists every ignored
+  pattern and code with a Remove, and the config path. History gained a Clear
+  history button. Both are contextual, not a new Settings page, and the
+  endpoints are loopback-only like the rest of the dashboard.
+
 - **Package-health check for Alpine.** `packages` had no `apk` branch, so
   Alpine was the last family without one. `apk fix --simulate` is the dry run
   (it reports what it would repair and changes nothing) and runs unprivileged.

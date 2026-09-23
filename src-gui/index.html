@@ -807,6 +807,19 @@ body.compact #report { gap: 14px; }
 .sched .mono { font-family: var(--mono); font-size: 11px; }
 .sched .toolbtn { margin-left: auto; }
 
+/* Ignore list (Checks modal) + Clear history (History ledger): the persistent
+   state the GUI can otherwise only set via Dismiss. */
+.ig-row { display: flex; align-items: center; gap: 10px; padding: 7px 2px; border-top: 1px solid var(--border); font-size: 13px; }
+.ig-v { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ig-kind { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.ig-remove, .ledger-clear {
+  height: 26px; padding: 0 10px; border-radius: 7px; border: 1px solid var(--border);
+  background: var(--card); color: var(--text); font-weight: 600; font-size: 12px; cursor: pointer;
+}
+.ig-remove:hover, .ledger-clear:hover { border-color: var(--red); color: var(--red); }
+.ledger-head { display: flex; align-items: baseline; gap: 10px; }
+.ledger-clear { margin-left: auto; color: var(--muted); }
+
 
 /* ── responsive.css ── */
 /* SPDX-License-Identifier: GPL-3.0-or-later */
@@ -1312,6 +1325,51 @@ async function loadCategoryMap() {
     checksCategoryMap = new Map();
   }
   return checksCategoryMap;
+}
+
+/* Ignore list + history clearing. The desktop shell's loopback service answers
+   the same shapes on 17321; in the browser the dashboard serves them directly.
+   Both are best-effort: a missing route leaves the section empty, never throws. */
+async function fetchIgnore() {
+  if (STATIC_DATA) return { patterns: [], codes: [], path: "" };
+  if (isDesktop()) {
+    try {
+      const res = await fetch("http://127.0.0.1:17321/api/ignore", { cache: "no-store" });
+      if (res.ok) return await res.json();
+    } catch {}
+  }
+  try {
+    const res = await fetch("/api/ignore", { cache: "no-store" });
+    if (res.ok) return await res.json();
+  } catch {}
+  return { patterns: [], codes: [], path: "" };
+}
+
+async function postJson(url, payload) {
+  try {
+    const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    return res.ok && (await res.json()).ok !== false;
+  } catch {
+    return false;
+  }
+}
+
+async function editIgnore(payload) {
+  if (isDesktop() && await postJson("http://127.0.0.1:17321/api/ignore", payload)) return true;
+  return postJson("/api/ignore", payload);
+}
+
+async function clearHistoryApi() {
+  const tryPost = async (url) => {
+    try {
+      const res = await fetch(url, { method: "POST" });
+      return res.ok && (await res.json()).ok !== false;
+    } catch {
+      return false;
+    }
+  };
+  if (isDesktop() && await tryPost("http://127.0.0.1:17321/api/history/clear")) return true;
+  return tryPost("/api/history/clear");
 }
 
 
@@ -2118,7 +2176,8 @@ async function renderTrend(currentScore) {
 function historyLedgerHtml(runs) {
   const rows = (runs || []).filter((r) => typeof r.score === "number").slice(-12);
   if (rows.length < 2) return "";
-  let html = '<div class="ledger-head">Past runs <span class="ledger-sub">newest first</span></div><div class="ledger">';
+  let html = '<div class="ledger-head">Past runs <span class="ledger-sub">newest first</span>' +
+    '<button class="ledger-clear" id="histclear" title="Delete all stored runs">Clear history</button></div><div class="ledger">';
   for (let i = rows.length - 1; i >= 0; i -= 1) {
     const r = rows[i];
     const prev = i > 0 ? rows[i - 1] : null;
@@ -2138,6 +2197,12 @@ function renderHistoryLedger(runs) {
   const box = $("#runledger");
   if (!box) return;
   box.innerHTML = historyLedgerHtml(runs);
+  $("#histclear")?.addEventListener("click", async () => {
+    if (!window.confirm("Delete all stored runs? This cannot be undone.")) return;
+    const ok = await clearHistoryApi();
+    showToast(ok ? "History cleared" : "Could not clear history");
+    if (ok) renderTrend(lastReportData ? lastReportData.score : undefined);
+  });
 }
 
 function setTabBadge(id, text) {
@@ -2750,11 +2815,28 @@ function checksMatrixHtml(data, checks) {
     body;
 }
 
+/* The persistent state the GUI can otherwise only set (Dismiss) lives here:
+   the ignore list, with a remove for each entry and the config path. */
+function ignoredSectionHtml(ig) {
+  const rows = [];
+  for (const p of ig.patterns || []) rows.push({ kind: "title", v: p });
+  for (const c of ig.codes || []) rows.push({ kind: "code", v: c });
+  const list = rows.length
+    ? rows.map((r) =>
+        '<div class="ig-row"><span class="ig-v">' + esc(r.v) + '</span>' +
+        '<span class="ig-kind">' + (r.kind === "code" ? "code" : "title") + '</span>' +
+        '<button class="ig-remove" data-ig-remove="' + esc(r.v) + '" data-ig-kind="' + r.kind + '">Remove</button></div>'
+      ).join("")
+    : '<div class="mx-sub">Nothing is ignored. Dismiss a finding to hide it here.</div>';
+  return '<div class="mx-head" style="margin-top:20px">Ignored findings</div>' +
+    '<div class="mx-sub">Dismissed findings and patterns, saved to <code>' + esc(ig.path || "~/.config/linux-doctor/config.json") + '</code></div>' + list;
+}
+
 async function openChecksMatrix() {
   openModal('<div class="mx-head">All checks</div><div class="mx-sub">Loading\u2026</div>', "All checks");
   const checks = STATIC_DATA ? [] : await fetchChecks();
-  openModal(checksMatrixHtml(lastReportData || {}, checks), "All checks");
-
+  const ignore = await fetchIgnore();
+  openModal(checksMatrixHtml(lastReportData || {}, checks) + ignoredSectionHtml(ignore), "All checks");
 }
 
 function gotoFinding(check, code) {
@@ -2778,7 +2860,18 @@ function setupChecksMatrix() {
   // Deep-link rows: mouse and keyboard share one persistent handler.
   const body = $("#modal-body");
   if (!body) return;
-  body.addEventListener("click", (e) => {
+  body.addEventListener("click", async (e) => {
+    const rm = e.target.closest("[data-ig-remove]");
+    if (rm && isModalOpen()) {
+      rm.disabled = true;
+      const payload = rm.dataset.igKind === "code"
+        ? { code: rm.dataset.igRemove, remove: true }
+        : { pattern: rm.dataset.igRemove, remove: true };
+      const ok = await editIgnore(payload);
+      showToast(ok ? "Removed from ignore list" : "Could not remove");
+      if (ok) openChecksMatrix();
+      return;
+    }
     const row = e.target.closest("[data-goto-check]");
     if (!row || !isModalOpen()) return;
     gotoFinding(row.dataset.gotoCheck, row.dataset.gotoCode);

@@ -104,7 +104,8 @@ async function renderTrend(currentScore) {
 function historyLedgerHtml(runs) {
   const rows = (runs || []).filter((r) => typeof r.score === "number").slice(-12);
   if (rows.length < 2) return "";
-  let html = '<div class="ledger-head">Past runs <span class="ledger-sub">newest first</span></div><div class="ledger">';
+  let html = '<div class="ledger-head">Past runs <span class="ledger-sub">newest first</span>' +
+    '<button class="ledger-clear" id="histclear" title="Delete all stored runs">Clear history</button></div><div class="ledger">';
   for (let i = rows.length - 1; i >= 0; i -= 1) {
     const r = rows[i];
     const prev = i > 0 ? rows[i - 1] : null;
@@ -124,6 +125,12 @@ function renderHistoryLedger(runs) {
   const box = $("#runledger");
   if (!box) return;
   box.innerHTML = historyLedgerHtml(runs);
+  $("#histclear")?.addEventListener("click", async () => {
+    if (!window.confirm("Delete all stored runs? This cannot be undone.")) return;
+    const ok = await clearHistoryApi();
+    showToast(ok ? "History cleared" : "Could not clear history");
+    if (ok) renderTrend(lastReportData ? lastReportData.score : undefined);
+  });
 }
 
 function setTabBadge(id, text) {

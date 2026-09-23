@@ -39,3 +39,15 @@ test("fullscreen: the app exposes the window API and permits set_fullscreen", ()
     "toggling needs the current state, so is_fullscreen too",
   );
 });
+
+test("ignore list + clear history are wired into the built dashboard", () => {
+  // The GUI can set the ignore list (Dismiss) but could not view or undo it, and
+  // had no way to clear history. Both are contextual now: the ignore list in the
+  // Checks modal, Clear history in the History ledger. The endpoints they call
+  // are pinned by web.test.js.
+  const html = read("src-gui/index.html");
+  assert.match(html, /Ignored findings/, "the Checks modal must list ignored patterns");
+  assert.match(html, /data-ig-remove/, "each ignored pattern needs a remove control");
+  assert.match(html, /clearHistoryApi\(/, "Clear history must call the clear endpoint");
+  assert.match(html, /id="histclear"/, "the History ledger must offer Clear history");
+});
