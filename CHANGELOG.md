@@ -8,6 +8,10 @@ All notable changes to Linux Doctor are documented here. The format follows
 
 ### Added
 
+- **Package-health check for Alpine.** `packages` had no `apk` branch, so
+  Alpine was the last family without one. `apk fix --simulate` is the dry run
+  (it reports what it would repair and changes nothing) and runs unprivileged.
+
 - **Package-health checks for openSUSE and Void.** `packages` covered apt,
   dnf and pacman only, so those two families got no package-manager check at
   all. openSUSE uses `zypper verify -D` (the dry run, so it cannot fix

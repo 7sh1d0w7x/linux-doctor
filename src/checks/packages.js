@@ -301,6 +301,39 @@ export const packages = defineCheck({
       return findings;
     }
 
+    // Alpine — `apk fix --simulate` is the dry run: it reports what it would
+    // repair (missing files, broken dependencies) and changes nothing. It runs
+    // unprivileged (verified).
+    if (pkg === "apk" || family === "alpine") {
+      const fix = await ctx.run("apk fix --simulate 2>&1");
+      const diag = lines(fix.stdout || "")
+        .filter((l) => !/^OK:/i.test(l))
+        .join("\n");
+      if (/error|broken|missing|failed|repair/i.test(diag) && diag.trim() !== "") {
+        findings.push(finding({
+          severity: "high",
+          code: "packages/broken",
+          title: "Package manager reports problems",
+          detail: "`apk fix --simulate` reports packages that need repair.",
+          evidence: diag.split("\n").slice(0, 3).join("\n"),
+          fix: "Check `sudo apk fix` to see and repair the details.",
+          confidence: "medium",
+        }));
+        return findings;
+      }
+      if (!fix.ok) return findings;
+      findings.push(finding({
+        severity: "info",
+        code: "packages/ok",
+        title: "Package manager is healthy",
+        detail: "apk reports nothing to repair.",
+        evidence: "apk fix --simulate: ok",
+        fix: null,
+        confidence: "high",
+      }));
+      return findings;
+    }
+
     // Unknown family — nothing to say
     return findings;
   },
