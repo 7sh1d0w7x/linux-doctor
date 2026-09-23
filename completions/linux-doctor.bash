@@ -24,7 +24,7 @@ _linux_doctor() {
   esac
 
   if [[ "$cur" == -* ]]; then
-    COMPREPLY=($(compgen -W "--check --ignore --ignore-code --ignore-add --ignore-remove --push --html --md --severity --compare --alert --heartbeat --interval --json --plain --web --ai --ai-local --list --schema --profile --ignore-list --summary --init --init-config --check-list --history-json --history-clear --thresholds-json --thresholds-set --todo --fix --yes --interactive --notify --self-test --license --daemon --support --no-history --install-timer --uninstall-timer --allow-private-endpoint --debug --help --version" -- "$cur"))
+    COMPREPLY=($(compgen -W "--check --ignore --ignore-code --ignore-add --ignore-remove --push --html --md --severity --compare --alert --heartbeat --interval --json --plain --web --ai --ai-local --list --schema --profile --ignore-list --ignore-list-json --summary --init --init-config --check-list --history-json --history-clear --thresholds-json --thresholds-set --todo --fix --yes --interactive --notify --self-test --license --daemon --support --no-history --install-timer --uninstall-timer --allow-private-endpoint --debug --help --version" -- "$cur"))
   fi
 }
 

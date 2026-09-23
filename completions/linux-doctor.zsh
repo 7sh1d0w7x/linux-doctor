@@ -25,6 +25,7 @@ _linux_doctor() {
     '--ignore-add=[persistently ignore a code or title fragment]:value:' \
     '--ignore-remove=[remove a previously ignored code or title fragment]:value:' \
     '--ignore-list[show configured ignore patterns]' \
+    '--ignore-list-json[show ignore patterns as JSON]' \
     '--summary[one-line score + severity counts]' \
     '--todo[numbered fix list, ordered by severity]' \
     '--fix[dry run: show safe-fix commands for the findings]' \

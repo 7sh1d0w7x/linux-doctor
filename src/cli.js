@@ -373,6 +373,7 @@ OPTIONS
    --ignore-add <v>  persistently ignore a code or title fragment (saved to config)
    --ignore-remove <v> remove a previously ignored code or title fragment
    --ignore-list  show configured ignore patterns and exit
+   --ignore-list-json  same, as JSON (used by the desktop app)
   --init         guided first-run setup (config, daily timer, notification test)
   --init-config  create a starter config file at ~/.config/linux-doctor/config.json
   --schema       print the JSON Schema for --json output (v1)
