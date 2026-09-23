@@ -5,7 +5,7 @@
  * typo like `--jsonn` must never quietly run a full report.
  */
 export const VALUE_FLAGS = new Set(["--check", "--ignore", "--ignore-code", "--ignore-add", "--ignore-remove", "--push", "--html", "--md", "--severity", "--compare", "--alert", "--heartbeat", "--interval", "--thresholds-set"]);
-export const BOOL_FLAGS = new Set(["--json", "--plain", "--web", "--ai", "--ai-local", "--list", "--schema", "--profile", "--ignore-list", "--summary", "--init", "--init-config", "--check-list", "--history-json", "--thresholds-json", "--todo", "--self-test", "--license", "--daemon", "--support", "--no-history", "--fix", "--yes", "--interactive", "--notify", "--history-clear", "--install-timer", "--uninstall-timer", "--allow-private-endpoint", "--debug"]);
+export const BOOL_FLAGS = new Set(["--json", "--plain", "--web", "--ai", "--ai-local", "--list", "--schema", "--profile", "--ignore-list", "--ignore-list-json", "--summary", "--init", "--init-config", "--check-list", "--history-json", "--thresholds-json", "--todo", "--self-test", "--license", "--daemon", "--support", "--no-history", "--fix", "--yes", "--interactive", "--notify", "--history-clear", "--install-timer", "--uninstall-timer", "--allow-private-endpoint", "--debug"]);
 
 export function parseArgs(argv) {
   const args = argv.slice(2);
@@ -25,6 +25,7 @@ export function parseArgs(argv) {
     ignoreCodes: [],
     severity: null,
     ignoreList: false,
+    ignoreListJson: false,
     pushUrl: null,
     htmlPath: null,
     mdPath: null,

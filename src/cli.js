@@ -595,6 +595,13 @@ function printIgnoreLists(titles, codes) {
     return 0;
   }
 
+  // --ignore-list-json: the same data, machine-readable. The desktop shell's
+  // dashboard reads it for its ignored-findings section (--ignore-list is text).
+  if (args.ignoreListJson) {
+    console.log(JSON.stringify({ patterns: loadIgnore(), codes: loadIgnoreCodes(), path: configFile() }));
+    return 0;
+  }
+
   // --check-list: print check metadata as JSON and exit.
   if (args.checkList) {
     const profile = await detectProfile();

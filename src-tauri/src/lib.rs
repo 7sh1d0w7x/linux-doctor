@@ -488,6 +488,23 @@ fn handle_client(
         ("GET", "/history") | ("GET", "/history/") => {
             cli_json(&["bin/doctor.js", "--history-json"])
         }
+        ("GET", "/api/ignore") | ("GET", "/api/ignore/") => {
+            cli_json(&["bin/doctor.js", "--ignore-list-json"])
+        }
+        ("POST", "/api/history/clear") | ("POST", "/api/history/clear/") => {
+            let (code, _out, _err) = run_cli(root, node, &["bin/doctor.js", "--history-clear"]);
+            if code == 0 {
+                (
+                    "200 OK",
+                    serde_json::to_vec(&serde_json::json!({ "ok": true })).unwrap_or_default(),
+                )
+            } else {
+                (
+                    "500 Internal Server Error",
+                    serde_json::to_vec(&serde_json::json!({ "ok": false })).unwrap_or_default(),
+                )
+            }
+        }
         ("GET", "/thresholds") | ("GET", "/thresholds/") => {
             cli_json(&["bin/doctor.js", "--thresholds-json"])
         }

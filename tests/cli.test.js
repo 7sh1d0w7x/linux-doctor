@@ -473,6 +473,22 @@ test("--self-test explains the environment and which checks run", () => {
   assert.match(res.stdout, /Checks that will run:/);
 });
 
+test("--ignore-list-json prints the ignore list as JSON for the desktop shell", () => {
+  const dir = mkdtempSync(join(tmpdir(), "ld-igjson-"));
+  try {
+    const file = join(dir, "config.json");
+    writeFileSync(file, JSON.stringify({ ignore: ["foo bar"], ignoreCodes: ["services/failed"] }));
+    const env = { ...process.env, LINUX_DOCTOR_CONFIG: file };
+    const res = spawnSync(process.execPath, [bin, "--ignore-list-json"], { encoding: "utf8", timeout: 60000, env });
+    const j = JSON.parse(res.stdout);
+    assert.deepEqual(j.patterns, ["foo bar"]);
+    assert.deepEqual(j.codes, ["services/failed"]);
+    assert.equal(j.path, file);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("--summary shows a score delta vs the previous run", () => {
   const dir = mkdtempSync(join(tmpdir(), "ld-cli-delta-"));
   const env = { ...process.env, LINUX_DOCTOR_HISTORY: join(dir, "history.json") };
