@@ -45,6 +45,7 @@ import { bluetooth } from "./bluetooth.js";
 import { wayland } from "./wayland.js";
 import { smart } from "./smart.js";
 import { hardware } from "./hardware.js";
+import { bringup } from "./bringup.js";
 import { audio } from "./audio.js";
 import { backup } from "./backup.js";
 import { fstrim } from "./fstrim.js";
@@ -67,7 +68,7 @@ export const checks = [
   // updates
   updates, snap, firmware, flatpak, reboot, packages,
   // hardware
-  battery, gpu, gpuUsage, bluetooth, wayland, smart, hardware, audio,
+  battery, gpu, gpuUsage, bluetooth, wayland, smart, hardware, bringup, audio,
   // data
   backup, fstrim, orphans, boot, cache,
 ];

@@ -30,6 +30,7 @@ import { ports } from "../src/checks/ports.js";
 import { suspend } from "../src/checks/suspend.js";
 import { battery } from "../src/checks/battery.js";
 import { bluetooth } from "../src/checks/bluetooth.js";
+import { bringup } from "../src/checks/bringup.js";
 import { wayland } from "../src/checks/wayland.js";
 import { backup } from "../src/checks/backup.js";
 import { hardware } from "../src/checks/hardware.js";

@@ -72,6 +72,10 @@ export const REGISTRY = {
   "bluetooth/failed": { sev: ["medium"], cat: "hardware" },
   "bluetooth/none": { sev: ["info"], cat: "hardware" },
   "bluetooth/ok": { sev: ["info"], cat: "hardware" },
+  "bringup/driver": { sev: ["medium"], cat: "hardware" },
+  "bringup/firmware": { sev: ["medium"], cat: "hardware" },
+  "bringup/ok": { sev: ["info"], cat: "hardware" },
+  "bringup/usb": { sev: ["medium"], cat: "hardware" },
   "bluetooth/stopped": { sev: ["medium"], cat: "hardware" },
   // containerdisk / containers
   "containerdisk/high": { sev: ["high"], cat: "containers" },

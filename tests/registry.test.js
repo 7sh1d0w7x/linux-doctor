@@ -34,7 +34,7 @@ test("registry: byId maps every check", () => {
 
 test("registry: the gated checks are exactly the expected ones", () => {
   const gated = checks.filter((c) => c.appliesTo.length < ALL_KINDS.length).map((c) => c.id).sort();
-  assert.deepEqual(gated, ["audio", "battery", "bluetooth", "cache", "certs", "fds", "gpu", "ports", "raid", "suspend", "wayland", "wifi"]);
+  assert.deepEqual(gated, ["audio", "battery", "bluetooth", "bringup", "cache", "certs", "fds", "gpu", "ports", "raid", "suspend", "wayland", "wifi"]);
 });
 
 test("registry: gpu runs before wayland (dedupe tie-break relies on it)", () => {

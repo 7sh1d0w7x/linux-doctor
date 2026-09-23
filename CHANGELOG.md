@@ -6,6 +6,18 @@ All notable changes to Linux Doctor are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **A bring-up check for devices that never appear.** `hardware` looks for
+  errors on devices that are working; this looks at the devices that are
+  missing. Three causes, one story: firmware the kernel could not load
+  (`bringup/firmware`), USB devices that failed to enumerate (`bringup/usb`),
+  and controllers with no driver bound (`bringup/driver`). This is the "my
+  Bluetooth and USB are gone" case: on a laptop the Bluetooth adapter is an
+  internal USB device, so one controller problem takes out both. Read-only,
+  current boot only, and it says so explicitly when everything is fine
+  (`bringup/ok`) instead of staying silent.
+
 ### Fixed
 
 - **The scheduled timer's service showed as failed on every machine that had a
