@@ -18,6 +18,13 @@ All notable changes to Linux Doctor are documented here. The format follows
   schedule.** On a non-systemd system with a backup tool installed the timer
   list was empty for lack of `systemctl`, not for lack of a schedule; it says
   the schedule could not be checked now (`backup/unknown`).
+- **`reboot` no longer says "No reboot needed" in a container.** A
+  container has no kernels of its own, so the empty `/boot` list read as "the
+  running kernel is the newest". It skips in a container, and stays silent
+  when no kernel list can be read.
+- **`boot`'s `df` probe no longer runs through `tail`.** Its exit status
+  belonged to `tail`, so a failed `df` looked successful; the data row is
+  taken in JS now.
 
 ## [0.7.1] - 2026-09-26
 

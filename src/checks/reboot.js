@@ -2,6 +2,7 @@
 import { lines } from "../utils.js";
 import { defineCheck } from "./define.js";
 import { finding } from "../findings.js";
+import { detectContainer } from "./shared.js";
 
 /** Split a kernel version into its numeric parts, e.g. "6.8.9-300.fc40" → [6, 8, 9, 300, 40]. */
 export function parseKernelVersion(v) {
@@ -50,6 +51,23 @@ export const reboot = defineCheck({
     // also self-contained (e.g. when called directly in tests or by plugins).
     if (ctx.dist.imageBased) return findings;
 
+    // A container has no /boot of its own and no reboot concept: the kernel
+    // list is empty because it is the host's, so comparing against it printed
+    // "No reboot needed" on a machine that cannot reboot at all.
+    const { inContainer, virtType } = await detectContainer(ctx);
+    if (inContainer) {
+      findings.push(finding({
+        severity: "info",
+        code: "reboot/skipped",
+        title: "Reboot check skipped (container)",
+        detail: "This is a container: it has no kernels of its own to compare against and no reboot concept, so the check stays quiet.",
+        evidence: `container detected: ${virtType && virtType !== "none" ? virtType : "container marker"}`,
+        fix: null,
+        confidence: "high",
+      }));
+      return findings;
+    }
+
     const [bootedRes, kernelsRes, rebootFile] = await Promise.all([
       ctx.run("uname -r 2>/dev/null"),
       ctx.run("for f in /boot/vmlinuz-*; do readlink -f \"$f\"; done 2>/dev/null | sort -u | sed 's|.*/vmlinuz-||'"),
@@ -61,6 +79,10 @@ export const reboot = defineCheck({
     const installed = lines(kernelsRes.stdout);
     const newer = installed.find((v) => versionGt(v, booted)) || null;
     const rebootRequired = rebootFile.ok && rebootFile.stdout.trim() !== "";
+
+    // No installed kernel could be read (an unmounted /boot, a chroot): we
+    // cannot say the running kernel is the newest, so stay silent.
+    if (installed.length === 0 && !rebootRequired) return findings;
 
     if (!newer && !rebootRequired) {
       findings.push(finding({

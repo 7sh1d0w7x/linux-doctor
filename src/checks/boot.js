@@ -21,15 +21,17 @@ export const boot = defineCheck({
     if (ctx.dist && ctx.dist.imageBased) return findings;
 
     // Check /boot and /boot/efi usage via df -P (POSIX, one line per FS)
-    const bootDf = await ctx.run("df -P /boot 2>/dev/null | tail -1");
-    const efiDf = await ctx.run("df -P /boot/efi 2>/dev/null | tail -1");
+    // No `| tail`: the pipeline's exit status is tail's, so a failed df looked
+    // successful. df prints a header line first, so the data row is taken in JS.
+    const bootDf = await ctx.run("df -P /boot 2>/dev/null");
+    const efiDf = await ctx.run("df -P /boot/efi 2>/dev/null");
 
     for (const [df, label, mount] of [
       [bootDf, "Boot partition (/boot)", "/boot"],
       [efiDf, "EFI partition (/boot/efi)", "/boot/efi"],
     ]) {
       if (!df.ok || !df.stdout.trim()) continue;
-      const p = df.stdout.trim().split(/\s+/);
+      const p = df.stdout.trim().split("\n").pop().trim().split(/\s+/);
       if (p.length < 6) continue;
       // `df -P /boot` prints the ROOT filesystem row when /boot is just a
       // directory on /, with the same columns as a real boot partition. Trust

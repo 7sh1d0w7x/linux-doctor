@@ -182,6 +182,7 @@ export const REGISTRY = {
   "packages/locked": { sev: ["medium"], cat: "system" },
   "packages/ok": { sev: ["info"], cat: "system" },
   // reboot
+  "reboot/skipped": { sev: ["info"], cat: "system" },
   "reboot/ok": { sev: ["info"], cat: "system" },
   "reboot/required": { sev: ["medium"], cat: "system" },
   // secureboot

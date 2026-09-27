@@ -349,6 +349,22 @@ test("fstrim: a container is an explicit skip, not the host's disks", async () =
   assert.equal(findings[0].code, "fstrim/skipped", `expected a container skip: ${JSON.stringify(findings.map((f) => f.code))}`);
 });
 
+
+test("reboot: a container is an explicit skip, not 'no reboot needed'", async () => {
+  // A container has no kernels of its own; the old check read an empty /boot
+  // list and concluded "No reboot needed".
+  const ctx = stubCtx({
+    "test -f /.dockerenv -o -f /run/.containerenv && echo container 2>/dev/null": "container\n",
+    "uname -r 2>/dev/null": "6.12.0\n",
+  }, { id: "alpine", id_like: "" });
+  const findings = await reboot.run(ctx);
+  assert.equal(findings[0].code, "reboot/skipped", `expected a container skip: ${JSON.stringify(findings.map((f) => f.code))}`);
+});
+
+test("reboot: no readable kernel list is silence, not 'no reboot needed'", async () => {
+  const ctx = stubCtx({ "uname -r 2>/dev/null": "6.12.0\n" }, { id: "debian", id_like: "" });
+  assert.deepEqual(await reboot.run(ctx), [], "cannot compare kernels → say nothing");
+});
 test("journal: known noise is filtered into an informational finding", async () => {
   const ctx = stubCtx({
     "journalctl -p err --since \"-24 hours\" --no-pager -o short 2>/dev/null": `Aug 15 14:32:47 bazzite systemd-udevd[465]: /usr/lib/udev/rules.d/50-udev-default.rules:105 Failed to resolve group 'disk', ignoring: Unknown group\nAug 15 14:33:01 bazzite setroubleshoot[1807]: SELinux is preventing bootupctl from read access on the directory /proc.\nAug 15 14:36:58 bazzite cupsd[1512]: Returning IPP client-error-bad-request for Create-Printer-Subscriptions (ipp://localhost/) from localhost.`,
@@ -1139,8 +1155,8 @@ test("firmware: fwupd not installed stays silent", async () => {
 // is only trusted when its mount point is the one we asked about.
 test("boot: a plain /boot directory on the root filesystem is not a boot partition", async () => {
   const ctx = stubCtx({
-    "df -P /boot 2>/dev/null | tail -1": "/dev/nvme0n1p2  100G  90G  5G  95% /\n",
-    "df -P /boot/efi 2>/dev/null | tail -1": "/dev/nvme0n1p1  511M  10M  501M  2% /boot/efi\n",
+    "df -P /boot 2>/dev/null": "Filesystem  Size Used Avail Use% Mounted on\n/dev/nvme0n1p2  100G  90G  5G  95% /\n",
+    "df -P /boot/efi 2>/dev/null": "Filesystem  Size Used Avail Use% Mounted on\n/dev/nvme0n1p1  511M  10M  501M  2% /boot/efi\n",
     "ls /boot/grub/grub.cfg /boot/grub2/grub.cfg /boot/loader/entries/*.conf 2>/dev/null | head -1": "/boot/grub2/grub.cfg\n",
     "ls /boot/efi/EFI/*/grub*.cfg /boot/efi/EFI/*/grubx64.efi 2>/dev/null | head -1": "/boot/efi/EFI/fedora/grubx64.efi\n",
     "test -d /boot 2>/dev/null && echo yes": "yes\n",
@@ -1152,7 +1168,7 @@ test("boot: a plain /boot directory on the root filesystem is not a boot partiti
 
 test("boot: a full separate /boot is high", async () => {
   const ctx = stubCtx({
-    "df -P /boot 2>/dev/null | tail -1": "/dev/sda2  500M  480M  20M  96% /boot\n",
+    "df -P /boot 2>/dev/null": "Filesystem  Size Used Avail Use% Mounted on\n/dev/sda2  500M  480M  20M  96% /boot\n",
     "df -P /boot/efi 2>/dev/null | tail -1": "",
     "ls /boot/grub/grub.cfg /boot/grub2/grub.cfg /boot/loader/entries/*.conf 2>/dev/null | head -1": "/boot/grub/grub.cfg\n",
     "test -d /boot 2>/dev/null && echo yes": "yes\n",
