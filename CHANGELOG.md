@@ -25,6 +25,10 @@ All notable changes to Linux Doctor are documented here. The format follows
 - **`boot`'s `df` probe no longer runs through `tail`.** Its exit status
   belonged to `tail`, so a failed `df` looked successful; the data row is
   taken in JS now.
+- **`processes` sums memory per app, not per process.** A browser spreads
+  its memory across many processes that share one binary, so the check listed
+  "brave" twice, reported one process as if it were the app's footprint, and
+  missed the real total. The top consumers are summed per binary now.
 
 ## [0.7.1] - 2026-09-26
 

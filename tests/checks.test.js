@@ -963,6 +963,23 @@ test("processes: a single app over 40% of RAM is flagged medium", async () => {
   assert.match(findings[0].title, /huge amount of memory/);
 });
 
+
+test("processes: RSS is summed per app, so a multi-process app is not split", async () => {
+  // Brave spreads its memory across processes that share one binary. The check
+  // listed "brave" twice and reported the largest process as if it were the
+  // app. Summed: 3M + 1.5M KiB = 4.5M KiB ≈ 28.6% of 16GB. One process alone
+  // (19.1%) stayed under the warn threshold, so the split hid the footprint.
+  const ctx = stubCtx({
+    "command -v ps 2>/dev/null": "/usr/bin/ps\n",
+    "ps -eo rss,args 2>/dev/null": `3000000 brave --type=renderer\n1500000 brave\n800000 firefox\n`,
+    "free -b": `              total        used        free      shared  buff/cache   available\nMem:    16106127360 12000000000   500000000    500000000  4718592000   1500000000\nSwap:   8267812045         0 8267812045`,
+  });
+  const findings = await processes.run(ctx);
+  assert.equal(findings[0].code, "processes/warn", `expected the summed app: ${JSON.stringify(findings.map((f) => f.code))}`);
+  const braveRows = findings[0].evidence.split("\n").filter((l) => /^brave\t/.test(l));
+  assert.equal(braveRows.length, 1, `brave must appear once: ${findings[0].evidence}`);
+});
+
 test("processes: healthy memory usage produces an info finding", async () => {
   const ctx = stubCtx({
     "command -v ps 2>/dev/null": "/usr/bin/ps\n",

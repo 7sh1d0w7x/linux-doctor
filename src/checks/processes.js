@@ -47,9 +47,13 @@ export const processes = defineCheck({
     // own header — without filtering the first parsed row was
     // { name: "RSS", rss: 0 } and the real top process was shifted out.
     // rss= would suppress it but breaks the existing test stubs, so filter.
-    const rows = lines(psRes.stdout)
-      .filter((l) => !/^\s*RSS\b/i.test(l))
-      .map((l) => {
+    // Sum RSS per app, not per process: a multi-process app (Brave, Chrome,
+    // Firefox) spreads its memory across processes that share one binary, so
+    // listing them separately both repeated the name ("brave" twice) and
+    // reported a single process as if it were the app's footprint. This is the
+    // browser case the check exists for.
+    const byApp = new Map();
+    for (const l of lines(psRes.stdout).filter((l) => !/^\s*RSS\b/i.test(l))) {
       const parts = l.trim().split(/\s+/);
       // rss first, args last: `args` is the full command line and may contain
       // spaces, and rss-first is the only order that works on both procps and
@@ -58,12 +62,15 @@ export const processes = defineCheck({
       // `ps` reports rss in KiB; convert to bytes so the ratio vs `free -b`
       // (bytes) is correct and fmtBytes displays real units.
       const rss = num(parts[0]) * 1024;
+      if (rss <= 0) continue;
       // The binary is the first token of args, not truncated the way `comm` is
       // ("QtWebEngineProcess" would arrive as "QtWebEngineProc").
       const bin = parts[1] ? parts[1].split("/").pop() : "unknown";
-      return { name: bin || "unknown", rss };
-      })
-      .filter((r) => r.rss > 0)
+      const name = bin || "unknown";
+      byApp.set(name, (byApp.get(name) || 0) + rss);
+    }
+    const rows = [...byApp.entries()]
+      .map(([name, rss]) => ({ name, rss }))
       .sort((a, b) => b.rss - a.rss)
       .slice(0, 3);
     if (rows.length === 0) return findings;
