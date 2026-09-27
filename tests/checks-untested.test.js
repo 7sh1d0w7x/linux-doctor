@@ -107,7 +107,7 @@ test("orphans: none is informational", async () => {
 });
 
 test("orphans: a couple of arch orphans is informational", async () => {
-  const ctx = stubCtx({ "pacman -Qtdq 2>/dev/null": "libfoo\nlibbar\n" }, { id: "arch" });
+  const ctx = stubCtx({ "pacman -Qtdq 2>&1": "libfoo\nlibbar\n" }, { id: "arch" });
   const findings = await orphans.run(ctx);
   assert.equal(findings[0].code, "orphans/some");
   assert.equal(findings[0].severity, "info");
@@ -467,8 +467,16 @@ test("orphans: a failed zypper query is not 'no orphaned packages'", async () =>
 });
 
 test("orphans: a failed pacman query is not 'no orphaned packages'", async () => {
-  const ctx = stubCtx({}, { id: "arch", id_like: "arch" });
+  // pacman -Qtdq exits 1 both when there are no orphans and on a real failure;
+  // the failure is told apart by its stderr, which 2>&1 folds in.
+  const ctx = stubCtx({ "pacman -Qtdq 2>&1": "error: could not open database: Success\n" }, { id: "arch", id_like: "arch" });
   assert.deepEqual(await orphans.run(ctx), []);
+});
+
+test("orphans: pacman with no orphans (exit 1, empty) still reports none", async () => {
+  const ctx = stubCtx({ "pacman -Qtdq 2>&1": "" }, { id: "arch", id_like: "arch" });
+  const findings = await orphans.run(ctx);
+  assert.equal(findings[0].code, "orphans/none", `an empty result is 'none', not silence: ${JSON.stringify(findings.map((f) => f.code))}`);
 });
 
 test("orphans: a failed dnf query is not 'no orphaned packages'", async () => {

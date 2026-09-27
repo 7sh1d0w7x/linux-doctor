@@ -21,9 +21,12 @@ export const orphans = defineCheck({
     let sample = "";
 
     if (pkg === "pacman" || family === "arch") {
-      const res = await ctx.run("pacman -Qtdq 2>/dev/null");
-      // A failed query (broken db) must not read as "no orphans".
-      if (!res.ok) return [];
+      // `pacman -Qtdq` exits 1 when there are no orphans, so the exit status
+      // cannot gate this one (it is 1 in the normal empty case). A real failure
+      // prints to stderr instead, which `2>&1` folds in so it can be told apart
+      // from the empty "no orphans" result.
+      const res = await ctx.run("pacman -Qtdq 2>&1");
+      if (/\berror\b/i.test(res.stdout)) return [];
       const pkgs = lines(res.stdout);
       count = pkgs.length;
       sample = pkgs.slice(0, 5).join(", ");
@@ -62,7 +65,7 @@ export const orphans = defineCheck({
     } else if (pkg === "zypper" || family === "suse") {
       // No `| grep -c`: grep exits 0 on empty input, so a failed zypper printed
       // "0" and read as a tidy database. Count in JS after checking it ran.
-      const res = await ctx.run("zypper packages --unneeded 2>/dev/null");
+      const res = await ctx.run("zypper --non-interactive packages --unneeded 2>/dev/null");
       if (!res.ok) return [];
       count = lines(res.stdout).filter((l) => /^i/.test(l)).length;
       evidence = `zypper packages --unneeded: ${count} orphaned`;

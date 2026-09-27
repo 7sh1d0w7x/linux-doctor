@@ -134,7 +134,7 @@ test("security/no-firewall: the fix points at the distro's tool, not a shell com
 
 test("orphans: the openSUSE finding must not name dnf", async () => {
   const ctx = stubCtx({
-    "zypper packages --unneeded 2>/dev/null": "i | libfoo\n i | libbar\n i | libbaz\n",
+    "zypper --non-interactive packages --unneeded 2>/dev/null": "i | libfoo\n i | libbar\n i | libbaz\n",
   }, { id: "opensuse-leap", id_like: "suse" });
   const [f] = await orphans.run(ctx);
   assert.equal(f.code, "orphans/some");
