@@ -6,7 +6,9 @@ All notable changes to Linux Doctor are documented here. The format follows
 
 ## [Unreleased]
 
-## [0.7.1] - **`orphans` no longer calls a failed query a tidy database on apt, zypper
+### Fixed
+
+- **`orphans` no longer calls a failed query a tidy database on apt, zypper
   or pacman.** Only the dnf branch checked whether its query actually ran; the
   other three piped through `grep`/`grep -c`, so a locked apt or a failed
   zypper printed nothing and the check reported "No orphaned packages". They
@@ -16,7 +18,8 @@ All notable changes to Linux Doctor are documented here. The format follows
   schedule.** On a non-systemd system with a backup tool installed the timer
   list was empty for lack of `systemctl`, not for lack of a schedule; it says
   the schedule could not be checked now (`backup/unknown`).
-- 2026-09-26
+
+## [0.7.1] - 2026-09-26
 
 ### Fixed
 
