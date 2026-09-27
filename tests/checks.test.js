@@ -1421,6 +1421,7 @@ test("backup: tools installed but nothing scheduled is informational", async () 
   const ctx = stubCtx({
     'for t in borg restic rclone duplicity timeshift pika-backup backintime deja-dup; do command -v "$t" 2>/dev/null; done': "/usr/bin/borg\n/usr/bin/restic\n",
     "systemctl list-timers --all --no-pager 2>/dev/null | grep -iE 'backup|borg|restic|timeshift|snapper|pika|deja' | grep -oE '[A-Za-z0-9_.@-]+\\.timer' | sort -u": "",
+    "command -v systemctl 2>/dev/null": "/usr/bin/systemctl\n",
   });
   const findings = await backup.run(ctx);
   assert.equal(findings.length, 1);

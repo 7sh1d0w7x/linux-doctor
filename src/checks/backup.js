@@ -17,12 +17,17 @@ export const backup = defineCheck({
   async run(ctx) {
     const findings = [];
 
-    const [tools, snapper, timeshift, timers] = await Promise.all([
+    const [tools, snapper, timeshift, timers, sysctlBin] = await Promise.all([
       ctx.run("for t in borg restic rclone duplicity timeshift pika-backup backintime deja-dup; do command -v \"$t\" 2>/dev/null; done"),
       ctx.run("ls /etc/snapper/configs 2>/dev/null"),
       ctx.run("[ -f /etc/timeshift/timeshift.json ] && echo configured"),
       ctx.run("systemctl list-timers --all --no-pager 2>/dev/null | grep -iE 'backup|borg|restic|timeshift|snapper|pika|deja' | grep -oE '[A-Za-z0-9_.@-]+\\.timer' | sort -u"),
+      ctx.run("command -v systemctl 2>/dev/null"),
     ]);
+    // Without systemctl the timer list is empty for a reason that is not "no
+    // schedule": a non-systemd system (Alpine, Void) with a backup tool used to
+    // get a false "nothing is scheduled".
+    const canCheckSchedule = sysctlBin.ok && sysctlBin.stdout.trim() !== "";
 
     const toolsFound = lines(tools.stdout).map((p) => p.split("/").pop()).filter(Boolean);
     const extras = [];
@@ -47,6 +52,18 @@ export const backup = defineCheck({
     }
 
     if (timerNames.length === 0) {
+      if (!canCheckSchedule) {
+        findings.push(finding({
+          severity: "info",
+          code: "backup/unknown",
+          title: "Backup scheduling could not be checked",
+          detail: `${present.join(", ")} ${present.length > 1 ? "are" : "is"} installed, but \`systemctl\` is not available (this is not a systemd system), so whether the backup actually runs could not be verified.`,
+          evidence: "scheduled: could not check (no systemctl)",
+          fix: null,
+          confidence: "high",
+        }));
+        return findings;
+      }
       findings.push(finding({
         severity: "info",
         code: "backup/unscheduled",

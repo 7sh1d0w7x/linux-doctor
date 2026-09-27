@@ -13,6 +13,7 @@ import { loadThresholds } from "../src/thresholds.js";
 import { oom } from "../src/checks/oom.js";
 import { wifi } from "../src/checks/wifi.js";
 import { orphans } from "../src/checks/orphans.js";
+import { backup } from "../src/checks/backup.js";
 import { foreignLockHolders, packages } from "../src/checks/packages.js";
 import { fs } from "../src/checks/fs.js";
 import { cache } from "../src/checks/cache.js";
@@ -92,7 +93,7 @@ test("wifi: no adapter at all is informational", async () => {
 
 test("orphans: 12 removable apt packages is medium", async () => {
   const remv = Array.from({ length: 12 }, (_, i) => `Remv lib${i} [1.0]`).join("\n") + "\n";
-  const ctx = stubCtx({ "apt-get -s autoremove 2>/dev/null | grep -E '^Remv '": remv });
+  const ctx = stubCtx({ "apt-get -s autoremove 2>/dev/null": remv });
   const findings = await orphans.run(ctx);
   assert.equal(findings[0].code, "orphans/many");
   assert.equal(findings[0].severity, "medium");
@@ -100,7 +101,7 @@ test("orphans: 12 removable apt packages is medium", async () => {
 });
 
 test("orphans: none is informational", async () => {
-  const ctx = stubCtx({ "apt-get -s autoremove 2>/dev/null | grep -E '^Remv '": "" });
+  const ctx = stubCtx({ "apt-get -s autoremove 2>/dev/null": "" });
   const findings = await orphans.run(ctx);
   assert.equal(findings[0].code, "orphans/none");
 });
@@ -452,6 +453,24 @@ test("packages: a failed pacman check stays silent instead of claiming health", 
 
 // ------------------------------------------------------- orphans: dnf query --
 
+
+test("orphans: a failed apt query is not 'no orphaned packages'", async () => {
+  // The pipeline's exit status was grep's, so a locked/failed apt printed
+  // nothing and the check called the database tidy. Silence, not a clean bill.
+  const ctx = stubCtx({}, { id: "debian", id_like: "debian" });
+  assert.deepEqual(await orphans.run(ctx), []);
+});
+
+test("orphans: a failed zypper query is not 'no orphaned packages'", async () => {
+  const ctx = stubCtx({}, { id: "opensuse-tumbleweed", id_like: "suse" });
+  assert.deepEqual(await orphans.run(ctx), []);
+});
+
+test("orphans: a failed pacman query is not 'no orphaned packages'", async () => {
+  const ctx = stubCtx({}, { id: "arch", id_like: "arch" });
+  assert.deepEqual(await orphans.run(ctx), []);
+});
+
 test("orphans: a failed dnf query is not 'no orphaned packages'", async () => {
   // `dnf repoquery --unneeded | wc -l` always exits 0 (wc's status), so a
   // failed query printed 0 and the check reported a tidy database. Verified
@@ -461,6 +480,19 @@ test("orphans: a failed dnf query is not 'no orphaned packages'", async () => {
   }, { id: "fedora", id_like: "fedora" });
   const findings = await orphans.run(ctx);
   assert.deepEqual(findings, [], "if neither query ran, say nothing");
+});
+
+
+test("backup: no systemctl is 'could not check', not 'nothing scheduled'", async () => {
+  // A non-systemd system with a backup tool got a false "nothing is scheduled":
+  // the timer probe was empty because systemctl is absent, not because the
+  // backup is unscheduled.
+  const ctx = stubCtx({
+    'for t in borg restic rclone duplicity timeshift pika-backup backintime deja-dup; do command -v "$t" 2>/dev/null; done': "/usr/bin/restic\n",
+  }, { id: "alpine", id_like: "" });
+  const findings = await backup.run(ctx);
+  assert.equal(findings[0].code, "backup/unknown", `expected 'could not check': ${JSON.stringify(findings.map((f) => f.code))}`);
+  assert.ok(!findings.some((f) => f.code === "backup/unscheduled"), "must not claim unscheduled");
 });
 
 // ------------------------------------------------- cache: Flatpak caches -----

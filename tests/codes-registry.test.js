@@ -50,6 +50,7 @@ export const REGISTRY = {
   "backup/none": { sev: ["info"], cat: "backup" },
   "backup/ok": { sev: ["info"], cat: "backup" },
   "backup/stale": { sev: ["medium"], cat: "backup" },
+  "backup/unknown": { sev: ["info"], cat: "backup" },
   "backup/unscheduled": { sev: ["info"], cat: "backup" },
   // certs
   "certs/critical": { sev: ["high"], cat: "security" },

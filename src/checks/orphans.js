@@ -22,14 +22,20 @@ export const orphans = defineCheck({
 
     if (pkg === "pacman" || family === "arch") {
       const res = await ctx.run("pacman -Qtdq 2>/dev/null");
+      // A failed query (broken db) must not read as "no orphans".
+      if (!res.ok) return [];
       const pkgs = lines(res.stdout);
       count = pkgs.length;
       sample = pkgs.slice(0, 5).join(", ");
       evidence = pkgs.slice(0, 5).join("\n") || "pacman -Qtdq: none";
     } else if (pkg === "apt" || family === "debian") {
-      // One dry-run serves both the count and the sample (it used to run twice).
-      const res = await ctx.run("apt-get -s autoremove 2>/dev/null | grep -E '^Remv '");
-      const pkgs = lines(res.stdout);
+      // No `| grep`: the pipeline's exit status is grep's, so a failed apt
+      // (dpkg lock, broken state) printed nothing and the check reported a tidy
+      // database. Read the simulation and filter in JS, and if it did not run,
+      // say nothing — the same bug the dnf branch was fixed for.
+      const res = await ctx.run("apt-get -s autoremove 2>/dev/null");
+      if (!res.ok) return [];
+      const pkgs = lines(res.stdout).filter((l) => /^Remv /i.test(l));
       count = pkgs.length;
       sample = pkgs.slice(0, 3).join("\n");
       evidence = `apt autoremove --dry-run: ${count} removable`;
@@ -54,8 +60,11 @@ export const orphans = defineCheck({
         evidence = `dnf autoremove --assumeno: ${count} removable`;
       }
     } else if (pkg === "zypper" || family === "suse") {
-      const res = await ctx.run("zypper packages --unneeded 2>/dev/null | grep -c '^i'");
-      count = Number(lines(res.stdout)[0] || 0);
+      // No `| grep -c`: grep exits 0 on empty input, so a failed zypper printed
+      // "0" and read as a tidy database. Count in JS after checking it ran.
+      const res = await ctx.run("zypper packages --unneeded 2>/dev/null");
+      if (!res.ok) return [];
+      count = lines(res.stdout).filter((l) => /^i/.test(l)).length;
       evidence = `zypper packages --unneeded: ${count} orphaned`;
     } else {
       // Unknown package manager — nothing to say (not a fault)
