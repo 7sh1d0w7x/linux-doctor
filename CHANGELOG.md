@@ -29,6 +29,12 @@ All notable changes to Linux Doctor are documented here. The format follows
   its memory across many processes that share one binary, so the check listed
   "brave" twice, reported one process as if it were the app's footprint, and
   missed the real total. The top consumers are summed per binary now.
+- **`processes` no longer flags a large app when there is plenty of free
+  RAM.** It warned whenever one app used more than 20% of total RAM, ignoring
+  how much was actually available, so a 15GB machine with 9.4GB free got a
+  medium "a single app is using a lot of memory" for a browser. The warning
+  now requires the system to be short on memory (available/total below the
+  memory warn ratio); otherwise the top consumers stay informational.
 
 ## [0.7.1] - 2026-09-26
 

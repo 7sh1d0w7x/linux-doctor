@@ -75,12 +75,24 @@ export const processes = defineCheck({
       .slice(0, 3);
     if (rows.length === 0) return findings;
 
-    const memLine = lines(memRes.stdout || "").find((l) => l.startsWith("Mem:"));
+    const memOut = lines(memRes.stdout || "");
+    const memLine = memOut.find((l) => l.startsWith("Mem:"));
+    const header = memOut[0] || "";
     const total = memLine ? num(memLine.split(/\s+/)[1]) : 0;
+    // `available` is the kernel's estimate of what a new app could use. procps
+    // prints it; busybox's `free` does not, so when it is absent we do not
+    // claim pressure (availRatio 1).
+    const available = /\bavailable\b/i.test(header) && memLine ? num(memLine.split(/\s+/)[6]) : 0;
+    const availRatio = total > 0 && available > 0 ? available / total : 1;
+    // A large app is only a problem when the system is short on memory: with
+    // half the RAM still available the top consumer is just the top consumer.
+    // This is the false alarm a 15GB box got for a browser at ~19% while 9GB
+    // was free.
+    const tight = availRatio < t.memWarnRatio;
     const top = rows[0];
     const ratio = total > 0 ? top.rss / total : 0;
 
-    if (top.rss > 0 && ratio > t.procHighRatio) {
+    if (tight && top.rss > 0 && ratio > t.procHighRatio) {
       findings.push(finding({
         severity: "medium",
         code: "processes/high",
@@ -90,7 +102,7 @@ export const processes = defineCheck({
         fix: "Close unused tabs or quit that app now, then re-run this check.",
         confidence: "high",
       }));
-    } else if (top.rss > 0 && ratio > t.procWarnRatio) {
+    } else if (tight && top.rss > 0 && ratio > t.procWarnRatio) {
       findings.push(finding({
         severity: "medium",
         code: "processes/warn",

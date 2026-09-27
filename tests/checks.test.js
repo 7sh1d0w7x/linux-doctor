@@ -980,6 +980,21 @@ test("processes: RSS is summed per app, so a multi-process app is not split", as
   assert.equal(braveRows.length, 1, `brave must appear once: ${findings[0].evidence}`);
 });
 
+
+test("processes: a large app on a box with free RAM is informational, not a warning", async () => {
+  // The false alarm a 15GB box got: Brave at ~19% while 9.4GB was free. Here
+  // the top app is 5M KiB ≈ 32% of RAM, over the 20% warn threshold, but 58%
+  // of RAM is available — so it is the top consumer, not a problem.
+  const ctx = stubCtx({
+    "command -v ps 2>/dev/null": "/usr/bin/ps\n",
+    "ps -eo rss,args 2>/dev/null": `5000000 brave\n800000 firefox\n`,
+    "free -b": `              total        used        free      shared  buff/cache   available\nMem:    16106127360  6000000000  5000000000    147000000  4900000000   9400000000\nSwap:   8267812045         0 8267812045`,
+  });
+  const findings = await processes.run(ctx);
+  assert.equal(findings[0].code, "processes/ok", `a big app with free RAM is not a warning: ${JSON.stringify(findings.map((f) => f.code))}`);
+  assert.equal(findings[0].severity, "info");
+});
+
 test("processes: healthy memory usage produces an info finding", async () => {
   const ctx = stubCtx({
     "command -v ps 2>/dev/null": "/usr/bin/ps\n",
