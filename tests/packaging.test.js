@@ -28,3 +28,12 @@ test("web.js' dashboard page exists on disk", () => {
   const page = join(root, "src-gui", "index.html");
   assert.doesNotThrow(() => readFileSync(page, "utf8"), "src-gui/index.html must exist");
 });
+
+test("the desktop binary does not shadow the CLI in /usr/bin", () => {
+  // The CLI installs /usr/bin/linux-doctor (npm, AUR, OBS). The deb/rpm used to
+  // install the GUI under the same name, so installing both overwrote one with
+  // the other (issue #39). The GUI binary must be distinct.
+  const conf = JSON.parse(readFileSync(join(root, "src-tauri", "tauri.conf.json"), "utf8"));
+  assert.ok(conf.mainBinaryName, "the GUI must pin a distinct mainBinaryName");
+  assert.notEqual(conf.mainBinaryName, "linux-doctor", "the GUI binary must not be named 'linux-doctor'");
+});
