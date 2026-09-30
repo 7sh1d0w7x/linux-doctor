@@ -21,10 +21,13 @@ and now has a test for.
   Those tools have a reason to find dirt; this one should not.
 - **Linux only.** No macOS, no Windows.
 - **Inside a container it reports the container's world, not the host's.**
-  Block devices and mounts from the host can leak into what a check sees
-  (`fstrim` is the known example), and systemd is usually absent, so
-  systemd-based checks report a skip or nothing. That is a limitation of the
-  environment, not a verdict about the host.
+  Some kernel interfaces are not namespaced — `/proc/loadavg`, `/proc/meminfo`,
+  `/proc/swaps`, and the block devices `lsblk` reports — so a check reading them
+  would report the host's state as the container's. Those checks now detect the
+  container and say why they are skipping (`load`, `memory`, `zram`, `fstrim`,
+  `reboot`). systemd is usually absent too, so systemd-based checks report a
+  skip or nothing. That is a limitation of the environment, not a verdict about
+  the host.
 - **Some checks degrade instead of guessing.** A check that needs root says
   `skipped (needs root)` rather than claiming a clean result (the `apt` health
   check does this), and a check whose tool is missing stays silent or reports a
@@ -51,6 +54,16 @@ oldest first within each table.
 | `security/autologin` on a machine with autologin disabled | the commented `# AutomaticLoginEnable=true` example that several distros ship was read as config, and an explicit `false` or a bare `[Autologin]` header counted too | comments are ignored, GDM needs an actual true value, and SDDM needs a `User=` line inside the section |
 | a full root filesystem reported as a full `/boot` | `df -P /boot` prints the root row when `/boot` is a directory on `/` and the columns are identical, so a 95%-full root was filed against `/boot` | a row is only used when its mount point is the one requested |
 | `crash` reporting a kernel panic on machines that reboot often | the Intel machine-check boot banner (`Intel machine check reporting enabled on CPU#N`) was read as a panic | it defers to the same classifier as `hardware/mce`, which rejects routine init lines |
+| `load`, `memory`, `zram`, `fstrim` reporting the HOST's load, memory, swap and disks inside a container | those kernel interfaces are not namespaced, so a 256MB-limited container's `free -b` reported the host's 15GB and the check read the host's state as the container's | each probes for a container and reports `*/skipped` instead |
+| `network/no-route` on a machine that has a route | minimal Debian, Fedora and Ubuntu images do not ship `ip` (iproute2), and the probe's failure was read as an empty route table | the presence of `ip` is probed first; a missing `ip` is a skip with the install hint, never "no route" |
+| `updates` "System is up to date" on Tumbleweed with updates waiting | the count piped through `awk`, which the minimal image does not ship, so the pipeline produced nothing | the raw output is parsed in JS, with no `awk`/`wc` dependency |
+| `hardware` staying silent on a healthy machine instead of "No hardware errors logged" | the readability gate was the exit status of `journalctl … \| grep …`, and grep exits 1 when nothing matches, so the status meant "found something", not "could read the log" | the log's readability is probed separately from its content |
+| `timers` calling a timer broken that can never run | an enabled timer whose start condition is unmet by design (`dnf-makecache.timer` on an immutable system) was read as a broken schedule | it consults `ConditionResult` and does not flag unmet-condition timers |
+| a KDE lock screen inflating the error count | `kscreenlocker_greet` logs `Authentication attempt too soon` when you retype a wrong password quickly, and each one was counted as an error | only the screen locker's copy is noise; the same string from `sshd` still counts |
+| `processes` warning for a large app on a machine with plenty of free RAM | it compared the app against total RAM, ignoring what was available, so a browser at ~19% of a 15GB machine with 9.4GB free was filed medium | the warning requires the system to be short on memory (available below the memory warn ratio) |
+| `processes` listing the same app several times, at the size of one process | a browser spreads its memory across many processes that share one binary, so it appeared once per process and the largest was reported as the app | RSS is summed per binary; the app appears once, with its total |
+| `backup` "tools installed, but nothing is scheduled" on a non-systemd system | the timer list was empty because `systemctl` is absent, not because the backup is unscheduled | it checks the timer tool is present and reports `backup/unknown` instead |
+| `reboot` "No reboot needed" in a container | a container has no kernels of its own, so the empty `/boot` list read as "the running kernel is the newest" | it skips in a container, and stays silent when no kernel list can be read |
 
 Three more that were fixed before anyone reported them: the webview could come
 up blank where WebKit's DMA-BUF renderer fails, `updates` could claim "up to
@@ -65,6 +78,12 @@ is high now, with its own wording.
 | `security/autologin` said nothing on Debian, Ubuntu and Mint | the probe listed `/etc/gdm` (the Red Hat, openSUSE and Fedora layout) but not `/etc/gdm3`, which the Debian family uses, so an enabled autologin read as no autologin | both layouts are searched, which is only safe because the comment filter above drops the commented examples Debian ships |
 | `flatpak` said "apps are up to date" with updates pending | the default `remote-ls --updates` output is a column table whose fields contain no `/`, and that is what the count looked for | it asks for `--columns=application,version`, with a table fallback for older flatpak |
 | `raid` called a `FAULTED`, `UNAVAIL`, `REMOVED` or `SUSPENDED` ZFS pool healthy | only the word "degraded" was recognised, so anything worse fell through to the healthy branch | only `ONLINE` counts as healthy, and a running scrub is no longer called a rebuild |
+| `updates` saying nothing on Alpine | `apk info -u` is not a valid command (it exits 1 with "unrecognized option 'u'"), and the empty output read as "no updates" | `apk version -l '<'` is the real command, with the header excluded so it cannot become a phantom update |
+| `updates` saying nothing on Void | there was no xbps branch at all, so a machine with 54 pending updates was skipped and scored as current | `xbps-install -un` lists what would be updated, from the local index |
+| `orphans` "No orphaned packages. The package database is tidy." when the query actually failed | only the dnf branch checked whether its query ran; apt and zypper piped through `grep`, so a locked apt or a failed zypper printed nothing and read as a tidy database | all four families check the query ran, and count in JS |
+| `apt` "up to date" from an empty package index | a fresh image, or a machine that never ran `apt update`, answers "0 upgraded" with a zero exit status | the check notices the empty index and says it could not determine the state, instead of claiming health |
+| `memory`, `processes`, `ports`, `certs` (and more) staying silent when their tool was missing | `run()` only set `missing` when the shell itself was absent, which never happens — a missing tool exits 127 — so every check that gated a "could not check" skip on `missing` stayed silent | `run()` marks exit 127 as missing, activating the skip findings, and the checks that lacked one gained an explicit skip |
+| `cache` not measuring the Flatpak app caches | it looked at `~/.cache` and Trash only, so `~/.var/app/<id>/cache` was invisible — on a Flatpak-heavy distro the larger half | both are measured and counted toward the same thresholds, and the biggest offenders are named |
 
 ## How we catch these now
 
