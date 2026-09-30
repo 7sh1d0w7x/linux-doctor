@@ -7,6 +7,6 @@ Comment=Read-only health checks for your Linux system
 Exec=linux-doctor
 Icon=linux-doctor
 Terminal=false
-Categories=System;Utility;Diagnostics;
+Categories=System;Utility;
 Keywords=health;diagnostics;doctor;system;report;
 StartupNotify=true

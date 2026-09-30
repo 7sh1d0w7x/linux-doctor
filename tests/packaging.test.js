@@ -37,3 +37,21 @@ test("the desktop binary does not shadow the CLI in /usr/bin", () => {
   assert.ok(conf.mainBinaryName, "the GUI must pin a distinct mainBinaryName");
   assert.notEqual(conf.mainBinaryName, "linux-doctor", "the GUI binary must not be named 'linux-doctor'");
 });
+
+test("the desktop template's StartupWMClass tracks the binary name", () => {
+  // It was hardcoded to linux-doctor; the GUI binary is linux-doctor-app now, so
+  // the window would not be matched to its launcher (a duplicate dock icon).
+  const tpl = readFileSync(join(root, "packaging", "desktop-template.desktop"), "utf8");
+  assert.match(tpl, /^StartupWMClass=\{\{exec\}\}$/m, "StartupWMClass must follow {{exec}}");
+});
+
+test("no .desktop uses an unregistered category", () => {
+  // desktop-file-validate errors on "Diagnostics", which is not a freedesktop
+  // category; it was shipped in packaging/linux-doctor.desktop.
+  for (const name of ["desktop-template.desktop", "linux-doctor.desktop", "com.zshadow7x.linuxdoctor.desktop"]) {
+    const s = readFileSync(join(root, "packaging", name), "utf8");
+    const m = s.match(/^Categories=(.*)$/m);
+    if (!m) continue;
+    assert.ok(!/\bDiagnostics\b/.test(m[1]), `${name} has the unregistered category Diagnostics`);
+  }
+});
