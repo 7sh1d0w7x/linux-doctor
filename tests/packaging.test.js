@@ -55,3 +55,17 @@ test("no .desktop uses an unregistered category", () => {
     assert.ok(!/\bDiagnostics\b/.test(m[1]), `${name} has the unregistered category Diagnostics`);
   }
 });
+
+test("no .desktop lists two main categories", () => {
+  // System and Utility are both main categories; a file with both makes the app
+  // appear twice in the menu (a desktop-file-validate hint). Monitor is an
+  // additional category under System, so System;Monitor; is the correct pair.
+  const MAIN = new Set(["AudioVideo", "Development", "Education", "Game", "Graphics", "Network", "Office", "Science", "Settings", "System", "Utility"]);
+  for (const name of ["desktop-template.desktop", "linux-doctor.desktop", "com.zshadow7x.linuxdoctor.desktop"]) {
+    const s = readFileSync(join(root, "packaging", name), "utf8");
+    const m = s.match(/^Categories=(.*)$/m);
+    if (!m) continue;
+    const mains = m[1].split(";").filter((c) => MAIN.has(c));
+    assert.ok(mains.length <= 1, `${name} lists ${mains.length} main categories: ${mains.join(", ")}`);
+  }
+});

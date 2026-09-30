@@ -1,11 +1,12 @@
 [Desktop Entry]
 Type=Application
 Name={{name}}
+GenericName=System diagnostics
 Comment={{comment}}
 Exec={{exec}}
 Icon={{icon}}
 Terminal=false
-Categories=System;Utility;
+Categories=System;Monitor;
 Keywords=health;diagnostics;doctor;system;report;fix;
 StartupWMClass={{exec}}
 StartupNotify=true
