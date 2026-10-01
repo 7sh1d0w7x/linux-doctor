@@ -6,7 +6,7 @@ Version:        0.7.1
 Release:        1%{?dist}
 Summary:        Read-only health checks for your Linux system
 License:        GPL-3.0-or-later
-URL:            https://github.com/zShaD0w7x/linux-doctor
+URL:            https://github.com/7sh1d0w7x/linux-doctor
 Source0:        %{url}/releases/download/v%{version}/%{name}-%{version}.tgz
 BuildArch:      noarch
 Requires:       nodejs >= 20
@@ -32,32 +32,32 @@ chmod 0755 %{buildroot}%{_libdir}/linux-doctor/bin/doctor.js
 %{_bindir}/linux-doctor
 
 %changelog
-* Sat, Sep 26, 2026 zShaD0w7x <zshadow7x@users.noreply.github.com> - 0.7.1-1
+* Sat, Sep 26, 2026 7sh1d0w7x <zshadow7x@users.noreply.github.com> - 0.7.1-1
 - Sync to 0.7.1
 
-* Tue, Sep 22, 2026 zShaD0w7x <zshadow7x@users.noreply.github.com> - 0.7.0-1
+* Tue, Sep 22, 2026 7sh1d0w7x <zshadow7x@users.noreply.github.com> - 0.7.0-1
 - Sync to 0.7.0
 
-* Thu, Sep 17, 2026 zShaD0w7x <zshadow7x@users.noreply.github.com> - 0.6.1-1
+* Thu, Sep 17, 2026 7sh1d0w7x <zshadow7x@users.noreply.github.com> - 0.6.1-1
 - Sync to 0.6.1
 
-* Sun Sep 13 2026 zShaD0w7x <zshadow7x@users.noreply.github.com> - 0.6.0-1
+* Sun Sep 13 2026 7sh1d0w7x <zshadow7x@users.noreply.github.com> - 0.6.0-1
 - Sync to 0.6.0
 
-* Sat Sep 05 2026 zShaD0w7x <zshadow7x@users.noreply.github.com> - 0.5.0-1
+* Sat Sep 05 2026 7sh1d0w7x <zshadow7x@users.noreply.github.com> - 0.5.0-1
 - Sync to 0.5.0
 
-* Fri Aug 28 2026 zShaD0w7x <zshadow7x@users.noreply.github.com> - 0.4.0-1
+* Fri Aug 28 2026 7sh1d0w7x <zshadow7x@users.noreply.github.com> - 0.4.0-1
 - Sync to 0.4.0
 
-* Thu Aug 27 2026 zShaD0w7x <zshadow7x@users.noreply.github.com> - 0.3.5-1
+* Thu Aug 27 2026 7sh1d0w7x <zshadow7x@users.noreply.github.com> - 0.3.5-1
 - Sync to 0.3.5
 
-* Thu Aug 27 2026 zShaD0w7x <zshadow7x@users.noreply.github.com> - 0.3.4-1
+* Thu Aug 27 2026 7sh1d0w7x <zshadow7x@users.noreply.github.com> - 0.3.4-1
 - Sync to 0.3.4
 
-* Tue Aug 18 2026 zShaD0w7x <zshadow7x@users.noreply.github.com> - 0.2.0-1
+* Tue Aug 18 2026 7sh1d0w7x <zshadow7x@users.noreply.github.com> - 0.2.0-1
 - Sync to 0.2.0; add audio and containers checks
 
-* Tue Aug 18 2026 zShaD0w7x <zshadow7x@users.noreply.github.com> - 0.1.0-1
+* Tue Aug 18 2026 7sh1d0w7x <zshadow7x@users.noreply.github.com> - 0.1.0-1
 - Initial packaging

@@ -96,7 +96,7 @@ bumpText("packaging/aur/.SRCINFO", (s) => {
   // pkgver 0.7.1 next to a v0.6.0 tarball, which makepkg and the AUR reject.
   out = out.replace(
     /^\tsource = .*$/m,
-    `\tsource = linux-doctor-${version}.tar.gz::https://github.com/zShaD0w7x/linux-doctor/archive/refs/tags/v${version}.tar.gz`,
+    `\tsource = linux-doctor-${version}.tar.gz::https://github.com/7sh1d0w7x/linux-doctor/archive/refs/tags/v${version}.tar.gz`,
   );
   return out;
 });
@@ -108,7 +108,7 @@ const specBump = (s) => {
   // Add changelog entry if not already present for this version
   const tag = `${version}-1`;
   if (!out.includes(tag)) {
-    const entry = `* ${new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "2-digit", year: "numeric" })} zShaD0w7x <zshadow7x@users.noreply.github.com> - ${tag}\n- Sync to ${version}\n`;
+    const entry = `* ${new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "2-digit", year: "numeric" })} 7sh1d0w7x <zshadow7x@users.noreply.github.com> - ${tag}\n- Sync to ${version}\n`;
     out = out.replace(/^%changelog/m, `%changelog\n${entry}`);
   }
   return out;

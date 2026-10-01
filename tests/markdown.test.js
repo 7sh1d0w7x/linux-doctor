@@ -54,7 +54,7 @@ test("renderMarkdown: full structure — header, since-last-run, severity sectio
   assert.match(md, /## Skipped \(not applicable on this system\)/m);
   assert.match(md, /\*\*battery\*\* — no battery on a desktop/m);
   assert.match(md, /IPs and home paths are redacted/m, "the footer promises the redaction");
-  assert.match(md, /Linux Doctor\]\(https:\/\/github\.com\/zShaD0w7x\/linux-doctor\) v/m);
+  assert.match(md, /Linux Doctor\]\(https:\/\/github\.com\/7sh1d0w7x\/linux-doctor\) v/m);
 });
 
 test("renderMarkdown: START HERE points at the first finding that has a fix", () => {

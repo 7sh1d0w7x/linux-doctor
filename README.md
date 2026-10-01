@@ -1,9 +1,9 @@
 # 🩺 Linux Doctor
 
-[![Latest release](https://img.shields.io/github/v/release/zShaD0w7x/linux-doctor)](https://github.com/zShaD0w7x/linux-doctor/releases/latest)
-[![CI](https://github.com/zShaD0w7x/linux-doctor/actions/workflows/ci.yml/badge.svg)](https://github.com/zShaD0w7x/linux-doctor/actions/workflows/ci.yml)
-[![License](https://img.shields.io/github/license/zShaD0w7x/linux-doctor)](https://github.com/zShaD0w7x/linux-doctor/blob/main/LICENSE)
-[![Sponsor](https://img.shields.io/github/sponsors/zShaD0w7x)](https://github.com/sponsors/zShaD0w7x)
+[![Latest release](https://img.shields.io/github/v/release/7sh1d0w7x/linux-doctor)](https://github.com/7sh1d0w7x/linux-doctor/releases/latest)
+[![CI](https://github.com/7sh1d0w7x/linux-doctor/actions/workflows/ci.yml/badge.svg)](https://github.com/7sh1d0w7x/linux-doctor/actions/workflows/ci.yml)
+[![License](https://img.shields.io/github/license/7sh1d0w7x/linux-doctor)](https://github.com/7sh1d0w7x/linux-doctor/blob/main/LICENSE)
+[![Sponsor](https://img.shields.io/github/sponsors/7sh1d0w7x)](https://github.com/sponsors/7sh1d0w7x)
 
 **Linux diagnostics that explain the problem and remember what changed.**
 
@@ -33,11 +33,11 @@ npx linux-doctor        # one run, nothing to install
   distros (Silverblue, Bazzite).
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/zShaD0w7x/linux-doctor/main/docs/screenshots/demo.gif" alt="linux-doctor in a terminal: health score, START HERE action, and findings with plain-English explanations and fixes" width="760">
+  <img src="https://raw.githubusercontent.com/7sh1d0w7x/linux-doctor/main/docs/screenshots/demo.gif" alt="linux-doctor in a terminal: health score, START HERE action, and findings with plain-English explanations and fixes" width="760">
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/zShaD0w7x/linux-doctor/main/docs/screenshots/app.gif" alt="The Linux Doctor desktop app: native window with the health score, severity and category filters, the checks view, and a finding's explanation and recommended fix" width="820">
+  <img src="https://raw.githubusercontent.com/7sh1d0w7x/linux-doctor/main/docs/screenshots/app.gif" alt="The Linux Doctor desktop app: native window with the health score, severity and category filters, the checks view, and a finding's explanation and recommended fix" width="820">
 </p>
 
 ## Why Linux Doctor?
@@ -69,7 +69,7 @@ alongside your monitoring stack, not instead of it.
 
 Desktop app (no install, no package manager):
 
-- **[Latest release](https://github.com/zShaD0w7x/linux-doctor/releases/latest)** — grab `linux-doctor-<version>-x86_64.AppImage`
+- **[Latest release](https://github.com/7sh1d0w7x/linux-doctor/releases/latest)** — grab `linux-doctor-<version>-x86_64.AppImage`
 
 ```bash
 chmod +x linux-doctor-*-x86_64.AppImage
@@ -126,13 +126,13 @@ npm install -g linux-doctor           # or install it, then run `linux-doctor`
 ```
 
 Want the current `main` instead of the latest release?
-`npx github:zShaD0w7x/linux-doctor`.
+`npx github:7sh1d0w7x/linux-doctor`.
 
 Prefer a native package?
 
 - **CLI, Arch:** build the [PKGBUILD](packaging/aur/PKGBUILD) with `makepkg -si`. It is not in the AUR yet (registration there is closed at the moment), so the PKGBUILD in this repository is the only Arch path for now.
 - **CLI, Fedora:** the [OBS repository](https://build.opensuse.org/project/show/home:7sh1d0w7x:linux-doctor) currently publishes Fedora 42 (`sudo dnf install linux-doctor`), or build with the [linux-doctor.spec](packaging/linux-doctor.spec). RHEL and openSUSE targets are not published there yet.
-- **Desktop app:** the `.deb`, `.rpm` and AppImage attached to each [release](https://github.com/zShaD0w7x/linux-doctor/releases/latest) are the GUI, not the CLI. On Debian/Ubuntu that `.deb` is what you want for the app; for the CLI there, `npx linux-doctor` (or the source tarball) is the path until an apt repository exists.
+- **Desktop app:** the `.deb`, `.rpm` and AppImage attached to each [release](https://github.com/7sh1d0w7x/linux-doctor/releases/latest) are the GUI, not the CLI. On Debian/Ubuntu that `.deb` is what you want for the app; for the CLI there, `npx linux-doctor` (or the source tarball) is the path until an apt repository exists.
 - **Immutable systems** (Silverblue, Bazzite): use `npx` or the AppImage rather than layering a package.
 
 ```
@@ -250,8 +250,8 @@ report still works.
 ## Community
 
 Questions, ideas and show-your-setup go to
-[GitHub Discussions](https://github.com/zShaD0w7x/linux-doctor/discussions);
-bugs and check requests to [Issues](https://github.com/zShaD0w7x/linux-doctor/issues).
+[GitHub Discussions](https://github.com/7sh1d0w7x/linux-doctor/discussions);
+bugs and check requests to [Issues](https://github.com/7sh1d0w7x/linux-doctor/issues).
 Contributions are welcome, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Roadmap
@@ -272,7 +272,7 @@ README's word for it; the artifacts are public:
 - [656 automated tests](tests/): golden snapshots for every output format,
   shell-safety tests for the fix catalog, and output-parity tests that keep the
   CLI and the dashboard in agreement.
-- [CI](https://github.com/zShaD0w7x/linux-doctor/actions/workflows/ci.yml) runs
+- [CI](https://github.com/7sh1d0w7x/linux-doctor/actions/workflows/ci.yml) runs
   the whole report on Fedora and on Node 20, 22 and 24, plus the Rust app on
   `fmt`, `clippy` and `cargo audit`.
 - A clean-image gate runs the engine inside Fedora, Debian, Ubuntu, Alpine and

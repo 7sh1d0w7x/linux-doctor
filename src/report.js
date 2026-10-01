@@ -215,7 +215,7 @@ export async function renderReport(findings, { aiSummary, system, score, scoreDe
 
   out.push("──────────────────────────────");
   out.push("Linux Doctor only reads system information — it never modifies anything.");
-  out.push("Report bugs or request checks at: github.com/zShaD0w7x/linux-doctor");
+  out.push("Report bugs or request checks at: github.com/7sh1d0w7x/linux-doctor");
   return out.join("\n");
 }
 

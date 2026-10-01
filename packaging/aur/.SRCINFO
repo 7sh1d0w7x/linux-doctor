@@ -2,11 +2,11 @@ pkgbase = linux-doctor
 	pkgdesc = Read-only health checks for your Linux system — finds real problems, explains them, and tells you how to fix them
 	pkgver = 0.7.1
 	pkgrel = 1
-	url = https://github.com/zShaD0w7x/linux-doctor
+	url = https://github.com/7sh1d0w7x/linux-doctor
 	arch = any
 	license = GPL-3.0-or-later
 	depends = nodejs>=20
-	source = linux-doctor-0.7.1.tar.gz::https://github.com/zShaD0w7x/linux-doctor/archive/refs/tags/v0.7.1.tar.gz
+	source = linux-doctor-0.7.1.tar.gz::https://github.com/7sh1d0w7x/linux-doctor/archive/refs/tags/v0.7.1.tar.gz
 	sha256sums = SKIP
 
 pkgname = linux-doctor

@@ -49,7 +49,7 @@ export function renderService({ node, bin, extraArgs = [] }) {
   return [
     "[Unit]",
     "Description=Linux Doctor — scheduled system health check",
-    "Documentation=https://github.com/zShaD0w7x/linux-doctor",
+    "Documentation=https://github.com/7sh1d0w7x/linux-doctor",
     "",
     "[Service]",
     "Type=oneshot",

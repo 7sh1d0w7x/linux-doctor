@@ -1,4 +1,4 @@
-# Maintainer: zShaD0w7x <zshadow7x@users.noreply.github.com>
+# Maintainer: 7sh1d0w7x <zshadow7x@users.noreply.github.com>
 # Arch Linux package for linux-doctor.
 #
 # Source: the GitHub release tag tarball (same tree as the npm tarball).
@@ -7,7 +7,7 @@
 #
 # IMPORTANT: on every version bump, update sha256sums with the real sha256 of
 # the new tarball (AUR rejects the source otherwise) and regenerate .SRCINFO:
-#   curl -sLO https://github.com/zShaD0w7x/linux-doctor/archive/refs/tags/v$pkgver.tar.gz
+#   curl -sLO https://github.com/7sh1d0w7x/linux-doctor/archive/refs/tags/v$pkgver.tar.gz
 #   sha256sum v$pkgver.tar.gz
 #   makepkg --printsrcinfo > .SRCINFO
 pkgname=linux-doctor
@@ -15,10 +15,10 @@ pkgver=0.7.1
 pkgrel=1
 pkgdesc="Read-only health checks for your Linux system — finds real problems, explains them, and tells you how to fix them"
 arch=('any')
-url="https://github.com/zShaD0w7x/linux-doctor"
+url="https://github.com/7sh1d0w7x/linux-doctor"
 license=('GPL-3.0-or-later')
 depends=('nodejs>=20')
-source=("$pkgname-$pkgver.tar.gz::https://github.com/zShaD0w7x/linux-doctor/archive/refs/tags/v$pkgver.tar.gz")
+source=("$pkgname-$pkgver.tar.gz::https://github.com/7sh1d0w7x/linux-doctor/archive/refs/tags/v$pkgver.tar.gz")
 sha256sums=('SKIP')
 
 package() {

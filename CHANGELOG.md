@@ -680,7 +680,7 @@ All notable changes to Linux Doctor are documented here. The format follows
 - **Consistent repository URLs**: every reference to the old
   `linux-doctor-cli` repo name (package.json, PKGBUILD, RPM spec, report
   footer, GUI "Report wrong" link, commercial license) now points to
-  `zShaD0w7x/linux-doctor`.
+  `7sh1d0w7x/linux-doctor`.
 - **Distro-specific fixes**: `pkgInstall()` accepts per-distro package-name
   maps, and the `memory`, `network` and `smart` checks now emit the install
   command for the detected distro instead of enumerating alternatives.
@@ -711,7 +711,7 @@ All notable changes to Linux Doctor are documented here. The format follows
 - **Shell-injection guardrail test**: a static test (`tests/shell-safety.test.js`)
   fails the suite if any command template interpolates a value without `shq()`,
   so the existing quoting discipline is enforced mechanically.
-- **`npx github:zShaD0w7x/linux-doctor`**: documented zero-install trial path
+- **`npx github:7sh1d0w7x/linux-doctor`**: documented zero-install trial path
   (the corrected repo URLs make it work).
 - **Checks**: `fstrim` (SSD TRIM health — weekly `fstrim.timer`, continuous
   `discard` mounting, or a medium finding when SSDs are never trimmed).
@@ -917,10 +917,10 @@ All notable changes to Linux Doctor are documented here. The format follows
 - `tests/web.test.js` flaked (server banner corrupted the TAP stream) —
   `startWeb` gained a `quiet` option used by tests.
 
-[Unreleased]: https://github.com/zShaD0w7x/linux-doctor/compare/v0.7.1...HEAD
-[0.7.1]: https://github.com/zShaD0w7x/linux-doctor/compare/v0.7.0...v0.7.1
-[0.7.0]: https://github.com/zShaD0w7x/linux-doctor/compare/v0.6.1...v0.7.0
-[0.6.1]: https://github.com/zShaD0w7x/linux-doctor/compare/v0.6.0...v0.6.1
-[0.6.0]: https://github.com/zShaD0w7x/linux-doctor/compare/v0.5.0...v0.6.0
-[0.5.0]: https://github.com/zShaD0w7x/linux-doctor/compare/v0.4.0...v0.5.0
-[0.4.0]: https://github.com/zShaD0w7x/linux-doctor/compare/v0.3.5...v0.4.0
+[Unreleased]: https://github.com/7sh1d0w7x/linux-doctor/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/7sh1d0w7x/linux-doctor/compare/v0.7.0...v0.7.1
+[0.7.0]: https://github.com/7sh1d0w7x/linux-doctor/compare/v0.6.1...v0.7.0
+[0.6.1]: https://github.com/7sh1d0w7x/linux-doctor/compare/v0.6.0...v0.6.1
+[0.6.0]: https://github.com/7sh1d0w7x/linux-doctor/compare/v0.5.0...v0.6.0
+[0.5.0]: https://github.com/7sh1d0w7x/linux-doctor/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/7sh1d0w7x/linux-doctor/compare/v0.3.5...v0.4.0

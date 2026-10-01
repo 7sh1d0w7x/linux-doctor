@@ -47,7 +47,7 @@ test("bump-version: the AUR pair is bumped together", () => {
 const METAINFO = "packaging/com.zshadow7x.linuxdoctor.metainfo.xml";
 const RELEASES = `  <releases>
     <release version="0.6.0" date="2026-09-13">
-      <url>https://github.com/zShaD0w7x/linux-doctor/releases/tag/v0.6.0</url>
+      <url>https://github.com/7sh1d0w7x/linux-doctor/releases/tag/v0.6.0</url>
     </release>
   </releases>
 </component>

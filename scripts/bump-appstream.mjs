@@ -11,7 +11,7 @@
  * validator complains about ("release newer than the metadata"). The release
  * script updates it now, and tests/bump-version.test.js holds the rule.
  */
-const RELEASE_URL = (version) => `https://github.com/zShaD0w7x/linux-doctor/releases/tag/v${version}`;
+const RELEASE_URL = (version) => `https://github.com/7sh1d0w7x/linux-doctor/releases/tag/v${version}`;
 
 /**
  * Insert a release entry at the top of `<releases>` (AppStream wants newest

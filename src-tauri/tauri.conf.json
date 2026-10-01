@@ -77,7 +77,7 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDVGQ0RBQUE0NjAwQjUyQjYKUldTMlVndGdwS3JOWDNJYjZkZGRhaW92azI5TFRXeHREQkVEbmpoYkF4ZUlKWFFaSkxJayt6Z1cK",
       "endpoints": [
-        "https://github.com/zShaD0w7x/linux-doctor/releases/latest/download/latest.json"
+        "https://github.com/7sh1d0w7x/linux-doctor/releases/latest/download/latest.json"
       ]
     }
   }

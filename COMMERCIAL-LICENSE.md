@@ -56,5 +56,5 @@ what each tier offers; it never ships its code.
 
 ## Contact
 
-Open an issue on [GitHub](https://github.com/zShaD0w7x/linux-doctor/issues)
+Open an issue on [GitHub](https://github.com/7sh1d0w7x/linux-doctor/issues)
 or email the maintainer for pricing and terms.

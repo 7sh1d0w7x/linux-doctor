@@ -1,7 +1,7 @@
 # Releasing
 
 How a version goes from this repo to downloadable artifacts on
-<https://github.com/zShaD0w7x/linux-doctor/releases>.
+<https://github.com/7sh1d0w7x/linux-doctor/releases>.
 
 ## Release checklist
 
@@ -161,7 +161,7 @@ to a user (Firejail, used by AppImageHub) — and re-signs it for the updater.
 Download `linux-doctor-0.3.0-x86_64.AppImage`, then:
   chmod +x linux-doctor-*-x86_64.AppImage && ./linux-doctor-*-x86_64.AppImage
 
-CLI users: npx github:zShaD0w7x/linux-doctor  (Node ≥ 20)
+CLI users: npx github:7sh1d0w7x/linux-doctor  (Node ≥ 20)
 Read-only diagnostics — it never modifies your system.
 ```
 
@@ -172,7 +172,7 @@ the user's consent, installs it and restarts. The check runs ~12s after
 startup and from the tray's **Check for updates** item. `LINUX_DOCTOR_NO_UPDATE=1`
 disables it (dev/tests).
 
-- Endpoint: `https://github.com/zShaD0w7x/linux-doctor/releases/latest/download/latest.json`
+- Endpoint: `https://github.com/7sh1d0w7x/linux-doctor/releases/latest/download/latest.json`
   (configured in `src-tauri/tauri.conf.json` → `plugins.updater.endpoints`).
 - The manifest `latest.json` is assembled by `scripts/make-latest-json.mjs`
   from the signed AppImage (`*.AppImage` + `*.AppImage.sig`) during the release

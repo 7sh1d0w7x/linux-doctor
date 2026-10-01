@@ -30,7 +30,7 @@ uploaded by hand. `linux-doctor.spec` here is a copy of
 osc checkout home:7sh1d0w7x:linux-doctor
 cd home:7sh1d0w7x:linux-doctor/linux-doctor
 cp <repo>/packaging/obs/linux-doctor.spec .
-curl -sLO https://github.com/zShaD0w7x/linux-doctor/releases/download/v<version>/linux-doctor-<version>.tgz
+curl -sLO https://github.com/7sh1d0w7x/linux-doctor/releases/download/v<version>/linux-doctor-<version>.tgz
 osc add linux-doctor.spec linux-doctor-<version>.tgz
 osc commit -m "linux-doctor <version>"
 osc results home:7sh1d0w7x:linux-doctor

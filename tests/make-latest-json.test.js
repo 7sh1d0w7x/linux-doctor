@@ -22,7 +22,7 @@ test("make-latest-json: finds the signed AppImage in the nested bundle layout", 
     mkdirSync(appimage);
     writeFileSync(join(appimage, "Linux Doctor_0.6.0_amd64.AppImage"), "appimage");
     writeFileSync(join(appimage, "Linux Doctor_0.6.0_amd64.AppImage.sig"), "SIGCONTENT\n");
-    execFileSync("node", [SCRIPT, dir, "0.6.0", "v0.6.0", "zShaD0w7x/linux-doctor"], { stdio: "pipe" });
+    execFileSync("node", [SCRIPT, dir, "0.6.0", "v0.6.0", "7sh1d0w7x/linux-doctor"], { stdio: "pipe" });
     const m = JSON.parse(readFileSync(join(dir, "latest.json"), "utf8"));
     assert.equal(m.version, "0.6.0");
     assert.equal(m.platforms["linux-x86_64"].signature, "SIGCONTENT");

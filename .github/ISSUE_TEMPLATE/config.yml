@@ -1,8 +1,8 @@
 blank_issues_enabled: true
 contact_links:
   - name: Security issue
-    url: https://github.com/zShaD0w7x/linux-doctor/security/advisories/new
+    url: https://github.com/7sh1d0w7x/linux-doctor/security/advisories/new
     about: Report a vulnerability privately, not in a public issue.
   - name: Documentation
-    url: https://github.com/zShaD0w7x/linux-doctor/tree/main/docs
+    url: https://github.com/7sh1d0w7x/linux-doctor/tree/main/docs
     about: CLI flags, configuration, integrations, severity rubric.

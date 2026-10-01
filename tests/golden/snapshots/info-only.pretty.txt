@@ -18,4 +18,4 @@ Ran 36 check(s) (2 skipped).
 
 ──────────────────────────────
 Linux Doctor only reads system information — it never modifies anything.
-Report bugs or request checks at: github.com/zShaD0w7x/linux-doctor
+Report bugs or request checks at: github.com/7sh1d0w7x/linux-doctor

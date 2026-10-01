@@ -15,7 +15,7 @@
  * Usage:
  *   node scripts/make-latest-json.mjs <bundle-dir> <version> <tag> <owner/repo> [out]
  * e.g.
- *   node scripts/make-latest-json.mjs src-tauri/target/release/bundle 0.6.0 v0.6.0 zShaD0w7x/linux-doctor
+ *   node scripts/make-latest-json.mjs src-tauri/target/release/bundle 0.6.0 v0.6.0 7sh1d0w7x/linux-doctor
  */
 import { readdirSync, readFileSync, writeFileSync, existsSync, statSync } from "node:fs";
 import { join, basename, dirname } from "node:path";
