@@ -58,6 +58,7 @@ you what changed. That is a different job from a monitoring stack:
 | Uptime Kuma, Beszel, Netdata | always-on metrics, uptime, alerting |
 | Cockpit | interactive server administration |
 | `inxi` / `neofetch` | hardware and system *inventory* |
+| `systemd-analyze`, `top` | one narrow view each (boot time, live processes) |
 | **Linux Doctor** | **diagnose → explain → suggest a fix → remember what changed** |
 
 Run it when something feels off, before filing a bug report, or daily from a
