@@ -6,6 +6,21 @@ All notable changes to Linux Doctor are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-10-03
+
+### Changed
+
+- **The desktop app's binary is `linux-doctor-app` now.** The CLI and the
+  desktop build both shipped a binary called `linux-doctor`, so the GUI binary
+  was renamed to keep them apart. The `.desktop` entry and its window class
+  follow it — an unchanged `StartupWMClass` left the app with a duplicate dock
+  icon.
+- **The shipped `.desktop` files validate clean.** They declared `Diagnostics`,
+  which is not a freedesktop category — an outright `desktop-file-validate`
+  error in the npm `packaging/` files — and then listed two main categories
+  (`System;Utility;`), which can show the app twice in the menu. The pair is
+  `System;Monitor;` now, with a `GenericName` added.
+
 ### Fixed
 
 - **`orphans` no longer calls a failed query a tidy database on apt, zypper

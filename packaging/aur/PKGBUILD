@@ -11,7 +11,7 @@
 #   sha256sum v$pkgver.tar.gz
 #   makepkg --printsrcinfo > .SRCINFO
 pkgname=linux-doctor
-pkgver=0.7.1
+pkgver=0.7.2
 pkgrel=1
 pkgdesc="Read-only health checks for your Linux system — finds real problems, explains them, and tells you how to fix them"
 arch=('any')

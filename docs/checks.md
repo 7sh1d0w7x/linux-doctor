@@ -2,7 +2,7 @@
 
 Every finding `code` is stable — use it for `--ignore-code`, history diffing, and scripting. Generated from `src/checks/index.js` + `tests/codes-registry.test.js`; do not edit by hand.
 
-Total: **49 checks** → **172 codes**.
+Total: **49 checks** → **174 codes**.
 
 | Check | Category | Codes | Severity |
 |---|---|---|---|
@@ -40,7 +40,7 @@ Total: **49 checks** → **172 codes**.
 | `snap` — Snap updates and refresh timer | updates | `snap/no-timer` (medium)<br>`snap/ok` (info)<br>`snap/pending` (info/medium) | desktop/laptop/server |
 | `firmware` — Firmware updates (fwupd) | updates | `firmware/none` (info)<br>`firmware/not-checked` (info)<br>`firmware/pending` (medium) | desktop/laptop/server |
 | `flatpak` — Flatpak app updates | updates | `flatpak/none` (info)<br>`flatpak/pending` (info/medium) | desktop/laptop/server |
-| `reboot` — Reboot required / kernel updates | updates | `reboot/ok` (info)<br>`reboot/required` (medium) | desktop/laptop/server |
+| `reboot` — Reboot required / kernel updates | updates | `reboot/skipped` (info)<br>`reboot/ok` (info)<br>`reboot/required` (medium) | desktop/laptop/server |
 | `packages` — Package manager health | system | `packages/broken` (high)<br>`packages/locked` (medium)<br>`packages/ok` (info) | desktop/laptop/server |
 | `battery` — Battery | hardware | `battery/low` (medium)<br>`battery/none` (info)<br>`battery/status` (info)<br>`battery/wear` (info/medium) | laptop |
 | `gpu` — Graphics / GPU | hardware | `gpu/amd` (info)<br>`gpu/amd-missing` (medium)<br>`gpu/driver` (info)<br>`gpu/none` (info)<br>`gpu/nouveau` (medium)<br>`gpu/nvidia` (info)<br>`gpu/nvidia-missing` (medium)<br>`gpu/skipped` (info)<br>`gpu/software-rendering` (medium) | desktop/laptop |
@@ -50,7 +50,7 @@ Total: **49 checks** → **172 codes**.
 | `smart` — Disk health (SMART) | hardware | `smart/failing` (high)<br>`smart/good` (info)<br>`smart/needs-root` (info)<br>`smart/skipped` (info) | desktop/laptop/server |
 | `hardware` — Hardware errors (MCE/ECC) | hardware | `hardware/ecc` (medium/high)<br>`hardware/mce` (high)<br>`hardware/ok` (info)<br>`hardware/skipped` (info) | desktop/laptop/server |
 | `audio` — Audio (PipeWire / PulseAudio) | hardware | `audio/no-output` (medium)<br>`audio/no-server` (medium)<br>`audio/ok` (info)<br>`audio/sinks-skipped` (info) | desktop/laptop |
-| `backup` — Backups and snapshots | data | `backup/none` (info)<br>`backup/ok` (info)<br>`backup/stale` (medium)<br>`backup/unscheduled` (info) | desktop/laptop/server |
+| `backup` — Backups and snapshots | data | `backup/none` (info)<br>`backup/ok` (info)<br>`backup/stale` (medium)<br>`backup/unknown` (info)<br>`backup/unscheduled` (info) | desktop/laptop/server |
 | `fstrim` — SSD TRIM (fstrim) | data | `fstrim/disabled` (medium)<br>`fstrim/ok` (info)<br>`fstrim/ok-discard` (info)<br>`fstrim/skipped` (info) | desktop/laptop/server |
 | `orphans` — Orphaned packages | system | `orphans/many` (medium)<br>`orphans/none` (info)<br>`orphans/some` (info) | desktop/laptop/server |
 | `boot` — Boot partition | system | `boot/full` (high/medium)<br>`boot/no-config` (medium)<br>`boot/ok` (info) | desktop/laptop/server |
