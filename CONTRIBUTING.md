@@ -3,6 +3,8 @@
 Thanks for considering a contribution to Linux Doctor! It's a small, focused
 project — keep it that way.
 
+By taking part you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
+
 ## Setup
 
 - Node.js ≥ 20. No runtime dependencies.
