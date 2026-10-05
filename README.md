@@ -4,6 +4,7 @@
 [![CI](https://github.com/7sh1d0w7x/linux-doctor/actions/workflows/ci.yml/badge.svg)](https://github.com/7sh1d0w7x/linux-doctor/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/7sh1d0w7x/linux-doctor)](https://github.com/7sh1d0w7x/linux-doctor/blob/main/LICENSE)
 [![Sponsor](https://img.shields.io/github/sponsors/7sh1d0w7x)](https://github.com/sponsors/7sh1d0w7x)
+[![Write-up](https://img.shields.io/badge/dev.to-20%20ways%20it%20was%20wrong-0A0A0A?logo=devdotto&logoColor=white)](https://dev.to/7sh1d0w7x/linux-doctor-heal-thyself-20-ways-my-linux-health-checker-was-wrong-1b2a)
 
 **Linux diagnostics that explain the problem and remember what changed.**
 
