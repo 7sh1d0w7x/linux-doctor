@@ -3,6 +3,12 @@ node_modules/
 *.log
 *.tgz
 
+# Local-only working directories — never published.
+# These were only in .git/info/exclude, which is per-clone: a fresh clone would
+# drop the protection and a careless `git add -A` could publish them.
+internal/
+pro/
+
 # Tauri (desktop app)
 src-tauri/target/
 src-tauri/gen/
