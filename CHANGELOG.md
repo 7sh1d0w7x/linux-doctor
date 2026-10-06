@@ -8,6 +8,20 @@ All notable changes to Linux Doctor are documented here. The format follows
 
 ### Fixed
 
+- **The scheduled timer's service showed as failed on every machine that had a
+  finding.** `--notify` exits 1 when there are high/medium findings — that is
+  the documented contract (`docs/compatibility.md`) — but the generated unit had
+  no `SuccessExitStatus`, so systemd read a successful watchdog run as a failed
+  unit, and the `services` check then reported that failure. The unit declares
+  exit 1 as a success now. An existing install needs the same line plus
+  `systemctl --user daemon-reload && systemctl --user reset-failed linux-doctor.service`.
+
+- **A container stopped with `podman stop` was called "did not exit cleanly".**
+  143 is 128 + SIGTERM, exactly what `podman stop`, `systemctl stop` and an
+  orderly shutdown send; 130 is SIGINT. Both are deliberate stops, not failures,
+  and this check is not a monitor — the medium finding cost 8 points on any
+  machine with a container switched off.
+
 - **The "N checks · M skipped" chip could never be seen.** The renderer filled
   it with the counts and cleared `hidden`, and the click handler that opens the
   checks matrix was wired — but a stylesheet hid it with `display: none`, so

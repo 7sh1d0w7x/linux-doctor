@@ -95,8 +95,14 @@ export const containers = defineCheck({
             restarting.push(name);
           } else if (exited) {
             const code = parseInt(exited[1], 10);
+            // 128 + signal: 143 is SIGTERM and 130 is SIGINT — exactly what
+            // `podman stop`, `systemctl stop` and an orderly shutdown send. A
+            // container that stopped when it was told to stopped cleanly, and
+            // this check is not a monitor: flagging it put a medium finding on
+            // every machine with a deliberately stopped container.
+            const deliberateStop = code === 143 || code === 130;
             if (code === 137) oom.push(name); // SIGKILL — the OOM-kill signature
-            else if (code !== 0) dead.push(`${name} (exit ${code})`);
+            else if (code !== 0 && !deliberateStop) dead.push(`${name} (exit ${code})`);
           } else if (/^created\b/i.test(status)) {
             dead.push(`${name} (created, never started)`);
           }

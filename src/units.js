@@ -55,6 +55,10 @@ export function renderService({ node, bin, extraArgs = [] }) {
     "Type=oneshot",
     `# ${MARKER} — safe to remove with: linux-doctor --uninstall-timer`,
     `ExecStart=${q(node)} ${q(bin)} --notify${args}`,
+    // --notify exits 1 when it has high/medium findings (docs/compatibility.md).
+    // For a watchdog that is the success case: without this line systemd marks
+    // the unit failed every time the machine has anything worth reporting.
+    "SuccessExitStatus=1",
     "SyslogIdentifier=linux-doctor",
     "",
     "",

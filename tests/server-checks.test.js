@@ -194,3 +194,35 @@ test("services: no failed and no looping units produces no finding", async () =>
   const findings = await services.run(ctx);
   assert.equal(findings.length, 0);
 });
+
+/**
+ * 143 is 128 + 15: the SIGTERM a plain `podman stop`, a `systemctl stop` or an
+ * orderly shutdown sends. A container that stopped when it was told to stopped
+ * cleanly, and this check is not a monitor — calling that "did not exit cleanly"
+ * put a medium finding (8 points) on every machine with a deliberately stopped
+ * container.
+ */
+test("containers: exit 143 is a plain stop, not a failure", async () => {
+  const ctx = stubCtx({
+    "command -v podman 2>/dev/null": "/usr/bin/podman\n",
+    "systemctl is-active docker 2>/dev/null": "inactive\n",
+    "podman info >/dev/null 2>&1 && echo ok || echo fail": "ok\n",
+    "podman ps -a --format '{{.Names}} {{.Status}}' 2>/dev/null": "n8n Exited (143) 44 hours ago\n",
+  });
+  const findings = await containers.run(ctx);
+  assert.ok(
+    !findings.some((f) => f.code === "containers/dead"),
+    "143 is SIGTERM — the signal `podman stop` sends"
+  );
+});
+
+test("containers: exit 130 (Ctrl-C / SIGINT) is also a plain stop", async () => {
+  const ctx = stubCtx({
+    "command -v podman 2>/dev/null": "/usr/bin/podman\n",
+    "systemctl is-active docker 2>/dev/null": "inactive\n",
+    "podman info >/dev/null 2>&1 && echo ok || echo fail": "ok\n",
+    "podman ps -a --format '{{.Names}} {{.Status}}' 2>/dev/null": "tmp Exited (130) 2 hours ago\n",
+  });
+  const findings = await containers.run(ctx);
+  assert.ok(!findings.some((f) => f.code === "containers/dead"), "130 is SIGINT");
+});

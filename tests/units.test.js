@@ -207,3 +207,20 @@ test("timerStatus: unit files without systemd read as installed but inert", () =
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+/**
+ * The CLI's exit codes are a public contract (docs/compatibility.md): 0 = nothing
+ * serious, 1 = high/medium findings, 2 = errors. The timer's ExecStart carries
+ * --notify, so a run that FINDS something exits 1 — which systemd reads as a
+ * failed unit. A watchdog that reported a real problem did its job; without
+ * this, the unit sits in "failed" whenever the machine has any finding at all.
+ */
+test("renderService: exit 1 (findings) counts as success, not failure", () => {
+  const unit = renderService({ node: "/usr/bin/node", bin: "/opt/doctor.js" });
+  assert.match(
+    unit,
+    /SuccessExitStatus=1/,
+    "--notify exits 1 when it has something to report; systemd must not call that a failure"
+  );
+  assert.match(unit, /Type=oneshot/);
+});
