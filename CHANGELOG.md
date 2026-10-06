@@ -8,6 +8,11 @@ All notable changes to Linux Doctor are documented here. The format follows
 
 ### Fixed
 
+- **The phone toolbar wraps instead of stacking.** On a narrow screen every
+  control in the toolbar became a full-width block — six rows of chrome before
+  the first finding. The buttons now share rows of their own width; only the
+  filter chips and the search take a full row.
+
 - **The desktop workbench starts at 1200px, not 1440px.** The wide layout — the
   sidebar rail, the master-detail pane and the status bar — was gated at 1440
   CSS px, which an ordinary 1366px laptop (or a 1080p screen at 150% scaling,

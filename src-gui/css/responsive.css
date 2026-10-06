@@ -11,8 +11,15 @@
   .status-main { width: 100%; justify-content: flex-start; flex-direction: row; }
   .gauge { width: 72px; height: 72px; }
   .stat-tiles { min-width: 0; width: 100%; }
-  .toolbar { top: 108px; flex-direction: column; align-items: stretch; gap: 12px; padding: 14px; }
-  .filters { justify-content: center; }
+  /* The toolbar wraps instead of stacking. A column turned every control into
+     a full-width block — six rows of chrome before the first finding, which is
+     the worst possible first impression on a phone. Wrapping keeps the buttons
+     in rows of their own width; only the filters and the search take a row. */
+  .toolbar { top: 108px; flex-wrap: wrap; gap: 8px; padding: 12px; }
+  .toolbar .seg { flex: 0 0 auto; }
+  .filters { flex: 1 1 100%; justify-content: center; }
+  #search { flex: 1 1 100%; }
+  .toolbar .toolbtn { flex: 1 1 auto; }
   #search { min-width: 0; }
   .group-body { padding: 12px; }
   .card summary { padding: 11px 12px; }
