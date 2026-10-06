@@ -47,7 +47,7 @@ const JS_ORDER = [
   "ui-history.js",     // statusTimer + trend rendering
   "ui-sidebar.js",     // overview sidebar: breakdown bars + nav counts
   "ui-views.js",       // Overview / History / Checks app views
-  "ui-wide.js",        // wide-desktop mode (>=1440px): html.wide + open groups
+  "ui-wide.js",        // wide-desktop mode (>=1200px): html.wide + open groups
   "ui-detailpane.js",  // wide master-detail: findings list + pinned detail pane
   "ui-checks.js",      // all-checks matrix modal + jump-to-finding
   "export.js",

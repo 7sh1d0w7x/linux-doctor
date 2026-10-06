@@ -136,12 +136,6 @@ button.primary {
 }
 button.primary:hover { background: var(--accent2); border-color: var(--accent2); }
 button:disabled { opacity: .45; cursor: default; }
-#autorefresh.on { background: var(--accent); color: #0b1020; border-color: var(--accent); }
-#autorefresh.paused {
-  background: color-mix(in srgb, var(--yellow) 10%, var(--card));
-  border-color: color-mix(in srgb, var(--yellow) 30%, transparent);
-  color: var(--yellow); opacity: .9;
-}
 
 /* === Status Hero — BALANCED PREMIUM === */
 .status {
@@ -150,7 +144,6 @@ button:disabled { opacity: .45; cursor: default; }
   background: var(--card); border: 1px solid var(--border); border-radius: 16px;
   position: relative; overflow: hidden;
 }
-.status::after { display: none; }
 .status.running { display: flex; justify-content: center; color: var(--muted); padding: 40px; grid-template-columns: 1fr; }
 .status.calm { border-color: color-mix(in srgb, var(--green) 14%, var(--border)); }
 .status.calm::before {
@@ -197,10 +190,6 @@ button:disabled { opacity: .45; cursor: default; }
 .lowbadge { font-size: 10px; font-weight: 600; letter-spacing: .04em; color: var(--muted2); background: transparent; border: 1px solid var(--border); border-radius: 5px; padding: 2px 6px; flex-shrink: 0; }
 .checkid { font-family: var(--mono); font-size: 10px; color: var(--muted2); border: none; background: var(--bg2); border-radius: 5px; padding: 2px 6px; flex-shrink: 0; }
 
-/* === Gauge large variant === */
-.gauge.large { width: 108px; height: 108px; }
-.gauge.large .scorenum { font-size: 42px; }
-
 /* === Toolbar — quieter secondary controls === */
 .toolbar {
   display: flex; gap: 10px; align-items: center;
@@ -240,7 +229,7 @@ button:disabled { opacity: .45; cursor: default; }
 .toolbtn:hover { background: var(--card); border-color: var(--muted2); color: var(--text); transform: none; box-shadow: none; }
 .toolbtn.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
 #autorefresh.on { background: var(--accent); color: #0b1020; border-color: var(--accent); }
-#autorefresh.paused { background: color-mix(in srgb, var(--yellow) 12%, var(--card)); border-color: color-mix(in srgb, var(--yellow) 30%, transparent); color: var(--yellow); }
+#autorefresh.paused { background: color-mix(in srgb, var(--yellow) 12%, var(--card)); border-color: color-mix(in srgb, var(--yellow) 30%, transparent); color: var(--yellow); opacity: .9; }
 
 /* === Content grid — breathing room === */
 .content { display: grid; gap: 20px; max-width: 1040px; margin: 0 auto; width: 100%; }
@@ -565,7 +554,7 @@ body.compact #report { gap: 14px; }
 /* === Toast === */
 #toast-wrap { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); z-index: 50; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
 .toast { pointer-events: auto; display: flex; align-items: center; gap: 10px; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 13px; box-shadow: var(--shadow); animation: toastin .25s ease, toastout .25s ease 2.7s forwards; max-width: 92vw; }
-.toast button { pointer-events: auto; background: var(--accent); color: #fff; border-color: transparent; padding: 4px 10px; font-size: 12px; }
+.toast button { pointer-events: auto; background: var(--accent); color: #0b1020; border-color: transparent; padding: 4px 10px; font-size: 12px; }
 @keyframes toastin { from { opacity:0; transform: translateY(8px);} to { opacity:1; transform:none;} }
 @keyframes toastout { to { opacity:0; transform: translateY(8px);} }
 
@@ -598,7 +587,6 @@ body.compact #report { gap: 14px; }
 
 /* === Trend — COMPACT BUT MEANINGFUL === */
 #trend { background: transparent; border: none; padding: 0; max-width: 1040px; margin: 0 auto; width: 100%; }
-.trend-hero { display: flex; align-items: center; gap: 20px; padding: 16px 0; border-bottom: 1px solid var(--border); margin-bottom: 14px; }
 /* === Trend hero — matches render-charts.js classes (.trend-hero-*, up/down/flat) === */
 .trend-hero { display: flex; align-items: center; gap: 18px; padding: 14px 0 12px; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
 .trend-hero-score { display: flex; align-items: baseline; gap: 4px; }
@@ -846,13 +834,16 @@ body.compact #report { gap: 14px; }
   .card .detail { font-size: 13px; }
   .fix .fixtext { min-width: 0; font-size: 11.5px; }
   .fix button, .fix .reportbtn { height: 40px; font-size: 12px; }
-  #nexthep { flex-direction: column; align-items: flex-start; gap: 10px; padding: 12px 14px; }
+  /* #nexthep is a block, not a flex container: flex-direction here would be a
+     no-op. Only the padding was ever doing anything. */
+  #nexthep { padding: 12px 14px; }
   .history { margin-top: 36px; }
   .status.calm::before { left: 16px; right: 16px; }
   /* Touch targets: every interactive control reaches ~40px tall. */
   button { min-height: 38px; }
   .fpill, .segbtn { padding: 9px 14px; }
-  .sb-item { display: none; }
+  /* .sb-item needs no rule here: at ≤700px #sidebar .sb-block is already
+     display:none, and the visible strip holds .viewtab, not .sb-item. */
   .evidence { font-size: 10.5px; max-height: 160px; }
   .ev-copy, .ev-expand { padding: 8px 12px; min-height: 36px; }
 }
@@ -999,7 +990,7 @@ body.compact #report { gap: 14px; }
 
   /* Keep the brand mark and health colors in print — browsers strip
      backgrounds by default and may drop var()-driven strokes. */
-  .logo, .gauge svg, .statusmsg { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .logo, .gauge svg { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .logo svg path { stroke: #0e9c5a !important; }   /* fixed brand green on paper */
   .gauge .ring { stroke-width: 7 !important; }      /* ring keeps its inline stroke color */
 }

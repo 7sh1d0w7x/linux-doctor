@@ -8,6 +8,18 @@ All notable changes to Linux Doctor are documented here. The format follows
 
 ### Fixed
 
+- **A toast button was unreadable on the terminal theme.** The toast's action
+  button drew white text on the accent colour — 3.8:1 in dark, and 1.3:1 under
+  the terminal theme's bright green. It now uses the same dark-on-accent ink as
+  the primary buttons.
+
+- **Dead and duplicated CSS went.** `.trend-hero`, `#autorefresh.on` and its
+  `.paused` state were each declared twice, the second silently winning; a
+  `.gauge.large` variant, `.status::after`, a print `.statusmsg`, a `#nexthep`
+  flex rule that could never apply and a redundant `.sb-item` rule had no
+  emitter at all. No pixels change — the survivors keep every property that was
+  in effect.
+
 - **The phone toolbar wraps instead of stacking.** On a narrow screen every
   control in the toolbar became a full-width block — six rows of chrome before
   the first finding. The buttons now share rows of their own width; only the

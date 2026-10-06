@@ -27,13 +27,16 @@
   .card .detail { font-size: 13px; }
   .fix .fixtext { min-width: 0; font-size: 11.5px; }
   .fix button, .fix .reportbtn { height: 40px; font-size: 12px; }
-  #nexthep { flex-direction: column; align-items: flex-start; gap: 10px; padding: 12px 14px; }
+  /* #nexthep is a block, not a flex container: flex-direction here would be a
+     no-op. Only the padding was ever doing anything. */
+  #nexthep { padding: 12px 14px; }
   .history { margin-top: 36px; }
   .status.calm::before { left: 16px; right: 16px; }
   /* Touch targets: every interactive control reaches ~40px tall. */
   button { min-height: 38px; }
   .fpill, .segbtn { padding: 9px 14px; }
-  .sb-item { display: none; }
+  /* .sb-item needs no rule here: at ≤700px #sidebar .sb-block is already
+     display:none, and the visible strip holds .viewtab, not .sb-item. */
   .evidence { font-size: 10.5px; max-height: 160px; }
   .ev-copy, .ev-expand { padding: 8px 12px; min-height: 36px; }
 }

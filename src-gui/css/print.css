@@ -10,7 +10,7 @@
 
   /* Keep the brand mark and health colors in print — browsers strip
      backgrounds by default and may drop var()-driven strokes. */
-  .logo, .gauge svg, .statusmsg { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .logo, .gauge svg { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .logo svg path { stroke: #0e9c5a !important; }   /* fixed brand green on paper */
   .gauge .ring { stroke-width: 7 !important; }      /* ring keeps its inline stroke color */
 }

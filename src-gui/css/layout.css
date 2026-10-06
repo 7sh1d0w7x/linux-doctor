@@ -53,12 +53,6 @@ button.primary {
 }
 button.primary:hover { background: var(--accent2); border-color: var(--accent2); }
 button:disabled { opacity: .45; cursor: default; }
-#autorefresh.on { background: var(--accent); color: #0b1020; border-color: var(--accent); }
-#autorefresh.paused {
-  background: color-mix(in srgb, var(--yellow) 10%, var(--card));
-  border-color: color-mix(in srgb, var(--yellow) 30%, transparent);
-  color: var(--yellow); opacity: .9;
-}
 
 /* === Status Hero — BALANCED PREMIUM === */
 .status {
@@ -67,7 +61,6 @@ button:disabled { opacity: .45; cursor: default; }
   background: var(--card); border: 1px solid var(--border); border-radius: 16px;
   position: relative; overflow: hidden;
 }
-.status::after { display: none; }
 .status.running { display: flex; justify-content: center; color: var(--muted); padding: 40px; grid-template-columns: 1fr; }
 .status.calm { border-color: color-mix(in srgb, var(--green) 14%, var(--border)); }
 .status.calm::before {
@@ -114,10 +107,6 @@ button:disabled { opacity: .45; cursor: default; }
 .lowbadge { font-size: 10px; font-weight: 600; letter-spacing: .04em; color: var(--muted2); background: transparent; border: 1px solid var(--border); border-radius: 5px; padding: 2px 6px; flex-shrink: 0; }
 .checkid { font-family: var(--mono); font-size: 10px; color: var(--muted2); border: none; background: var(--bg2); border-radius: 5px; padding: 2px 6px; flex-shrink: 0; }
 
-/* === Gauge large variant === */
-.gauge.large { width: 108px; height: 108px; }
-.gauge.large .scorenum { font-size: 42px; }
-
 /* === Toolbar — quieter secondary controls === */
 .toolbar {
   display: flex; gap: 10px; align-items: center;
@@ -157,7 +146,7 @@ button:disabled { opacity: .45; cursor: default; }
 .toolbtn:hover { background: var(--card); border-color: var(--muted2); color: var(--text); transform: none; box-shadow: none; }
 .toolbtn.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
 #autorefresh.on { background: var(--accent); color: #0b1020; border-color: var(--accent); }
-#autorefresh.paused { background: color-mix(in srgb, var(--yellow) 12%, var(--card)); border-color: color-mix(in srgb, var(--yellow) 30%, transparent); color: var(--yellow); }
+#autorefresh.paused { background: color-mix(in srgb, var(--yellow) 12%, var(--card)); border-color: color-mix(in srgb, var(--yellow) 30%, transparent); color: var(--yellow); opacity: .9; }
 
 /* === Content grid — breathing room === */
 .content { display: grid; gap: 20px; max-width: 1040px; margin: 0 auto; width: 100%; }
