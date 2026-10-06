@@ -90,3 +90,31 @@ test("severityChart: handles a run with zero findings (no negative heights)", ()
   assert.ok(!out.includes("NaN"));
   assert.ok(!out.includes("undefined"));
 });
+
+/**
+ * The chart marks open a run's diff, so they are controls, not decoration.
+ * They used to be click-only: no tabindex, no role, no label — unreachable
+ * from the keyboard, and invisible to a screen reader.
+ */
+test("scoreChart: every dot is a keyboard-reachable button with a name", () => {
+  const runs = [
+    { at: "2026-08-20T10:00:00.000Z", score: 70 },
+    { at: "2026-08-21T10:00:00.000Z", score: 82 },
+  ];
+  const out = scoreChart(runs);
+  const dots = out.match(/class="hist-dot"/g) || [];
+  assert.equal(dots.length, runs.length, "one mark per run");
+  assert.equal((out.match(/tabindex="0"/g) || []).length, runs.length, "each dot is focusable");
+  assert.equal((out.match(/role="button"/g) || []).length, runs.length, "each dot is a button");
+  assert.ok(out.includes('aria-label="Run 1 of 2: 70/100'), "the label names the run and its score");
+  assert.ok(!out.includes('style="cursor:pointer"'), "the pointer comes from CSS, not an inline style");
+});
+
+test("severityChart: every bar group is a keyboard-reachable button with a name", () => {
+  const out = severityChart(sample);
+  const bars = out.match(/class="hist-bar"/g) || [];
+  assert.equal(bars.length, sample.length, "one group per run");
+  assert.equal((out.match(/tabindex="0"/g) || []).length, sample.length, "each group is focusable");
+  assert.equal((out.match(/role="button"/g) || []).length, sample.length, "each group is a button");
+  assert.ok(out.includes('aria-label="Run 1: high: 1 · medium: 2 · info: 5'), "the label carries the counts");
+});

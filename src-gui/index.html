@@ -187,7 +187,7 @@ button:disabled { opacity: .45; cursor: default; }
 .newbadge, .fixedbadge { font-size: 10px; font-weight: 700; letter-spacing: .03em; border-radius: 6px; padding: 3px 7px; flex-shrink: 0; font-variant-numeric: tabular-nums; border: 1px solid transparent; }
 .newbadge { color: var(--purple); background: color-mix(in srgb, var(--purple) 12%, transparent); border-color: color-mix(in srgb, var(--purple) 20%, transparent); }
 .fixedbadge { color: var(--green); background: color-mix(in srgb, var(--green) 12%, transparent); border-color: color-mix(in srgb, var(--green) 20%, transparent); }
-.lowbadge { font-size: 10px; font-weight: 600; letter-spacing: .04em; color: var(--muted2); background: transparent; border: 1px solid var(--border); border-radius: 5px; padding: 2px 6px; flex-shrink: 0; }
+.lowbadge { font-size: 10px; font-weight: 600; letter-spacing: .04em; color: var(--muted2); background: transparent; border: 1px solid var(--border); border-radius: 5px; padding: 2px 6px; flex-shrink: 0; cursor: pointer; }
 .checkid { font-family: var(--mono); font-size: 10px; color: var(--muted2); border: none; background: var(--bg2); border-radius: 5px; padding: 2px 6px; flex-shrink: 0; }
 
 /* === Toolbar — quieter secondary controls === */
@@ -427,7 +427,6 @@ footer .sbar-view, footer .sbar-check { display: none; }
 .codepill:hover { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
 .codepill::before { content: "· "; color: var(--border); }
 .durpill { display: none; } /* moved to details — reduce summary chrome */
-.lowbadge { display: none; } /* shown inside body when relevant */
 .checkid { display: none; } /* keep for data but hide from summary — reduce chrome */
 
 /* Show durpill only when card is open, as subtle metadata */
@@ -606,6 +605,11 @@ body.compact #report { gap: 14px; }
 .trendtitle b { color: var(--text); }
 .trendrange { color: var(--muted2); font-size: 11px; }
 #trend svg { flex-shrink: 0; }
+/* The chart marks are buttons now (role="button" + tabindex): they need a
+   pointer and a visible focus ring, since the renderer no longer inlines
+   either. Without this a keyboard user tabs onto nothing they can see. */
+.hist-dot, .hist-bar { cursor: pointer; }
+.hist-dot:focus, .hist-bar:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
 #trend .trend-wrap { display: flex; align-items: center; flex-wrap: wrap; gap: 14px 22px; width: 100%; }
 #trend .trendchart { display: flex; flex-direction: column; gap: 6px; }
 #trend .sevlegend { font-size: 11px; color: var(--muted2); display: flex; align-items: center; gap: 4px 5px; flex-wrap: wrap; }
@@ -2090,8 +2094,20 @@ async function renderTrend(currentScore) {
       const det = document.querySelector(".hist-details");
       if (det) det.open = true;
     };
+    // Keyboard parity: the chart marks are role="button", so Enter and Space
+    // must do what the click does — the finding cards behave the same way.
+    const activate = (el) => {
+      const idx = Number(el.dataset.idx || el.closest("[data-idx]")?.dataset.idx);
+      if (Number.isFinite(idx)) showRun(idx);
+    };
     trend.querySelectorAll(".hist-dot, .hist-bar").forEach(el => {
-      el.addEventListener("click", () => { const idx = Number(el.dataset.idx || el.closest("[data-idx]")?.dataset.idx); if (Number.isFinite(idx)) showRun(idx); });
+      el.addEventListener("click", () => activate(el));
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+          e.preventDefault();
+          activate(el);
+        }
+      });
     });
   }, 80);
 }
@@ -2919,7 +2935,7 @@ function scoreChart(data) {
   const line = pts.map((p) => p.join(",")).join(" ");
   const area = "M" + line.replace(/ /g, " L") + " L" + (W - pad) + "," + (H - pad) + " L" + pad + "," + (H - pad) + " Z";
   const dots = pts.map((p, i) =>
-    '<circle data-idx="' + i + '" cx="' + p[0] + '" cy="' + p[1] + '" r="5" fill="transparent" style="cursor:pointer" class="hist-dot">' +
+    '<circle data-idx="' + i + '" cx="' + p[0] + '" cy="' + p[1] + '" r="5" fill="transparent" class="hist-dot" tabindex="0" role="button" aria-label="Run ' + (i + 1) + " of " + scores.length + ": " + scores[i] + "/100, " + fmtWhen(data[i].at) + ' — open the diff">' +
     '<title>' + scores[i] + "/100 · " + fmtWhen(data[i].at) + ' — click to show diff</title></circle>').join("");
   const end = pts[pts.length - 1];
   const thresh = (min < 50 && max > 50)
@@ -2959,7 +2975,7 @@ function severityChart(data) {
     const yMed = (H - spad - iH - mH).toFixed(1);
     const yHigh = (H - spad - iH - mH - hH).toFixed(1);
     const tip = "high: " + c.high + " · medium: " + c.medium + " · info: " + c.info + (fmtWhen(c.at) ? " · " + fmtWhen(c.at) : "");
-    return '<g data-idx="' + i + '" style="cursor:pointer" class="hist-bar">' +
+    return '<g data-idx="' + i + '" class="hist-bar" tabindex="0" role="button" aria-label="Run ' + (i + 1) + ": " + tip + ' — open the diff">' +
       '<rect x="' + x + '" y="' + yInfo + '" width="' + bw.toFixed(1) + '" height="' + iH.toFixed(1) + '" rx="2" fill="var(--blue)" opacity="0.7"><title>' + tip + ' — click</title></rect>' +
       '<rect x="' + x + '" y="' + yMed + '" width="' + bw.toFixed(1) + '" height="' + mH.toFixed(1) + '" rx="2" fill="var(--yellow)" opacity="0.85"><title>' + tip + '</title></rect>' +
       '<rect x="' + x + '" y="' + yHigh + '" width="' + bw.toFixed(1) + '" height="' + hH.toFixed(1) + '" rx="2" fill="var(--red)" opacity="0.9"><title>' + tip + '</title></rect></g>';
@@ -3503,7 +3519,6 @@ function render(data) {
       chip.textContent = data.checksRun + " checks" + (data.checksSkipped ? " \u00b7 " + data.checksSkipped + " skipped" : "");
       chip.hidden = false;
       chip.title = "Open the all-checks matrix";
-      chip.style.cursor = "pointer";
     } else {
       chip.hidden = true;
     }

@@ -54,6 +54,11 @@
 .trendtitle b { color: var(--text); }
 .trendrange { color: var(--muted2); font-size: 11px; }
 #trend svg { flex-shrink: 0; }
+/* The chart marks are buttons now (role="button" + tabindex): they need a
+   pointer and a visible focus ring, since the renderer no longer inlines
+   either. Without this a keyboard user tabs onto nothing they can see. */
+.hist-dot, .hist-bar { cursor: pointer; }
+.hist-dot:focus, .hist-bar:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
 #trend .trend-wrap { display: flex; align-items: center; flex-wrap: wrap; gap: 14px 22px; width: 100%; }
 #trend .trendchart { display: flex; flex-direction: column; gap: 6px; }
 #trend .sevlegend { font-size: 11px; color: var(--muted2); display: flex; align-items: center; gap: 4px 5px; flex-wrap: wrap; }

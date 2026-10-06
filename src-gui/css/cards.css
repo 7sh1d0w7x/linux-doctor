@@ -33,7 +33,6 @@
 .codepill:hover { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
 .codepill::before { content: "· "; color: var(--border); }
 .durpill { display: none; } /* moved to details — reduce summary chrome */
-.lowbadge { display: none; } /* shown inside body when relevant */
 .checkid { display: none; } /* keep for data but hide from summary — reduce chrome */
 
 /* Show durpill only when card is open, as subtle metadata */

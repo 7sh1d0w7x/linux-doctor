@@ -80,8 +80,20 @@ async function renderTrend(currentScore) {
       const det = document.querySelector(".hist-details");
       if (det) det.open = true;
     };
+    // Keyboard parity: the chart marks are role="button", so Enter and Space
+    // must do what the click does — the finding cards behave the same way.
+    const activate = (el) => {
+      const idx = Number(el.dataset.idx || el.closest("[data-idx]")?.dataset.idx);
+      if (Number.isFinite(idx)) showRun(idx);
+    };
     trend.querySelectorAll(".hist-dot, .hist-bar").forEach(el => {
-      el.addEventListener("click", () => { const idx = Number(el.dataset.idx || el.closest("[data-idx]")?.dataset.idx); if (Number.isFinite(idx)) showRun(idx); });
+      el.addEventListener("click", () => activate(el));
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+          e.preventDefault();
+          activate(el);
+        }
+      });
     });
   }, 80);
 }

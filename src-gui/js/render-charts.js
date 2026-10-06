@@ -40,7 +40,7 @@ function scoreChart(data) {
   const line = pts.map((p) => p.join(",")).join(" ");
   const area = "M" + line.replace(/ /g, " L") + " L" + (W - pad) + "," + (H - pad) + " L" + pad + "," + (H - pad) + " Z";
   const dots = pts.map((p, i) =>
-    '<circle data-idx="' + i + '" cx="' + p[0] + '" cy="' + p[1] + '" r="5" fill="transparent" style="cursor:pointer" class="hist-dot">' +
+    '<circle data-idx="' + i + '" cx="' + p[0] + '" cy="' + p[1] + '" r="5" fill="transparent" class="hist-dot" tabindex="0" role="button" aria-label="Run ' + (i + 1) + " of " + scores.length + ": " + scores[i] + "/100, " + fmtWhen(data[i].at) + ' — open the diff">' +
     '<title>' + scores[i] + "/100 · " + fmtWhen(data[i].at) + ' — click to show diff</title></circle>').join("");
   const end = pts[pts.length - 1];
   const thresh = (min < 50 && max > 50)
@@ -80,7 +80,7 @@ function severityChart(data) {
     const yMed = (H - spad - iH - mH).toFixed(1);
     const yHigh = (H - spad - iH - mH - hH).toFixed(1);
     const tip = "high: " + c.high + " · medium: " + c.medium + " · info: " + c.info + (fmtWhen(c.at) ? " · " + fmtWhen(c.at) : "");
-    return '<g data-idx="' + i + '" style="cursor:pointer" class="hist-bar">' +
+    return '<g data-idx="' + i + '" class="hist-bar" tabindex="0" role="button" aria-label="Run ' + (i + 1) + ": " + tip + ' — open the diff">' +
       '<rect x="' + x + '" y="' + yInfo + '" width="' + bw.toFixed(1) + '" height="' + iH.toFixed(1) + '" rx="2" fill="var(--blue)" opacity="0.7"><title>' + tip + ' — click</title></rect>' +
       '<rect x="' + x + '" y="' + yMed + '" width="' + bw.toFixed(1) + '" height="' + mH.toFixed(1) + '" rx="2" fill="var(--yellow)" opacity="0.85"><title>' + tip + '</title></rect>' +
       '<rect x="' + x + '" y="' + yHigh + '" width="' + bw.toFixed(1) + '" height="' + hH.toFixed(1) + '" rx="2" fill="var(--red)" opacity="0.9"><title>' + tip + '</title></rect></g>';

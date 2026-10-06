@@ -17,7 +17,6 @@ function render(data) {
       chip.textContent = data.checksRun + " checks" + (data.checksSkipped ? " \u00b7 " + data.checksSkipped + " skipped" : "");
       chip.hidden = false;
       chip.title = "Open the all-checks matrix";
-      chip.style.cursor = "pointer";
     } else {
       chip.hidden = true;
     }

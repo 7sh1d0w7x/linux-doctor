@@ -8,6 +8,17 @@ All notable changes to Linux Doctor are documented here. The format follows
 
 ### Fixed
 
+- **The "N checks · M skipped" chip could never be seen.** The renderer filled
+  it with the counts and cleared `hidden`, and the click handler that opens the
+  checks matrix was wired — but a stylesheet hid it with `display: none`, so
+  the element and its shortcut were dead. It shows next to the NEW/FIXED pills.
+
+- **The history charts work from the keyboard.** Every dot and every stacked
+  bar opens that run's diff, but they were click-only: no `tabindex`, no role,
+  no accessible name and no focus ring — unreachable without a mouse, and
+  invisible to a screen reader. They are buttons now, with Enter/Space, a label
+  that names the run, and a focus ring.
+
 - **A toast button was unreadable on the terminal theme.** The toast's action
   button drew white text on the accent colour — 3.8:1 in dark, and 1.3:1 under
   the terminal theme's bright green. It now uses the same dark-on-accent ink as
