@@ -6,6 +6,16 @@ All notable changes to Linux Doctor are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- **The desktop workbench starts at 1200px, not 1440px.** The wide layout — the
+  sidebar rail, the master-detail pane and the status bar — was gated at 1440
+  CSS px, which an ordinary 1366px laptop (or a 1080p screen at 150% scaling,
+  an effective 1280) never reaches; those machines got the phone-first column
+  instead. Two gates had to agree by hand (`wide.css` and `ui-wide.js`) with
+  nothing keeping them in sync, so a test now asserts they match and that the
+  committed `index.html` carries both.
+
 ## [0.7.2] - 2026-10-03
 
 ### Changed

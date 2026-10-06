@@ -869,12 +869,12 @@ body.compact #report { gap: 14px; }
 
 /* ── wide.css ── */
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* === Wide desktop shell (≥1440px) ===
+/* === Wide desktop shell (≥1200px) ===
    Uncaps the phone-first column and puts the monitor to work: fixed rail +
    fluid main, components stretched over the grid, instrument-scale hero.
-   Below 1440 nothing changes — mobile and the 1100px sidebar rail keep
+   Below 1200 nothing changes — mobile and the 1100px sidebar rail keep
    their exact behavior. Variables only, so all four themes hold. */
-@media (min-width: 1440px) {
+@media (min-width: 1200px) {
   body { padding: 20px 24px 56px; }
 
   .wrap { max-width: none; }
@@ -916,7 +916,7 @@ body.compact #report { gap: 14px; }
 
   /* === Master-detail (phase 2) ===
      The findings list stays on the left; the selected finding's full body
-     renders in a sticky pane on the right. Below 1440 .reportgrid is a
+     renders in a sticky pane on the right. Below 1200 .reportgrid is a
      plain block and the pane stays hidden — mobile behavior untouched. */
   html.wide .reportgrid {
     display: grid;
@@ -2490,12 +2490,12 @@ function setupViews() {
 
 /* ── ui-wide.js ── */
 // SPDX-License-Identifier: GPL-3.0-or-later
-/* === Wide-desktop mode (>=1440px) ===
+/* === Wide-desktop mode (>=1200px) ===
    A PC canvas gets desktop behavior: the shell uncaps (wide.css) and the
    findings groups open — a workbench shows its data, an accordion hides
-   it. Below 1440px nothing changes. Guarded so environments without
+   it. Below 1200px nothing changes. Guarded so environments without
    matchMedia (headless test sandboxes) keep the narrow behavior. */
-const WIDE_QUERY = "(min-width: 1440px)";
+const WIDE_QUERY = "(min-width: 1200px)";
 
 function isWide() {
   try { return typeof matchMedia === "function" && matchMedia(WIDE_QUERY).matches; }

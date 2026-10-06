@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-/* === Wide-desktop mode (>=1440px) ===
+/* === Wide-desktop mode (>=1200px) ===
    A PC canvas gets desktop behavior: the shell uncaps (wide.css) and the
    findings groups open — a workbench shows its data, an accordion hides
-   it. Below 1440px nothing changes. Guarded so environments without
+   it. Below 1200px nothing changes. Guarded so environments without
    matchMedia (headless test sandboxes) keep the narrow behavior. */
-const WIDE_QUERY = "(min-width: 1440px)";
+const WIDE_QUERY = "(min-width: 1200px)";
 
 function isWide() {
   try { return typeof matchMedia === "function" && matchMedia(WIDE_QUERY).matches; }

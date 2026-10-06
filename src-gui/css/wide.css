@@ -1,10 +1,10 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* === Wide desktop shell (≥1440px) ===
+/* === Wide desktop shell (≥1200px) ===
    Uncaps the phone-first column and puts the monitor to work: fixed rail +
    fluid main, components stretched over the grid, instrument-scale hero.
-   Below 1440 nothing changes — mobile and the 1100px sidebar rail keep
+   Below 1200 nothing changes — mobile and the 1100px sidebar rail keep
    their exact behavior. Variables only, so all four themes hold. */
-@media (min-width: 1440px) {
+@media (min-width: 1200px) {
   body { padding: 20px 24px 56px; }
 
   .wrap { max-width: none; }
@@ -46,7 +46,7 @@
 
   /* === Master-detail (phase 2) ===
      The findings list stays on the left; the selected finding's full body
-     renders in a sticky pane on the right. Below 1440 .reportgrid is a
+     renders in a sticky pane on the right. Below 1200 .reportgrid is a
      plain block and the pane stays hidden — mobile behavior untouched. */
   html.wide .reportgrid {
     display: grid;
