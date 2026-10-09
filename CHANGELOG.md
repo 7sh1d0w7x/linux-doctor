@@ -6,7 +6,53 @@ All notable changes to Linux Doctor are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-17
 ### Added
+
+- **The dashboard can manage persistent state now.** The ignore list was
+  write-only from the GUI (Dismiss), so a dismissed finding could not be seen
+  or undone once the toast was gone; the Checks modal lists every ignored
+  pattern and code with a Remove, and the config path. History gained a Clear
+  history button. Both are contextual, not a new Settings page, and the
+  endpoints are loopback-only like the rest of the dashboard.
+- **Package-health check for Alpine.** `packages` had no `apk` branch, so
+  Alpine was the last family without one. `apk fix --simulate` is the dry run
+  (it reports what it would repair and changes nothing) and runs unprivileged.
+- **Package-health checks for openSUSE and Void.** `packages` covered apt,
+  dnf and pacman only, so those two families got no package-manager check at
+  all. openSUSE uses `zypper verify -D` (the dry run, so it cannot fix
+  anything) and Void uses `xbps-pkgdb -a`; both read-only.
+- **A bring-up check for devices that never appear.** `hardware` looks for
+  errors on devices that are working; this looks at the devices that are
+  missing. Three causes, one story: firmware the kernel could not load
+  (`bringup/firmware`), USB devices that failed to enumerate (`bringup/usb`),
+  and controllers with no driver bound (`bringup/driver`). This is the "my
+  Bluetooth and USB are gone" case: on a laptop the Bluetooth adapter is an
+  internal USB device, so one controller problem takes out both. Read-only,
+  current boot only, and it says so explicitly when everything is fine
+  (`bringup/ok`) instead of staying silent.
+
+### Fixed
+
+- **A dashboard refresh could get an empty response.** The stale-while-
+  revalidate background scan resolved to `undefined`; a blocking request that
+  arrived while it was in flight awaited it and served that `undefined` as an
+  empty body ("Unexpected end of JSON input"), and poisoned the cache with
+  it. The scan now always resolves to the body string.
+- **A Re-run could be swallowed by a background poll and record no
+  history.** With stale-while-revalidate, the background scan and the blocking
+  path shared one single-flight promise, so a Re-run that arrived while a
+  background poll was running awaited that non-saving scan and never advanced
+  history. An explicit Re-run now runs on its own, then refreshes the cache.
+- **The dashboard refreshes live.** Auto-refresh polls every 5s instead of
+  20s, and the server answers a stale request instantly with the last report
+  while it regenerates in the background (stale-while-revalidate), so a poll
+  never waits on a full scan. The new report appears on the next poll.
+- **`timers`, `fstrim`, `hardware` and `bringup` say when they cannot run.**
+  On a non-systemd system they returned silently, which read as "nothing
+  wrong". They emit an explicit skip now (`timers/skipped`, `fstrim/skipped`,
+  `hardware/skipped`, `bringup/skipped`), and `bringup` keeps running its
+  driver check even when the kernel log is not readable.
 
 - **The dashboard can manage persistent state now.** The ignore list was
   write-only from the GUI (Dismiss), so a dismissed finding could not be seen
@@ -33,8 +79,6 @@ All notable changes to Linux Doctor are documented here. The format follows
   internal USB device, so one controller problem takes out both. Read-only,
   current boot only, and it says so explicitly when everything is fine
   (`bringup/ok`) instead of staying silent.
-
-### Fixed
 
 - **The scheduled timer's service showed as failed on every machine that had a
   finding.** `--notify` exits 1 when there are high/medium findings — that is
