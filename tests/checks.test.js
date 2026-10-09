@@ -35,7 +35,6 @@ import { wayland } from "../src/checks/wayland.js";
 import { backup } from "../src/checks/backup.js";
 import { hardware } from "../src/checks/hardware.js";
 import { packages } from "../src/checks/packages.js";
-import { fstrim } from "../src/checks/fstrim.js";
 import { smart } from "../src/checks/smart.js";
 import { luks } from "../src/checks/luks.js";
 import { audio } from "../src/checks/audio.js";
