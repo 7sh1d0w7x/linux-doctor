@@ -106,16 +106,20 @@ capture() {
 
   # One frame per step; the dashboard shortcuts drive the UI:
   #   1..5 = views, ArrowDown = focus a card, Enter = open it.
+  #
+  # Order matters for the story: the report lands on Overview first and HOLDS
+  # for ~2s, so the score is what a reader sees before anything moves. Only
+  # then does it walk the views, comes back to Overview, and opens a finding.
   i=0
   while [ $i -lt 72 ]; do
     import -window root "$FRAMES_DIR/$(printf %04d $i).png" 2>/dev/null || true
     case $i in
-      8) xdotool key 2 ;;
-      22) xdotool key 3 ;;
-      34) xdotool key 5 ;;
+      16) xdotool key 2 ;;
+      28) xdotool key 3 ;;
+      38) xdotool key 5 ;;
       46) xdotool key 1 ;;
       54) xdotool key Down ;;
-      58) xdotool key Return ;;
+      60) xdotool key Return ;;
     esac
     i=$((i + 1))
   done
@@ -131,7 +135,7 @@ fi
 CROP=$(cat "$FRAMES_DIR/.crop" 2>/dev/null || echo "$FALLBACK_CROP")
 
 ffmpeg -y -loglevel error -framerate "$FPS" -i "$FRAMES_DIR/%04d.png" \
-  -vf "crop=$CROP,fps=$FPS,scale=$SCALE:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=128[p];[s1][p]paletteuse=dither=bayer:bayer_scale=4" \
+  -vf "crop=$CROP,fps=$FPS,scale=$SCALE:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=128[p];[s1][p]paletteuse=dither=none" \
   -loop 0 "$OUT"
 echo "Wrote $OUT ($(identify -format '%wx%h' "$OUT[0]") · $(du -h "$OUT" | cut -f1))"
 
