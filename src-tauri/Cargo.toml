@@ -1,6 +1,6 @@
 [package]
 name = "linux-doctor"
-version = "0.7.2"
+version = "0.7.3"
 description = "Linux Doctor desktop app — read-only health checks for your Linux system"
 edition = "2021"
 

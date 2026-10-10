@@ -6,6 +6,8 @@ All notable changes to Linux Doctor are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.7.3] - 2026-10-10
+
 ### Fixed
 
 - **The scheduled timer's service showed as failed on every machine that had a
