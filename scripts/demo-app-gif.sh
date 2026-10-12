@@ -67,13 +67,30 @@ if [ -n "${TOOLBOX:-}" ]; then trap bus_stop EXIT INT TERM; bus_start; fi
 
 capture() {
   export XDG_RUNTIME_DIR=$(mktemp -d)
-  Xvfb :99 -screen 0 "$SCREEN"x24 >/tmp/ld-xvfb.log 2>&1 & local xp=$!
+  Xvfb :99 -ac -screen 0 "$SCREEN"x24 >/tmp/ld-xvfb.log 2>&1 & local xp=$!
   sleep 2
   export DISPLAY=:99
   openbox >/tmp/ld-openbox.log 2>&1 & local op=$!
   sleep 1
   export LIBGL_ALWAYS_SOFTWARE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 WEBKIT_DISABLE_COMPOSITING_MODE=1
-  "$APP" >/tmp/ld-app.log 2>&1 & local ap=$!
+  if [ -n "${HOST_APP:-}" ]; then
+    # Run the app on the HOST so it inspects the host, not this container. A
+    # capture taken inside the toolbox showed "Fedora Linux 42" and container
+    # skips — a demo of a container, which is not what the README shows. It
+    # still renders HERE: the Xvfb socket lands in /tmp/.X11-unix, which toolbox
+    # shares with the host, so DISPLAY=:99 crosses the boundary. flatpak-spawn
+    # --host is how the container runs anything on the host.
+    # GDK_BACKEND=x11 + no WAYLAND_DISPLAY: on the host the app is Wayland-first,
+    # and an inherited WAYLAND_DISPLAY makes it render on the real session
+    # instead of this Xvfb (a window on the user's screen, and none here).
+    flatpak-spawn --host env -u WAYLAND_DISPLAY \
+      DISPLAY=:99 GDK_BACKEND=x11 LIBGL_ALWAYS_SOFTWARE=1 \
+      WEBKIT_DISABLE_DMABUF_RENDERER=1 WEBKIT_DISABLE_COMPOSITING_MODE=1 \
+      DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS" \
+      sh -c 'echo $$ > /tmp/ld-app.pid; exec "$0"' "$APP" >/tmp/ld-app.log 2>&1 & local ap=$!
+  else
+    "$APP" >/tmp/ld-app.log 2>&1 & local ap=$!
+  fi
   local id="" i=0
   for i in $(seq 1 90); do
     id=$(xdotool search --name "Linux Doctor" 2>/dev/null | head -1 || true)
@@ -82,6 +99,7 @@ capture() {
   done
   if [ -z "$id" ]; then
     echo "app window never appeared (see /tmp/ld-app.log)" >&2
+    if [ -n "${HOST_APP:-}" ]; then flatpak-spawn --host sh -c '[ -f /tmp/ld-app.pid ] && kill "$(cat /tmp/ld-app.pid)"' 2>/dev/null || true; fi
     kill $ap $op $xp 2>/dev/null || true
     return 1
   fi
@@ -89,7 +107,10 @@ capture() {
   if [ -n "$WINDOW" ]; then
     xdotool windowsize "$id" "${WINDOW%x*}" "${WINDOW#*x}" 2>/dev/null || true
   fi
-  sleep 7 # let the first report finish rendering
+  # The host app takes longer to draw its first report than one running in this
+  # container (package cold start, real /proc reads): 7s left "Loading…" on
+  # screen for the first few frames.
+  if [ -n "${HOST_APP:-}" ]; then sleep 25; else sleep 7; fi
 
   # Crop to the window's client area, so the frame is the app and nothing else.
   # `getwindowgeometry` reports the client window in root coordinates even when
@@ -106,24 +127,33 @@ capture() {
 
   # One frame per step; the dashboard shortcuts drive the UI:
   #   1..5 = views, ArrowDown = focus a card, Enter = open it.
+  #
+  # Order matters for the story: the report lands on Overview first and HOLDS
+  # for ~2s, so the score is what a reader sees before anything moves. Only
+  # then does it walk the views, comes back to Overview, and opens a finding.
   i=0
   while [ $i -lt 72 ]; do
     import -window root "$FRAMES_DIR/$(printf %04d $i).png" 2>/dev/null || true
     case $i in
-      8) xdotool key 2 ;;
-      22) xdotool key 3 ;;
-      34) xdotool key 5 ;;
+      16) xdotool key 2 ;;
+      28) xdotool key 3 ;;
+      38) xdotool key 5 ;;
       46) xdotool key 1 ;;
       54) xdotool key Down ;;
-      58) xdotool key Return ;;
+      60) xdotool key Return ;;
     esac
     i=$((i + 1))
   done
+  # Stop the host app by the pid it wrote (pkill -f would also match the shell
+  # command line that starts with APP=…, which hangs this very session).
+  if [ -n "${HOST_APP:-}" ]; then flatpak-spawn --host sh -c '[ -f /tmp/ld-app.pid ] && kill "$(cat /tmp/ld-app.pid)"' 2>/dev/null || true; fi
+  pkill -x Xvfb 2>/dev/null || true
+  pkill -x openbox 2>/dev/null || true
   kill $ap $op $xp 2>/dev/null || true
 }
 
 if [ -n "${TOOLBOX:-}" ]; then
-  toolbox run -c "$TOOLBOX" -- bash -lc "$(declare -f capture); ROOT='$ROOT' APP='$APP' FRAMES_DIR='$FRAMES_DIR' SCREEN='$SCREEN' WINDOW='$WINDOW' EXTRACT='$EXTRACT' DBUS_SESSION_BUS_ADDRESS='unix:path=$BUS_PATH' capture"
+  toolbox run -c "$TOOLBOX" -- bash -lc "$(declare -f capture); ROOT='$ROOT' APP='$APP' FRAMES_DIR='$FRAMES_DIR' SCREEN='$SCREEN' WINDOW='$WINDOW' EXTRACT='$EXTRACT' HOST_APP='${HOST_APP:-}' DBUS_SESSION_BUS_ADDRESS='unix:path=$BUS_PATH' capture"
 else
   capture
 fi
@@ -131,7 +161,7 @@ fi
 CROP=$(cat "$FRAMES_DIR/.crop" 2>/dev/null || echo "$FALLBACK_CROP")
 
 ffmpeg -y -loglevel error -framerate "$FPS" -i "$FRAMES_DIR/%04d.png" \
-  -vf "crop=$CROP,fps=$FPS,scale=$SCALE:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=128[p];[s1][p]paletteuse=dither=bayer:bayer_scale=4" \
+  -vf "crop=$CROP,fps=$FPS,scale=$SCALE:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=128[p];[s1][p]paletteuse=dither=none" \
   -loop 0 "$OUT"
 echo "Wrote $OUT ($(identify -format '%wx%h' "$OUT[0]") · $(du -h "$OUT" | cut -f1))"
 

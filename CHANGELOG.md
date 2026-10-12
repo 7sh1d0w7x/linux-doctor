@@ -130,6 +130,60 @@ All notable changes to Linux Doctor are documented here. The format follows
   nothing keeping them in sync, so a test now asserts they match and that the
   committed `index.html` carries both.
 
+## [0.7.3] - 2026-10-10
+
+### Fixed
+
+- **The scheduled timer's service showed as failed on every machine that had a
+  finding.** `--notify` exits 1 when there are high/medium findings — that is
+  the documented contract (`docs/compatibility.md`) — but the generated unit had
+  no `SuccessExitStatus`, so systemd read a successful watchdog run as a failed
+  unit, and the `services` check then reported that failure. The unit declares
+  exit 1 as a success now. An existing install needs the same line plus
+  `systemctl --user daemon-reload && systemctl --user reset-failed linux-doctor.service`.
+
+- **A container stopped with `podman stop` was called "did not exit cleanly".**
+  143 is 128 + SIGTERM, exactly what `podman stop`, `systemctl stop` and an
+  orderly shutdown send; 130 is SIGINT. Both are deliberate stops, not failures,
+  and this check is not a monitor — the medium finding cost 8 points on any
+  machine with a container switched off.
+
+- **The "N checks · M skipped" chip could never be seen.** The renderer filled
+  it with the counts and cleared `hidden`, and the click handler that opens the
+  checks matrix was wired — but a stylesheet hid it with `display: none`, so
+  the element and its shortcut were dead. It shows next to the NEW/FIXED pills.
+
+- **The history charts work from the keyboard.** Every dot and every stacked
+  bar opens that run's diff, but they were click-only: no `tabindex`, no role,
+  no accessible name and no focus ring — unreachable without a mouse, and
+  invisible to a screen reader. They are buttons now, with Enter/Space, a label
+  that names the run, and a focus ring.
+
+- **A toast button was unreadable on the terminal theme.** The toast's action
+  button drew white text on the accent colour — 3.8:1 in dark, and 1.3:1 under
+  the terminal theme's bright green. It now uses the same dark-on-accent ink as
+  the primary buttons.
+
+- **Dead and duplicated CSS went.** `.trend-hero`, `#autorefresh.on` and its
+  `.paused` state were each declared twice, the second silently winning; a
+  `.gauge.large` variant, `.status::after`, a print `.statusmsg`, a `#nexthep`
+  flex rule that could never apply and a redundant `.sb-item` rule had no
+  emitter at all. No pixels change — the survivors keep every property that was
+  in effect.
+
+- **The phone toolbar wraps instead of stacking.** On a narrow screen every
+  control in the toolbar became a full-width block — six rows of chrome before
+  the first finding. The buttons now share rows of their own width; only the
+  filter chips and the search take a full row.
+
+- **The desktop workbench starts at 1200px, not 1440px.** The wide layout — the
+  sidebar rail, the master-detail pane and the status bar — was gated at 1440
+  CSS px, which an ordinary 1366px laptop (or a 1080p screen at 150% scaling,
+  an effective 1280) never reaches; those machines got the phone-first column
+  instead. Two gates had to agree by hand (`wide.css` and `ui-wide.js`) with
+  nothing keeping them in sync, so a test now asserts they match and that the
+  committed `index.html` carries both.
+
 ## [0.7.2] - 2026-10-03
 
 ### Changed
@@ -266,18 +320,6 @@ All notable changes to Linux Doctor are documented here. The format follows
 
 ### Added
 
-- **The report names everything that needs a human now, not just the first
-  thing.** Findings carry a derived urgency (`now` / `watch` / `fyi`), and a
-  machine with a full disk and a degraded array at the same time lists both
-  under `NEEDS YOU NOW` instead of hiding the second behind `START HERE`.
-  Membership is a reviewed list of codes: an unknown or plugin code can never be
-  `now`, urgency never re-grades the score, and the rubric is in
-  [docs/severity.md](docs/severity.md).
-- **`--todo` leads with the urgent steps.** The list claims to be "in priority
-  order" and used to order by severity alone; the findings that need a human now
-  come first. A deadline is not urgency: an expiring certificate or a disk
-  filling up has a date, not a slope, so they stay watch items with a date
-  rather than crowding out the things to do today.
 - **Two public documents about trust rather than features.**
   [docs/limitations.md](docs/limitations.md) lists what the tool does not
   detect and every false positive it has shipped and fixed, with the regression
