@@ -5,6 +5,22 @@ import { detectSoftwareRenderer } from "./shared.js";
 import { defineCheck } from "./define.js";
 import { finding } from "../findings.js";
 
+/* The NVIDIA driver is not a package you install on an image-based desktop:
+   it is baked into the image, and you switch images by rebasing. Telling a
+   Bazzite user to run `dnf install akmod-nvidia` is the classic wrong move. */
+function nvidiaDriverFix(dist, tail) {
+  const suffix = tail ? " " + tail : "";
+  if (dist?.imageBased) {
+    return "The driver is not installed with a package manager on an image-based desktop — it ships with the image. Rebase to the NVIDIA image instead (Bazzite: `sudo rpm-ostree rebase ostree-image-signed:docker://ghcr.io/ublue-os/bazzite-nvidia:stable`), then reboot." + suffix;
+  }
+  const p = dist?.pkg;
+  let cmd = "your distribution's NVIDIA driver package";
+  if (p === "apt") cmd = "`sudo apt install nvidia-driver` (enable contrib non-free first)";
+  else if (p === "pacman") cmd = "`sudo pacman -S nvidia`";
+  else if (p === "dnf") cmd = "`sudo dnf install akmod-nvidia` (enable RPM Fusion first)";
+  return "Install the proprietary driver from your distro: " + cmd + "." + suffix;
+}
+
 export const gpu = defineCheck({
   id: "gpu",
   title: "Graphics / GPU",
@@ -81,7 +97,7 @@ export const gpu = defineCheck({
           title: "NVIDIA GPU is using the open-source nouveau driver",
           detail: "Your NVIDIA card is running on the open nouveau driver. It works for the desktop, but performance and CUDA support are limited — games and GPU compute will underperform.",
           evidence: "hardware: " + (hardware || "nvidia") + "\nmodule: nouveau",
-          fix: "Install the proprietary driver from your distro (e.g. `sudo dnf install akmod-nvidia` on Fedora/Bazzite, or the nvidia-driver package on Debian-family).",
+          fix: nvidiaDriverFix(ctx.dist, ""),
           confidence: "high",
         }));
       } else {
@@ -91,7 +107,7 @@ export const gpu = defineCheck({
           title: "NVIDIA GPU detected but no driver is loaded",
           detail: "Your system has an NVIDIA card, but neither the proprietary driver nor nouveau is loaded. Graphics will fall back to slow software rendering.",
           evidence: "hardware: " + (hardware || "nvidia") + "\nloaded modules: " + (loaded || "none"),
-          fix: "Install the NVIDIA driver for your distro (e.g. `sudo dnf install akmod-nvidia` on Fedora/Bazzite, or the nvidia-driver package on Debian-family), then reboot.",
+          fix: nvidiaDriverFix(ctx.dist, "Then reboot."),
           confidence: "high",
         }));
       }

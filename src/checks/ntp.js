@@ -2,6 +2,7 @@
 import { lines } from "../utils.js";
 import { defineCheck } from "./define.js";
 import { finding } from "../findings.js";
+import { svcCmd } from "../distro.js";
 
 /**
  * Time synchronization. A drifting clock silently breaks HTTPS, cron jobs,
@@ -59,7 +60,9 @@ export const ntp = defineCheck({
         detail:
           "No NTP client (systemd-timesyncd, chronyd, or ntpd) is running, so the clock will drift. A wrong clock breaks HTTPS, cron jobs, and time-based tokens.",
         evidence: "no active NTP daemon",
-        fix: "Enable one: `sudo systemctl enable --now systemd-timesyncd` (most systems) or `sudo systemctl enable --now chronyd` (Fedora/RHEL).",
+        fix: (ctx.dist?.init || "systemd") === "systemd"
+          ? `Enable one: \`${svcCmd(ctx.dist, "enable-now", "systemd-timesyncd")}\` (most systems) or \`${svcCmd(ctx.dist, "enable-now", "chronyd")}\` (Fedora/RHEL).`
+          : `Enable a time daemon: \`${svcCmd(ctx.dist, "enable-now", "chronyd")}\`.`,
         confidence: "high",
       }));
     } else {

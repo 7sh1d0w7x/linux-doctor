@@ -2,6 +2,7 @@
 import { lines, pct } from "../utils.js";
 import { defineCheck } from "./define.js";
 import { finding } from "../findings.js";
+import { oldKernelClean, bootloaderRefresh } from "../distro.js";
 
 /**
  * Boot partition and bootloader health.
@@ -66,7 +67,7 @@ export const boot = defineCheck({
           title: `${label} is getting full (${use}% used)`,
           detail: `${label} is ${use}% full. It will block the next kernel update if it keeps growing.`,
           evidence: df.stdout.trim(),
-          fix: "Clean old kernels (`sudo dnf remove --oldinstallonly` / `sudo apt autoremove --purge`) and re-check `df -h ${mount}`.",
+          fix: `Clean old kernels (${oldKernelClean(ctx.dist)}) and re-check \`df -h ${mount}\`.`,
           confidence: "high",
         }));
       }
@@ -93,7 +94,7 @@ export const boot = defineCheck({
           title: "No bootloader config found",
           detail: "No grub.cfg or systemd-boot entry was found under /boot. If this is a BIOS/UEFI install, the next reboot may fail to find a boot entry.",
           evidence: "checked /boot/grub/grub.cfg, /boot/grub2/grub.cfg, /boot/loader/entries/, /boot/efi/EFI/*",
-          fix: "Regenerate it: `sudo grub2-mkconfig -o /boot/grub2/grub.cfg` (Fedora) or `sudo grub-mkconfig -o /boot/grub/grub.cfg` (Debian/Arch). For systemd-boot: `sudo bootctl install`.",
+          fix: "Regenerate it: " + bootloaderRefresh(ctx.dist) + ". For systemd-boot: `sudo bootctl install`.",
           confidence: "medium",
         }));
       }

@@ -167,7 +167,11 @@ export const updates = defineCheck({
       }
     }
 
-    const fixCmd = label === "apt" ? "apt upgrade" : label === "pacman" ? "pacman -Syu" : label === "rpm-ostree" ? "rpm-ostree upgrade" : label === "zypper" ? "zypper update" : label === "apk" ? "apk upgrade" : label === "xbps" ? "xbps-install -Su" : "dnf upgrade";
+    // openSUSE Tumbleweed is rolling and `zypper up` is the wrong verb there
+    // (`dup` is the supported full upgrade); Leap keeps `up`. Alpine wants the
+    // index refreshed in the same breath as the upgrade.
+    const zypperVerb = ctx.dist?.id === "opensuse-tumbleweed" ? "zypper dup" : "zypper update";
+    const fixCmd = label === "apt" ? "apt upgrade" : label === "pacman" ? "pacman -Syu" : label === "rpm-ostree" ? "rpm-ostree upgrade" : label === "zypper" ? zypperVerb : label === "apk" ? "apk update && apk upgrade" : label === "xbps" ? "xbps-install -Su" : "dnf upgrade";
     const rebootNote = label === "rpm-ostree" ? " Reboot to activate it." : "";
 
     if (count === 0) {

@@ -2,7 +2,7 @@
 import { lines } from "../utils.js";
 import { defineCheck } from "./define.js";
 import { finding } from "../findings.js";
-import { pkgInstall } from "../distro.js";
+import { pkgInstall, svcCmd } from "../distro.js";
 
 /**
  * Container runtimes: is Podman or Docker installed, and is it usable?
@@ -49,7 +49,7 @@ export const containers = defineCheck({
           title: "Docker daemon is not running",
           detail: "Docker is installed but its daemon is stopped, so `docker` commands fail. This is usually just a service that is not enabled at boot.",
           evidence: `docker: ${dockerPath}\nsystemctl docker: ${st}`,
-          fix: "Start it with `sudo systemctl enable --now docker`.",
+          fix: `Start it with \`${svcCmd(ctx.dist, "enable-now", "docker")}\`.`,
           confidence: "high",
         }));
       }
