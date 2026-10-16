@@ -6,7 +6,19 @@
    not-applicable for this profile, atomic skips, or runtime errors.
    Rows with findings deep-link back to their cards in the report. */
 
-function checksMatrixHtml(data, checks) {
+/* Result states — a fixed vocabulary, not free prose. The three finding
+   words are the ones the report and the severity legend already use, so a
+   result column reads the same everywhere in the product. */
+const MX_STATE = {
+  high: "needs attention", medium: "warning", info: "observation",
+  ok: "clean", na: "not applicable", skip: "skipped", err: "failed to run",
+};
+const MX_CLS = { high: "high", medium: "medium", info: "info", ok: "ok", na: "na", skip: "na", err: "err" };
+
+/* Build the matrix once, returned in parts: the view frames it with its own
+   header and column rule, the modal keeps the "All checks" heading. */
+function checksMatrixBody(data, checks, opts) {
+  const problemsOnly = !!(opts && opts.problemsOnly);
   const findingsByCheck = new Map();
   for (const f of data.findings || []) {
     if (!findingsByCheck.has(f.check)) findingsByCheck.set(f.check, []);
@@ -17,22 +29,17 @@ function checksMatrixHtml(data, checks) {
 
   const SEV_RANK = { high: 0, medium: 1, info: 2 };
   const dot = (cls) => '<span class="sev-dot ' + cls + '"></span>';
-  const ST = {
-    err:    { i: dot("err"),    t: "failed" },
-    ok:     { i: dot("ok"),     t: "clean" },
-    na:     { i: dot("na"),     t: "" },
-    atomic: { i: dot("atomic"), t: "" },
-  };
   function statusOf(c) {
-    if (errors.has(c.id)) return { rank: 0, icon: ST.err.i, cls: "err", note: esc(errors.get(c.id) || "failed to run") };
+    if (errors.has(c.id)) return { rank: 0, key: "err", icon: dot("err"), why: esc(errors.get(c.id) || "failed to run") };
     const fs = findingsByCheck.get(c.id) || [];
     if (fs.length) {
       fs.sort((a, b) => (SEV_RANK[a.severity] ?? 9) - (SEV_RANK[b.severity] ?? 9));
-      return { rank: 1, icon: dot(fs[0].severity), cls: fs[0].severity, note: fs.length + " finding" + (fs.length > 1 ? "s" : ""), goto: true };
+      const sev = fs[0].severity;
+      return { rank: 1, key: sev, icon: dot(sev), why: fs.length > 1 ? fs.length + " findings" : "", goto: true };
     }
-    if (!c.appliesHere) return { rank: 3, icon: ST.na.i, cls: "na", note: "runs on: " + (c.appliesTo || []).join(", ") };
-    if (c.skipOnAtomic || atomic.has(c.id)) return { rank: 3, icon: ST.atomic.i, cls: "na", note: c.atomicReason || "skipped on immutable/atomic systems" };
-    return { rank: 2, icon: ST.ok.i, cls: "ok", note: "clean" };
+    if (!c.appliesHere) return { rank: 3, key: "na", icon: dot("na"), why: "runs on: " + (c.appliesTo || []).join(", ") };
+    if (c.skipOnAtomic || atomic.has(c.id)) return { rank: 3, key: "skip", icon: dot("atomic"), why: c.atomicReason || "skipped on immutable/atomic systems" };
+    return { rank: 2, key: "ok", icon: dot("ok"), why: "" };
   }
 
   const cats = new Map();
@@ -42,39 +49,56 @@ function checksMatrixHtml(data, checks) {
     cats.get(cat).push(c);
   }
 
+  // Stats are computed over the whole registry, so the summary never changes
+  // shape when the "problems only" filter is on.
+  const all = new Map();
   let problemCount = 0, errorCount = 0, cleanCount = 0, naCount = 0;
-  let body = "";
-  for (const cat of CATEGORY_ORDER) {
-    const list = cats.get(cat);
-    if (!list || !list.length) continue;
+  for (const [cat, list] of cats) {
     const rows = list.map((c) => ({ c, s: statusOf(c) }))
       .sort((a, b) => a.s.rank - b.s.rank || a.c.id.localeCompare(b.c.id));
-    body += '<div class="mx-cat">' + catIcon(cat, 12) + " " + esc(CATEGORY_LABELS[cat] || cat) + "</div>";
-    for (const { c, s } of rows) {
+    for (const { s } of rows) {
       if (s.rank === 1) problemCount++;
       else if (s.rank === 0) errorCount++;
       else if (s.rank === 2) cleanCount++;
       else naCount++;
+    }
+    all.set(cat, rows);
+  }
+
+  let body = "";
+  for (const cat of CATEGORY_ORDER) {
+    const rows = (all.get(cat) || []).filter((r) => !problemsOnly || r.s.rank <= 1);
+    if (!rows.length) continue;
+    body += '<div class="mx-cat">' + catIcon(cat, 12) + " " + esc(CATEGORY_LABELS[cat] || cat) +
+      '<span class="mx-cat-n">' + rows.length + "</span></div>";
+    for (const { c, s } of rows) {
       const gotoAttr = s.goto
         ? ' data-goto-code="' + esc(((findingsByCheck.get(c.id) || [])[0] || {}).code || "") + '" data-goto-check="' + esc(c.id) + '" tabindex="0" role="button" aria-label="Show ' + esc(c.id) + ' finding"'
         : "";
+      const why = s.why ? '<span class="mx-why" title="' + esc(s.why) + '">' + s.why + "</span>" : "";
+      const cls = MX_CLS[s.key];
       body += '<div class="mx-row' + (s.goto ? " link" : "") + '"' + gotoAttr + ">" +
         '<span class="mx-st" aria-hidden="true">' + s.icon + '</span>' +
         '<span class="mx-id">' + esc(c.id) + '</span>' +
         '<span class="mx-title">' + esc(c.title) + '</span>' +
-        '<span class="mx-note ' + s.cls + '">' + s.note + "</span></div>";
+        '<span class="mx-res ' + cls + '"><span class="mx-state ' + cls + '">' + MX_STATE[s.key] + "</span>" + why + "</span></div>";
     }
   }
 
   const total = checks.length;
-  return '<div class="mx-head">All checks</div>' +
-    '<div class="mx-sub">' + total + " registered \u00b7 " +
+  const summary = total + " registered \u00b7 " +
     problemCount + " with findings \u00b7 " +
     cleanCount + " clean \u00b7 " +
     (errorCount ? errorCount + " failed to run \u00b7 " : "") +
     naCount + " not applicable here" +
-    (STATIC_DATA ? " \u00b7 static report: live check list unavailable" : "") + "</div>" +
-    body;
+    (STATIC_DATA ? " \u00b7 static report: live check list unavailable" : "");
+  return { body, summary, problems: problemCount + errorCount };
+}
+
+function checksMatrixHtml(data, checks, opts) {
+  const m = checksMatrixBody(data, checks, opts);
+  const head = opts && opts.head === false ? "" : '<div class="mx-head">All checks</div>';
+  return head + '<div class="mx-sub">' + m.summary + "</div>" + m.body;
 }
 
 /* The persistent state the GUI can otherwise only set (Dismiss) lives here:
@@ -147,13 +171,38 @@ function setupChecksMatrix() {
   });
 }
 
-/* Checks view: the same matrix, inline instead of in a modal. Rendered
-   lazily on every activation so it never goes stale behind the report. */
+/* Checks view: the same matrix, inline and framed as its own view. The
+   inventory needs to be scannable (a real column rule), countable (a count
+   per category), and quietable (a filter that drops everything clean).
+   Cached so the filter repaints without another fetch. */
+let lastChecks = null;
+let checksProblemsOnly = false;
+
+function paintChecksView() {
+  const box = $("#checksview");
+  if (!box) return;
+  const data = lastReportData || {};
+  const checks = lastChecks || [];
+  const m = checksMatrixBody(data, checks, { problemsOnly: checksProblemsOnly });
+  const empty = checksProblemsOnly && m.problems === 0
+    ? '<div class="mx-none">Nothing needs attention — every check came back clean.</div>'
+    : "";
+  box.innerHTML =
+    '<div class="mx-tools">' +
+      '<div class="mx-sub">All checks \u00b7 ' + m.summary + "</div>" +
+      '<button class="fpill mx-filter' + (checksProblemsOnly ? " active" : "") + '" id="mx-problems" type="button" aria-pressed="' + (checksProblemsOnly ? "true" : "false") + '">Problems only <span class="mx-fcount">' + m.problems + "</span></button>" +
+    "</div>" +
+    '<div class="mx-cols" aria-hidden="true"><span>Check</span><span>Result</span></div>' +
+    empty +
+    '<div class="mx-list">' + m.body + "</div>";
+}
+
 async function renderChecksView() {
   const box = $("#checksview");
   if (!box) return;
   const checks = STATIC_DATA ? [] : await fetchChecks();
-  box.innerHTML = checksMatrixHtml(lastReportData || {}, checks);
+  lastChecks = checks;
+  paintChecksView();
 }
 
 function setupChecksView() {
@@ -163,6 +212,11 @@ function setupChecksView() {
   if (cv && !cv.dataset.bound) {
     cv.dataset.bound = "1";
     cv.addEventListener("click", (e) => {
+      if (e.target.closest("#mx-problems")) {
+        checksProblemsOnly = !checksProblemsOnly;
+        paintChecksView();
+        return;
+      }
       const row = e.target.closest("[data-goto-check]");
       if (!row) return;
       switchView("overview");

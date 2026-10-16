@@ -71,7 +71,10 @@ function applyFiltersNow() {
   });
   const nomatch = $("#nomatch");
   nomatch.hidden = !(activeFilter && qRaw && visible === 0);
-  if (!nomatch.hidden) nomatch.textContent = 'No findings match "' + qRaw + '".';
+  if (!nomatch.hidden) {
+    nomatch.innerHTML = '<div class="empty-big">No findings match \u201c' + esc(qRaw) + '\u201d</div>' +
+      '<button type="button" class="empty-cta" data-clear-filters>Clear filters</button>';
+  }
   // Wide: if the pane's selection was filtered out, pick the next visible
   // one; while it stays visible the pane is left alone (no scroll churn).
   if (typeof wideModeOn === "function" && wideModeOn()) {

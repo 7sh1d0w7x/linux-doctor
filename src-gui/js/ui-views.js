@@ -123,8 +123,9 @@ function switchView(name, { focusTab = false } = {}) {
     if (pane) pane.hidden = id !== name;
   }
   // The sidebar itself is persistent, but the report sections inside it
-  // (breakdown, severity, categories) only make sense on Overview.
-  document.querySelectorAll("#sidebar .sb-block:not(.sb-views)").forEach((b) => {
+  // (breakdown, severity, categories) only make sense on Overview. The
+  // Health block is global — it stays on every view.
+  document.querySelectorAll("#sidebar .sb-block:not(.sb-views):not(.sb-health)").forEach((b) => {
     b.hidden = name !== "overview";
   });
   viewTabs().forEach((b) => {

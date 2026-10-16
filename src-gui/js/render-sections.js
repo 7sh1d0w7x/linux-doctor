@@ -74,10 +74,10 @@ function renderNextStep(data) {
       '<div class="nh-section"><div class="nh-section-label">What happened</div><div class="nh-hint">' + esc(detail || "An issue was detected that needs attention.") + '</div></div>' +
       (evidence ? '<div class="nh-section"><div class="nh-section-label">Evidence</div><div style="font-family:var(--mono);font-size:11px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;overflow:auto;max-height:120px;white-space:pre-wrap;color:var(--muted)">' + esc(String(evidence).split("\n").slice(0,5).join("\n")) + '</div></div>' : '') +
       (whyText ? '<div class="nh-section"><div class="nh-section-label">Why it matters</div><div class="nh-hint">' + esc(whyText) + '</div></div>' : '') +
-      '<div class="nh-section"><div class="nh-section-label">Recommended next step</div><div class="nh-hint">' + esc(firstSentence(pick.fix).slice(0, 160)) + '</div></div>' +
+      '<div class="nh-section"><div class="nh-section-label">Recommended next step</div><div class="nh-hint">' + cmdCode(firstSentence(pick.fix).slice(0, 160)) + '</div></div>' +
       '<div class="nh-actions">' +
         // Primary: actually inspect — jumps to the finding card (delegated handler)
-        (code ? '<button data-nhjump="' + esc(code) + '" style="background:var(--green);border-color:var(--green);color:#06231a">Inspect details</button>' : '') +
+        (code ? '<button data-nhjump="' + esc(code) + '" style="background:var(--green);border-color:var(--green);color:var(--on-ok)">Inspect details</button>' : '') +
         // Secondary: single copy path via the delegated [data-nhcopy] handler in init.js
         '<button data-nhcopy="' + esc(pick.fix) + '" style="background:var(--card);border:1px solid var(--border);color:var(--text)">Copy fix</button>' +
       '</div>' +

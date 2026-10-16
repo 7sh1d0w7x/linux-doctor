@@ -39,6 +39,7 @@ const JS_ORDER = [
   "ui-modal.js",       // shared modal shell (checks matrix, help)
   "ui-theme.js",
   "ui-keyboard.js",
+  "ui-palette.js",    // Ctrl/Cmd+K command palette
   "ui-filters.js",     // activeFilter state + filter/search logic
   "ui-polling.js",     // pollTimer, autoRefresh state
   "ui-notify.js",
@@ -73,6 +74,9 @@ function readOrdered(dir, order, ext) {
   return order.map((f) => `/* ── ${f} ── */\n` + readFileSync(join(dir, f), "utf8")).join("\n\n");
 }
 
+// The author's mark, inlined so the dashboard stays one self-contained file.
+const brandMark = readFileSync(join(SRC, "brand", "monogram.png")).toString("base64");
+
 const css = readOrdered(join(SRC, "css"), CSS_ORDER, ".css");
 const js = readOrdered(join(SRC, "js"), JS_ORDER, ".js");
 
@@ -92,11 +96,11 @@ ${css}
 <a class="skip-link" href="#report">Skip to findings</a>
 <div class="wrap">
   <header>
-    <a id="brand" class="brand" href="#overview" aria-label="Linux Doctor — go to Overview">
-      <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M2 13h4l2.5-7 4 12 3-8 1.5 3H22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-      <h1>Linux Doctor</h1>
-    </a>
-    <div>
+    <div class="hdr-id">
+      <a id="brand" class="brand" href="#overview" aria-label="Linux Doctor — go to Overview">
+        <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M2 13h4l2.5-7 4 12 3-8 1.5 3H22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <h1>Linux Doctor</h1>
+      </a>
       <div class="sysinfo" id="sysinfo" role="status">Loading…</div>
     </div>
     <div class="actions">
@@ -115,11 +119,15 @@ ${css}
       <button id="rerun" class="primary">↻ Re-run checks</button>
     </div>
   </header>
-  <div id="status" class="status running" aria-live="polite" role="status">
-    <span class="spinner" aria-hidden="true"></span>Reading your system…
-  </div>
   <div class="layout">
     <aside id="sidebar" class="sidebar" hidden aria-label="Report overview">
+      <section class="sb-block sb-health">
+        <div id="status" class="status running" aria-live="polite" role="status">
+          <div class="skel skel-k"></div>
+          <div class="skel skel-v"></div>
+          <div class="skel skel-b"></div>
+        </div>
+      </section>
       <section class="sb-block sb-views">
         <h2>Views</h2>
         <nav id="viewtabs" class="viewtabs" role="tablist" aria-label="Views">
@@ -176,7 +184,7 @@ ${css}
         </div>
         <div class="reportgrid">
           <div id="drillhint" class="empty" hidden></div>
-          <div id="report"><div class="empty">Reading your system…</div></div>
+          <div id="report" aria-busy="true"><div class="skel skel-row"></div><div class="skel skel-row"></div><div class="skel skel-row"></div><div class="skel skel-row"></div></div>
           <div id="nomatch" class="empty" hidden></div>
           <aside id="detailpane" class="detailpane" hidden aria-live="polite" aria-label="Finding detail"></aside>
         </div>
@@ -199,21 +207,34 @@ ${css}
       </main>
     </div>
   <div id="view-history" class="view" role="tabpanel" aria-label="History" hidden>
+  <div class="view-head">
+    <div class="vh-title">History</div>
+    <div class="vh-sub">How this machine's health moved, run by run</div>
+  </div>
   <section id="history" class="history" hidden>
-    <details class="hist-details">
-      <summary class="hist-summary">History <span class="hist-sub">score &amp; findings across recent runs</span><span class="chev">▸</span></summary>
-      <div id="trend"></div>
-      <div id="runledger"></div>
-    </details>
+    <div id="trend"></div>
+    <div id="runledger"></div>
   </section>
   </div>
   <div id="view-checks" class="view" role="tabpanel" aria-label="All checks" hidden>
+  <div class="view-head">
+    <div class="vh-title">Checks</div>
+    <div class="vh-sub">Every check this tool knows, and what it found on this machine</div>
+  </div>
     <div id="checksview"></div>
   </div>
   <div id="view-system" class="view" role="tabpanel" aria-label="System" hidden>
+  <div class="view-head">
+    <div class="vh-title">System</div>
+    <div class="vh-sub">The machine's profile, read straight from the report</div>
+  </div>
     <div id="systemview"></div>
   </div>
   <div id="view-schedule" class="view" role="tabpanel" aria-label="Schedule" hidden>
+  <div class="view-head">
+    <div class="vh-title">Schedule</div>
+    <div class="vh-sub">Will this machine check itself — and when</div>
+  </div>
     <div id="schedview"></div>
   </div>
     </div>
@@ -222,10 +243,18 @@ ${css}
     <span id="sbar-view" class="sbar-view">Overview</span>
     <span id="sbar-check" class="sbar-check" hidden></span>
     <span class="sbar-note">Linux Doctor only reads system information — it never modifies anything.</span>
-    <span class="sbar-hints"><kbd>↑</kbd> <kbd>↓</kbd> navigate · <kbd>Enter</kbd> open/close · <kbd>/</kbd> search · <kbd>1</kbd>–<kbd>5</kbd> views · <kbd>Esc</kbd> clear</span>
+    <span class="sbar-hints"><kbd>↑</kbd> <kbd>↓</kbd> navigate · <kbd>Enter</kbd> open/close · <kbd>/</kbd> search · <kbd>Ctrl</kbd> <kbd>K</kbd> palette · <kbd>1</kbd>–<kbd>5</kbd> views · <kbd>Esc</kbd> clear</span>
+    <span class="sbar-brand" title="Built by 7sh1d0w7x"><img class="sbar-mark" src="data:image/png;base64,${brandMark}" alt="" width="29" height="18">7sh1d0w7x</span>
   </footer>
 </div>
 <div id="toast-wrap" aria-live="polite" aria-atomic="true"></div>
+<div id="palette" class="palette" hidden role="dialog" aria-modal="true" aria-label="Command palette">
+  <div class="palette-card">
+    <input id="palette-input" type="text" placeholder="Search findings, views and actions…" autocomplete="off" spellcheck="false" aria-label="Command palette search" role="combobox" aria-expanded="true" aria-controls="palette-list">
+    <div id="palette-list" class="palette-list" role="listbox" aria-label="Results"></div>
+    <div class="palette-foot"><span><kbd>\u2191</kbd> <kbd>\u2193</kbd> move</span><span><kbd>\u21b5</kbd> run</span><span><kbd>esc</kbd> close</span></div>
+  </div>
+</div>
 <div id="modal" class="modal" hidden role="dialog" aria-modal="true" aria-label="Details">
   <div class="modal-card">
     <button id="modal-x" class="modal-x" title="Close (Esc)" aria-label="Close">×</button>

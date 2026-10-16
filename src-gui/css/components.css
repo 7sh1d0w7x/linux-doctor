@@ -1,14 +1,14 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 /* === Toast === */
 #toast-wrap { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); z-index: 50; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
-.toast { pointer-events: auto; display: flex; align-items: center; gap: 10px; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 13px; box-shadow: var(--shadow); animation: toastin .25s ease, toastout .25s ease 2.7s forwards; max-width: 92vw; }
-.toast button { pointer-events: auto; background: var(--accent); color: #0b1020; border-color: transparent; padding: 4px 10px; font-size: 12px; }
+.toast { pointer-events: auto; display: flex; align-items: center; gap: 10px; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; font-size: 13px; box-shadow: var(--shadow); animation: toastin .25s ease, toastout .25s ease 2.7s forwards; max-width: 92vw; }
+.toast button { pointer-events: auto; background: var(--accent); color: var(--on-accent); border-color: transparent; padding: 4px 10px; font-size: 12px; }
 @keyframes toastin { from { opacity:0; transform: translateY(8px);} to { opacity:1; transform:none;} }
 @keyframes toastout { to { opacity:0; transform: translateY(8px);} }
 
 /* === Threshold Panel === */
 .thresh-panel {
-  background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
   padding: 12px; margin: -12px 0 20px; box-shadow: var(--shadow-sm);
   max-width: 1040px; margin-left: auto; margin-right: auto; width: 100%;
 }
@@ -17,24 +17,21 @@
 .thresh-body { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
 .thresh-field { display: flex; flex-direction: column; gap: 4px; }
 .thresh-field label { font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted2); }
-.thresh-field input { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; color: var(--text); font-size: 12px; font-family: var(--mono); }
+.thresh-field input { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 8px; color: var(--text); font-size: 12px; font-family: var(--mono); }
 .thresh-field input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent); }
 .thresh-actions { display: flex; align-items: center; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 
-/* === History — NOW PROMINENT, NOT HIDDEN === */
-.history { max-width: 1040px; margin: 40px auto 0; width: 100%; }
-.history .hist-details { border: 1px solid var(--border); border-radius: 14px; background: var(--card); overflow: hidden; }
-.history .hist-summary { list-style: none; cursor: pointer; user-select: none; display: flex; align-items: center; gap: 10px; padding: 14px 16px; font-size: 13px; font-weight: 650; color: var(--text); }
-.history .hist-summary::-webkit-details-marker { display: none; }
-.history .hist-summary .hist-sub { font-size: 12px; font-weight: 450; color: var(--muted2); }
-.history .hist-summary .chev { margin-left: auto; transition: transform .18s ease; color: var(--muted2); font-size: 11px; }
-.history .hist-details[open] .chev { transform: rotate(90deg); }
-.history #trend { margin: 0; border: none; box-shadow: none; background: transparent; padding: 0 16px 16px; max-width: none; }
-.hist-empty { padding: 16px; font-size: 13px; line-height: 1.6; color: var(--muted); }
+/* === History — one instrument: the score and its shape, then the runs ===
+   Three seconds: has health held or slipped? The score sparkline sits right
+   under the score it belongs to (not floating at the bottom of a tall
+   column), each severity bar is one run with its date, and the ledger is a
+   real table with a header row. */
+.history { max-width: 1040px; margin: 0; width: 100%; }
+.hist-empty { border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); padding: 18px 20px; font-size: 13px; line-height: 1.6; color: var(--muted); }
 .hist-empty b { color: var(--text); font-variant-numeric: tabular-nums; }
 
 /* === Trend — COMPACT BUT MEANINGFUL === */
-#trend { background: transparent; border: none; padding: 0; max-width: 1040px; margin: 0 auto; width: 100%; }
+#trend { background: transparent; border: none; padding: 0; max-width: 1040px; margin: 0; width: 100%; }
 /* === Trend hero — matches render-charts.js classes (.trend-hero-*, up/down/flat) === */
 .trend-hero { display: flex; align-items: center; gap: 18px; padding: 14px 0 12px; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
 .trend-hero-score { display: flex; align-items: baseline; gap: 4px; }
@@ -74,7 +71,7 @@
 /* === Security posture — one line, louder only when high === */
 .security-posture {
   max-width: 1040px; margin: 0; width: 100%;
-  border: 1px solid var(--border); border-radius: 10px;
+  border: 1px solid var(--border); border-radius: var(--radius);
   padding: 6px 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
   background: var(--card); opacity: .92;
   font-size: 12px; color: var(--muted);
@@ -85,14 +82,14 @@
 .security-posture.high .sp-icon { opacity: 1; }
 .security-posture .sp-text { flex: 1; min-width: 160px; }
 .security-posture .sp-text b { font-weight: 650; }
-.security-posture button { font-size: 11px; padding: 5px 10px; border-radius: 7px; background: transparent; border: 1px solid var(--border); color: var(--muted2); }
+.security-posture button { font-size: 11px; padding: 5px 10px; border-radius: var(--radius-sm); background: transparent; border: 1px solid var(--border); color: var(--muted2); }
 .security-posture button:hover { color: var(--text); border-color: var(--muted2); }
 
 /* === Start Here — BALANCED PREMIUM === */
 #nexthep {
   max-width: 1040px; margin: 0 0 16px; width: 100%;
   border: 1px solid color-mix(in srgb, var(--green) 18%, var(--border));
-  border-radius: 12px; padding: 0; overflow: hidden;
+  border-radius: var(--radius); padding: 0; overflow: hidden;
   background: var(--card);
   box-shadow: 0 2px 8px rgba(0,0,0,.08);
 }
@@ -101,7 +98,7 @@
   background: color-mix(in srgb, var(--green) 8%, var(--card));
   border-bottom: 1px solid color-mix(in srgb, var(--green) 12%, var(--border));
 }
-#nexthep .nh-icon { font-size: 9px; color: #fff; font-weight: 800; letter-spacing: .07em; flex-shrink: 0; background: var(--green); padding: 2px 7px; border-radius: 4px; }
+#nexthep .nh-icon { font-size: 9px; color: var(--on-ok); font-weight: 800; letter-spacing: .07em; flex-shrink: 0; background: var(--green); padding: 2px 7px; border-radius: 4px; }
 #nexthep .nh-kicker { font-size: 9px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; color: var(--green); }
 #nexthep .nh-body { padding: 14px 16px 14px; }
 #nexthep .nh-title { font-size: 15px; font-weight: 700; letter-spacing: -0.015em; line-height: 1.35; color: var(--text); }
@@ -112,8 +109,8 @@
 #nexthep .nh-hint { font-size: 12px; color: var(--muted); line-height: 1.5; }
 #nexthep .nh-hint code { font-family: var(--mono); font-size: 10.5px; background: var(--bg2); padding: 1px 5px; border-radius: 4px; border: 1px solid var(--border); color: var(--text); }
 #nexthep .nh-actions { display: flex; gap: 7px; margin-top: 14px; flex-wrap: wrap; }
-#nexthep .nh-actions button { height: 32px; padding: 0 13px; border-radius: 8px; font-weight: 600; font-size: 12px; }
-#nexthep .nh-actions button[data-nhcopy] { background: var(--green); color: #06231a; border-color: var(--green); }
+#nexthep .nh-actions button { height: 32px; padding: 0 13px; border-radius: var(--radius-sm); font-weight: 600; font-size: 12px; }
+#nexthep .nh-actions button[data-nhcopy] { background: var(--green); color: var(--on-ok); border-color: var(--green); }
 #nexthep .nh-actions button[data-nhcopy]:hover { background: color-mix(in srgb, var(--green) 88%, #000); }
 #nexthep .nh-actions button[data-nhjump] { background: var(--card); border: 1px solid var(--border); color: var(--text); }
 #nexthep.flash { animation: nhflash 1.6s ease 1; }
@@ -127,7 +124,7 @@
 .bd-pen.high { color: var(--red); }
 .bd-pen.medium { color: var(--yellow); }
 .bd-code { font-family: var(--mono); font-size: 10px; color: var(--muted2); }
-.bd-bar { height: 3px; border-radius: 3px; background: var(--bg2); overflow: hidden; }
+.bd-bar { height: 3px; border-radius: 3px; background: var(--card2); overflow: hidden; margin-top: 5px; }
 .bd-fill { height: 100%; border-radius: 3px; background: var(--red); }
 .bd-fill.medium { background: var(--yellow); }
 .bd-more { font-size: 11px; color: var(--muted2); margin-top: 4px; }
@@ -135,19 +132,19 @@
 
 /* === Skeleton === */
 .skel {
-  height: 64px; border-radius: 12px; margin-bottom: 10px;
+  height: 64px; border-radius: var(--radius); margin-bottom: 10px;
   background: linear-gradient(90deg, var(--card) 25%, var(--hover) 50%, var(--card) 75%);
   background-size: 200% 100%; animation: shimmer 1.2s linear infinite;
   border: 1px solid var(--border);
 }
 .skel-hero {
-  height: 140px; border-radius: 18px; margin-bottom: 24px;
+  height: 140px; border-radius: var(--radius-lg); margin-bottom: 24px;
   background: linear-gradient(90deg, var(--card) 25%, var(--card2) 50%, var(--card) 75%);
   background-size: 200% 100%; animation: shimmer 1.2s linear infinite;
   border: 1px solid var(--border);
 }
 .skel-card {
-  height: 72px; border-radius: 12px; margin-bottom: 10px;
+  height: 72px; border-radius: var(--radius); margin-bottom: 10px;
   background: linear-gradient(90deg, var(--card) 25%, var(--hover) 50%, var(--card) 75%);
   background-size: 200% 100%; animation: shimmer 1.2s linear infinite;
   border: 1px solid var(--border);
@@ -186,7 +183,7 @@
 }
 .modal[hidden] { display: none; }
 .modal-card {
-  background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg);
   max-width: 740px; width: 100%;
   max-height: min(82vh, 780px); overflow: auto;
   box-shadow: var(--shadow-lg);
@@ -195,7 +192,7 @@
 }
 .modal-x {
   position: absolute; top: 12px; right: 12px;
-  padding: 4px 10px; font-size: 12px; border-radius: 8px;
+  padding: 4px 10px; font-size: 12px; border-radius: var(--radius-sm);
 }
 .mx-head { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 4px; padding-right: 36px; }
 .mx-sub { font-size: 12px; color: var(--muted2); margin-bottom: 12px; }
@@ -205,26 +202,33 @@
   display: flex; align-items: center; gap: 6px;
 }
 .mx-cat:first-of-type { margin-top: 4px; }
+.mx-cat-n { margin-left: 2px; font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: 0; color: var(--muted2); font-variant-numeric: tabular-nums; }
+.mx-cat-n::before { content: "\00b7"; margin-right: 4px; color: var(--border); }
 .mx-row {
   display: flex; gap: 10px; align-items: baseline;
-  padding: 6px 9px; border-radius: 8px; font-size: 12.5px;
+  padding: 6px 9px; border-radius: var(--radius-sm); font-size: 12.5px;
 }
 .mx-row.link { cursor: pointer; }
 .mx-row.link:hover { background: var(--hover); }
 .mx-st { width: 20px; text-align: center; flex-shrink: 0; }
 .mx-id { font-family: var(--mono); font-size: 10.5px; color: var(--muted2); flex-shrink: 0; width: 108px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mx-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.mx-note { font-size: 11px; color: var(--muted2); flex-shrink: 0; }
-.mx-note.high { color: var(--red); font-weight: 650; }
-.mx-note.medium { color: var(--yellow); font-weight: 650; }
-.mx-note.info { color: var(--blue); font-weight: 650; }
-.mx-note.ok { color: var(--green); }
+/* Result cell: a fixed state word carrying the severity ink, plus a quiet
+   reason. Never a sentence — the column vocabulary is the same in the modal
+   and the view. */
+.mx-res { display: inline-flex; align-items: baseline; gap: 6px; justify-content: flex-end; flex-shrink: 0; min-width: 0; }
+.mx-state { font-size: 11px; font-weight: 650; color: var(--muted); white-space: nowrap; }
+.mx-state.high { color: var(--red); }
+.mx-state.medium { color: var(--yellow); }
+.mx-state.info { color: var(--blue); }
+.mx-state.ok { color: var(--green); }
+.mx-why { font-size: 10.5px; color: var(--muted2); max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .help-grid { display: grid; grid-template-columns: auto 1fr; gap: 10px 14px; align-items: center; font-size: 13px; margin-top: 6px; }
 
 /* === All-clean hero state === */
 .cleanhero {
   display: flex; align-items: center; gap: 18px;
-  background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
   padding: 28px 28px;
   position: relative;
 }
@@ -245,7 +249,7 @@
 /* === Schedule strip: daily-check state, quiet by design === */
 .sched {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
   padding: 8px 12px; margin-bottom: 12px;
   font-size: 12px; color: var(--muted);
 }
@@ -268,3 +272,78 @@
 .ig-remove:hover, .ledger-clear:hover { border-color: var(--red); color: var(--red); }
 .ledger-head { display: flex; align-items: baseline; gap: 10px; }
 .ledger-clear { margin-left: auto; color: var(--muted); }
+/* === Skeletons — the shape of what is coming, not a spinner === */
+.skel-row { height: 38px; border-radius: var(--radius-sm); margin-bottom: 6px; }
+.skel-k { height: 10px; width: 46px; border-radius: 3px; margin-bottom: 12px; }
+.skel-v { height: 26px; width: 88px; border-radius: 6px; margin-bottom: 12px; }
+.skel-b { height: 4px; border-radius: 999px; }
+#status .skel { margin-bottom: 0; }
+
+/* === Command palette (Ctrl/Cmd+K) === */
+.palette { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-start; justify-content: center; padding: 12vh 16px 16px; background: rgba(6,8,12,.5); backdrop-filter: blur(3px); animation: palFade .12s ease; }
+.palette[hidden] { display: none; }
+@keyframes palFade { from { opacity: 0 } to { opacity: 1 } }
+.palette-card { width: min(560px, 100%); background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); overflow: hidden; animation: palRise .14s cubic-bezier(.2,.8,.3,1); }
+@keyframes palRise { from { transform: translateY(-6px); opacity: .6 } to { transform: none; opacity: 1 } }
+#palette-input { width: 100%; border: none; background: transparent; color: var(--text); font: 15px/1.4 var(--sans); padding: 15px 16px; outline: none; border-bottom: 1px solid var(--border); }
+#palette-input::placeholder { color: var(--muted2); }
+.palette-list { max-height: 44vh; overflow: auto; padding: 6px; }
+.pal-group { font-size: 10px; font-weight: 650; letter-spacing: .09em; text-transform: uppercase; color: var(--muted2); padding: 9px 10px 4px; }
+.pal-item { display: flex; align-items: baseline; gap: 10px; width: 100%; text-align: left; border: none; background: transparent; color: var(--text); padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer; }
+.pal-item .pal-label { font-size: 13px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pal-item .pal-hint { font: 10.5px/1 var(--mono); color: var(--muted2); flex-shrink: 0; }
+.pal-item.on, .pal-item:hover { background: var(--hover); }
+.pal-item.on { box-shadow: inset 2px 0 0 var(--accent); }
+.pal-empty { padding: 20px 12px; font-size: 13px; color: var(--muted2); text-align: center; }
+.palette-foot { display: flex; gap: 16px; padding: 8px 14px; border-top: 1px solid var(--border); font-size: 10.5px; color: var(--muted2); }
+.palette-foot kbd { font-size: 10px; }
+
+/* === Empty states — a short sentence and a way out === */
+.empty-cta { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 5px 11px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--card); color: var(--text); font-size: 12px; cursor: pointer; }
+.empty-cta:hover { background: var(--card2); }
+.empty-big { font-size: 14px; font-weight: 600; color: var(--text); }
+.empty-big.ok { color: var(--green); }
+
+/* === History, polished ===
+   The score and the severity mix sit side by side as two instruments. The
+   line under the chart repeated the hero word for word ("92/100 Stable 12
+   runs · 92↔92"), so the hero stands alone now. */
+.trend-wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 26px; align-items: start; }
+#trend .trendchart { min-width: 0; }
+/* The score, its direction chip and its sparkline are ONE instrument: the
+   hairline closes the whole block, not just the number. */
+.trend-hero { padding: 0 0 8px; margin-bottom: 0; border-bottom: none; }
+.trend-hero-num { font-size: 38px; letter-spacing: -0.035em; }
+.trend-hero ~ .trendtitle { display: none; }
+/* The score sparkline lives inside the score's own instrument, right under
+   the number and the direction chip — the shape comes from the data, the
+   same trace language as the rail's vitals pulse. */
+.hist-trace { padding: 0 0 12px; border-bottom: 1px solid var(--border); }
+.hist-trace svg { display: block; overflow: visible; }
+.sev-axis { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; color: var(--muted2); margin-top: -1px; }
+@media (max-width: 900px) { .trend-wrap { grid-template-columns: 1fr; gap: 20px; } }
+
+/* === Schedule view — is the machine watching itself, and when ===
+   Focus (3s): will this machine check itself tomorrow? The instrument row
+   answers last run / next run / timer state; the commands are printed as
+   recipes (the accent-ruled mono slip the findings already use) instead of
+   being hidden behind buttons. */
+#schedview { max-width: 780px; }
+.sched-instr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin: 12px 0 10px; }
+.si { background: var(--card); padding: 12px 14px; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.si-k { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted2); }
+.si-v { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text); }
+.si-v .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 18%, transparent); }
+.si-v .dot.stale { background: var(--yellow); box-shadow: 0 0 0 3px color-mix(in srgb, var(--yellow) 18%, transparent); }
+.sched-cap { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 11.5px; color: var(--muted2); }
+.sched-cap .sched-note { white-space: nowrap; }
+.sched-cap .sched-sep { color: var(--muted2); }
+.sched-idle { font-size: 12.5px; color: var(--muted); line-height: 1.6; margin: 14px 0 0; }
+.sched-none { font-size: 12.5px; color: var(--muted); margin-top: 10px; }
+.recipe { display: flex; align-items: stretch; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.recipe-cmd { flex: 1 1 300px; min-width: 0; display: flex; align-items: center; background: var(--evidence-bg); color: var(--text); border: 1px solid var(--border); border-left: 2px solid var(--accent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 8px 11px; font-family: var(--mono); font-size: 12px; white-space: nowrap; overflow-x: auto; scrollbar-width: thin; }
+.recipe-copy { flex-shrink: 0; padding: 0 12px; font-size: 11.5px; font-weight: 600; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.recipe-copy:hover { background: var(--card2); border-color: var(--border); }
+.recipe-copy.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.recipe-copy.primary:hover { background: var(--accent2); border-color: var(--accent2); }
+@media (max-width: 560px) { .sched-instr { grid-template-columns: 1fr; } .recipe-cmd { white-space: normal; overflow-wrap: anywhere; } }

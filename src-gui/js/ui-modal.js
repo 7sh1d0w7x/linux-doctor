@@ -56,6 +56,7 @@ function openHelp() {
     '<div class="help-grid">' +
     "<div><kbd>\u2191</kbd> <kbd>\u2193</kbd></div><div>Navigate findings</div>" +
     "<div><kbd>Enter</kbd> / <kbd>Space</kbd></div><div>Open or close a finding</div>" +
+    "<div><kbd>Ctrl</kbd> <kbd>K</kbd></div><div>Open the command palette</div>" +
     "<div><kbd>/</kbd></div><div>Focus the search box</div>" +
     "<div><kbd>1</kbd>–<kbd>5</kbd></div><div>Overview · History · Checks · System · Schedule views</div>" +
     "<div><kbd>Esc</kbd></div><div>Close this dialog \u00b7 clear search &amp; filters \u00b7 close thresholds</div>" +

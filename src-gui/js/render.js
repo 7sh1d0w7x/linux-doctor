@@ -49,6 +49,7 @@ function render(data) {
     if (ev.textContent.length > 500 || ev.scrollHeight > 228) btn.hidden = false;
   });
 
+  $("#report").removeAttribute("aria-busy");
   applyFilters();
   refreshSchedule();
   renderSystemView(data);
@@ -59,7 +60,7 @@ function render(data) {
   renderFixed(data);
   renderDiff(data);
   maybeNotify(data);
-  renderTrend(counts.score);
+  renderTrend();
   renderSkipped();
   applyWideGroups();
   syncDetailPane();

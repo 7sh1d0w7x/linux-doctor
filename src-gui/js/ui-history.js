@@ -25,7 +25,7 @@ function setStatus(generatedAt) {
   }
 }
 
-async function renderTrend(currentScore) {
+async function renderTrend() {
   if (STATIC_DATA) return;
   const trend = $("#trend");
   const runs = await fetchHistory();
@@ -38,8 +38,6 @@ async function renderTrend(currentScore) {
        what will grow here instead, using the score we already have. */
     if (data.length === 1 && !STATIC_DATA) {
       histEl.hidden = false;
-      const det = histEl.querySelector(".hist-details");
-      if (det) det.open = true;
       trend.innerHTML =
         '<div class="hist-empty">Only one run on record so far \u2014 it scored <b>' + data[0].score + "/100</b>." +
         "Run another check and your health-score trend appears here.</div>";
@@ -61,11 +59,6 @@ async function renderTrend(currentScore) {
 
   trend.innerHTML = '<div class="trend-wrap">' + scoreChart(data) + severityChart(data) + '</div>';
 
-  if (typeof currentScore === "number" && currentScore < 80) {
-    const det = document.querySelector(".hist-details");
-    if (det) det.open = true;
-  }
-
   setTimeout(() => {
     const histData = data;
     const showRun = (idx) => {
@@ -77,8 +70,6 @@ async function renderTrend(currentScore) {
       showToast(msg + " \u2014 opening Changes");
       const diffEl = $("#diff");
       if (diffEl) { diffEl.hidden = false; diffEl.open = true; diffEl.scrollIntoView({ behavior: scrollBehavior(), block: "start" }); }
-      const det = document.querySelector(".hist-details");
-      if (det) det.open = true;
     };
     // Keyboard parity: the chart marks are role="button", so Enter and Space
     // must do what the click does — the finding cards behave the same way.
@@ -105,7 +96,9 @@ function historyLedgerHtml(runs) {
   const rows = (runs || []).filter((r) => typeof r.score === "number").slice(-12);
   if (rows.length < 2) return "";
   let html = '<div class="ledger-head">Past runs <span class="ledger-sub">newest first</span>' +
-    '<button class="ledger-clear" id="histclear" title="Delete all stored runs">Clear history</button></div><div class="ledger">';
+    '<button class="ledger-clear" id="histclear" title="Delete all stored runs">Clear history</button></div>' +
+    '<div class="ledger">' +
+    '<div class="ledger-cols" aria-hidden="true"><span>When</span><span>Score</span><span>\u0394</span><span>Findings</span></div>';
   for (let i = rows.length - 1; i >= 0; i -= 1) {
     const r = rows[i];
     const prev = i > 0 ? rows[i - 1] : null;

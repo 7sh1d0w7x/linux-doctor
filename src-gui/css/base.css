@@ -1,37 +1,51 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* === CSS Variables, Reset, Typography === */
+/* === CSS Variables, Reset, Typography ===
+   The canon: a professional Linux desktop tool. One neutral surface ladder
+   tinted from a single hue, one accent with exactly three jobs (primary
+   action, selected row, focus), and three severity inks that are the only
+   other colours on screen. Radii are two values. Severity inks live here so
+   every component inherits them and no component re-defines a colour. */
 :root {
   /* Native widgets (scrollbars, inputs) follow the dark chrome. */
   color-scheme: dark;
-  --bg: #080a11; --bg2: #0e121e; --card: #111625; --card2: #171d2e; --border: #1e2538;
-  --text: #eef1f7; --muted: #8a93a6; --muted2: #7f8aa1;
-  --red: #ff5a67; --yellow: #f0b429; --green: #2ed69a; --blue: #5b9cf6; --purple: #a78bfa;
-  --accent: #4a7bff; --accent2: #6b93ff; --hover: #1c2235; --evidence-bg: #0c1020;
-  --shadow: 0 1px 2px rgba(0,0,0,.24), 0 8px 24px rgba(0,0,0,.18);
-  --shadow-sm: 0 1px 2px rgba(0,0,0,.20);
-  --shadow-lg: 0 8px 24px rgba(0,0,0,.28), 0 16px 40px rgba(0,0,0,.20);
-  --radius: 14px; --radius-sm: 9px; --radius-lg: 18px;
+  /* Surface ladder — 1 the window, 2 the chrome, 3 the controls. */
+  --bg: #101216; --bg2: #15181d; --card: #171b21; --card2: #1e222a;
+  --border: #262b33;
+  --text: #e7eaef; --muted: #98a1ad; --muted2: #737d8a;
+  /* Severity inks — the only colours besides the accent. */
+  --red: #f0616d; --yellow: #e0b341; --green: #3fb950; --blue: #46bfd4; --purple: #a371f7;
+  --accent: #4c8dff; --accent2: #6fa2ff; --hover: #1b2028; --evidence-bg: #0d1014;
+  /* Ink that sits on an accent or green fill — verified ≥4.5:1 in all themes. */
+  --on-accent: #0b0e14; --on-ok: #06180d;
+  --shadow: 0 1px 2px rgba(0,0,0,.30);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.25);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,.46), 0 2px 6px rgba(0,0,0,.30);
+  --radius: 10px; --radius-sm: 6px; --radius-lg: 12px;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  --sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Cantarell, system-ui, sans-serif;
 }
 :root[data-theme="light"] {
   color-scheme: light;
-  --bg: #f4f6fa; --bg2: #eef1f6; --card: #ffffff; --card2: #f5f7fb; --border: #e2e7f0;
-  --text: #1a1f2b; --muted: #5e6878; --muted2: #667080;
-  --red: #e0464f; --yellow: #b07d00; --green: #0e9c5a; --blue: #2f6ad6; --purple: #843fe0;
-  --hover: #eef1f7; --evidence-bg: #f7f9fc;
-  --shadow: 0 1px 2px rgba(20,30,50,.06), 0 8px 24px rgba(20,30,50,.08);
+  --bg: #f7f8fa; --bg2: #eef1f5; --card: #ffffff; --card2: #e9edf3;
+  --border: #dfe3e9;
+  --text: #171a1f; --muted: #59616d; --muted2: #6b7480;
+  --red: #bf2c33; --yellow: #7d5407; --green: #0a6b3c; --blue: #0e7285; --purple: #7c3fd6;
+  --accent: #2f6ad6; --accent2: #5c8ce0; --hover: #e9edf3; --evidence-bg: #f4f6f9;
+  --on-accent: #ffffff; --on-ok: #ffffff;
+  --shadow: 0 1px 2px rgba(20,30,50,.06);
   --shadow-sm: 0 1px 2px rgba(20,30,50,.08);
+  --shadow-lg: 0 12px 32px rgba(20,30,50,.14), 0 2px 6px rgba(20,30,50,.08);
 }
 /* Terminal theme: phosphor-console look for sysadmins. Same layout, same
    contrast budget (all pairs ≥4.5:1, verified) — only variables change, so
    no component CSS needs theme-specific overrides. Mono takes over --sans,
    corners go sharp, shadows go flat. */
 :root[data-theme="terminal"] {
-  --bg: #060906; --bg2: #0a0f0a; --card: #0b100b; --card2: #0e140e; --border: #1d2b1d;
+  --bg: #060906; --bg2: #0a0d0a; --card: #0b100b; --card2: #0e140e; --border: #1d2b1d;
   --text: #d9ead9; --muted: #8fae8f; --muted2: #6f8f6f;
   --red: #ff5a5a; --yellow: #ffd433; --green: #3dff73; --blue: #6aa8ff; --purple: #b79aff;
   --accent: #3dff73; --accent2: #6dff92; --hover: #101a10; --evidence-bg: #070b07;
+  --on-accent: #04120a; --on-ok: #04120a;
   --shadow: none; --shadow-sm: none; --shadow-lg: none;
   --radius: 4px; --radius-sm: 2px; --radius-lg: 6px;
   --sans: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
@@ -42,18 +56,20 @@ html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 body {
   background: var(--bg);
   color: var(--text);
-  font: 14.5px/1.6 var(--sans);
-  padding: 32px 20px 80px;
-  letter-spacing: -0.011em;
+  font: 13.5px/1.5 var(--sans);
+  letter-spacing: 0;
+  /* The shell owns the padding: header, sidebar and status bar run full-bleed
+     to the window edge, so the page itself carries none. */
+  padding: 0;
 }
-.wrap { max-width: 1100px; margin: 0 auto; }
-.empty { text-align: center; color: var(--muted); padding: 48px 0; font-size: 13.5px; }
+.wrap { max-width: none; margin: 0; }
+.empty { text-align: center; color: var(--muted); padding: 48px 0; font-size: 13px; }
 kbd { font-family: var(--mono); font-size: 11px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 5px; padding: 1px 5px; background: var(--card2); }
 
 /* === Accessibility === */
 .skip-link {
   position: absolute; left: -9999px; top: 0; z-index: 100;
-  background: var(--accent); color: #fff; padding: 10px 16px;
+  background: var(--accent); color: var(--on-accent); padding: 10px 16px;
   border-radius: 0 0 10px 0; font-size: 13px; font-weight: 650;
 }
 .skip-link:focus { left: 0; }

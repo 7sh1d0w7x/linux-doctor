@@ -52,7 +52,7 @@ function renderCard(f, sev) {
 
   html += '<div class="fix">';
   html += '<div class="fix-label">Recommended next step</div>';
-  if (f.fix) html += '<div class="fixtext">' + esc(f.fix) + '</div>';
+  if (f.fix) html += '<div class="fixtext">' + cmdCode(f.fix) + '</div>';
   else html += '<div class="fixtext" style="color:var(--muted2)">No automated fix — review details above.</div>';
   html += '<button data-copy="' + esc(f.fix || f.detail || f.title) + '">Copy fix</button>';
   html += '<button data-ignore="' + esc(f.title) + '" title="Hide this finding in future runs">Dismiss</button>';

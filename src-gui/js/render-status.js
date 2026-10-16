@@ -19,13 +19,20 @@ function renderGauge(score, size) {
 
 function animateScore(target) {
   const num = $("#scorenum");
-  const ring = $("#scorering");
+  const live = $("#scorering");
+  const dot = $("#pulsedot");
   if (!num) return;
   let reduce = false;
   try { reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch {}
+  /* The trace is drawn up to the score and ends in a dot — the machine's own
+     vital sign. pathLength="100" makes the dash arithmetic trivial. */
+  const setPulse = (v) => {
+    if (live) live.style.strokeDashoffset = String(100 - v);
+    if (dot) dot.setAttribute("cx", String((120 * v) / 100));
+  };
   if (reduce) {
     num.textContent = target;
-    if (ring) ring.style.strokeDashoffset = SCORE_RING_C * (1 - target / 100);
+    setPulse(target);
     return;
   }
   const t0 = performance.now();
@@ -34,10 +41,41 @@ function animateScore(target) {
     const p = Math.min(1, (now - t0) / dur);
     const v = target * (1 - Math.pow(1 - p, 3));
     num.textContent = Math.round(v);
-    if (ring) ring.style.strokeDashoffset = SCORE_RING_C * (1 - v / 100);
+    setPulse(v);
     if (p < 1) requestAnimationFrame(step);
   };
   requestAnimationFrame(step);
+}
+
+/* The product's own motif: a heartbeat, not a dashboard gauge. Same waveform
+   as the brand mark and the favicon, but the shape comes from the report —
+   a steady monitoring rhythm, with one taller beat for every finding that
+   needs attention (taller still for a high severity). A clean machine draws
+   the rhythm alone. */
+function pulsePath(w, amps) {
+  const mid = 14;
+  if (!amps.length) return "M0 " + mid + " H" + w;
+  const step = w / amps.length;
+  let d = "M0 " + mid;
+  amps.forEach((amp, i) => {
+    const a = 3.5 + 9 * amp;
+    const peak = 16 - a;
+    const trough = peak + a * 0.6 + 3;
+    d += " H" + (i * step + step * 0.42).toFixed(1);
+    d += " l2 2 l1 " + (-a).toFixed(1) + " l1 " + (a * 0.6 + 3).toFixed(1) + " l2 " + (-(trough - mid)).toFixed(1);
+    d += " H" + ((i + 1) * step).toFixed(1);
+  });
+  return d;
+}
+
+/* What the trace is made of: a fixed monitoring rhythm, with the beats that
+   carry a finding made taller in proportion to its severity. */
+function pulseTrace(findings) {
+  const high = findings.filter((f) => f.severity === "high").length;
+  const med = findings.filter((f) => f.severity === "medium").length;
+  const issues = Math.min(5, high + med);
+  const amp = high ? 1 : med ? 0.55 : 0;
+  return pulsePath(120, [1, 2, 3, 4, 5].map((_, i) => (i < issues ? amp : 0.16)));
 }
 
 function renderStatusMessage(findings) {
@@ -77,7 +115,7 @@ function renderStatus(data) {
   const med = findings.filter((f) => f.severity === "medium").length;
   const inf = findings.filter((f) => f.severity === "info").length;
 
-  const { headline, sublabel, level } = renderStatusMessage(findings);
+  const { headline, sublabel } = renderStatusMessage(findings);
 
   const scoreDelta = typeof data.scoreDelta === "number" ? data.scoreDelta : null;
   const deltaCls = scoreDelta === null ? "" : scoreDelta > 0 ? "delta-up" : scoreDelta < 0 ? "delta-down" : "delta-flat";
@@ -85,55 +123,46 @@ function renderStatus(data) {
   const deltaTxt = scoreDelta === null ? "no baseline yet" : (scoreDelta > 0 ? "+" + scoreDelta : String(scoreDelta)) + " since last check";
   const score = typeof data.score === "number" ? data.score : 0;
 
-  // Build breakdown: human language, distinguish issues vs findings
-  let breakdownHtml = "";
-  if (high + med > 0) {
-    const parts = [];
-    if (high) parts.push("<b>" + high + "</b> high-severity " + (high === 1 ? "issue" : "issues"));
-    if (med) parts.push("<b>" + med + "</b> medium " + (med === 1 ? "finding" : "findings"));
-    breakdownHtml = '<div class="status-breakdown">' + parts.join('<span class="sep">·</span>') + '</div>';
-    if (inf) breakdownHtml += '<div class="status-breakdown" style="margin-top:2px;color:var(--muted2)">' + inf + " informational " + (inf === 1 ? "note" : "notes") + " — no action needed</div>";
-  } else if (inf) {
-    breakdownHtml = '<div class="status-breakdown">' + inf + " informational " + (inf === 1 ? "finding" : "findings") + "</div>";
-  }
-
   const chips =
     (data.newCount > 0 ? '<span class="newbadge">NEW ' + data.newCount + "</span>" : "") +
     (data.fixedCount > 0 ? '<span class="fixedbadge">FIXED ' + data.fixedCount + "</span>" : "");
 
   const status = $("#status");
-  status.className = "status" + (high + med === 0 ? " calm" : high > 0 ? " warn" : "");
-
-  // Hierarchy: [Gauge] score + delta / headline / one detail line / chips
-  // One message line only: the breakdown when there is something to act on,
-  // the plain-language sublabel when healthy (it carries the "no high or
-  // medium issues" phrasing pinned by output-parity). The eyebrow and the
-  // big "/100" duplicated the headline and the gauge, so they are gone.
-  const detailHtml = (high + med > 0)
-    ? breakdownHtml.replace('status-breakdown', 'status-breakdown" style="font-size:12px;margin-top:6px').replace('margin-top:2px;color:var(--muted2)', 'margin-top:2px;color:var(--muted2);font-size:11px')
-    : '<div style="font-size:12px;color:var(--muted);margin-top:1px">' + sublabel + '</div>';
+  /* The score lives in the rail now: a compact Health block — number, a
+     progress hairline, the headline and one counts line. No gauge, no KPI
+     tiles: those belong to a dashboard, and this is an application. */
+  const band = score >= 80 ? "ok" : score >= 50 ? "warn" : "bad";
+  status.className = "status " + band;
+  const deltaShort = scoreDelta === null ? "" : (scoreDelta > 0 ? "+" + scoreDelta : String(scoreDelta));
+  const trace = pulseTrace(findings);
 
   status.innerHTML =
-    '<div class="status-main">' +
-    renderGauge(score, 84) +
-    '</div>' +
-    '<div class="status-body" style="gap:4px">' +
-    '<div class="status-score-row" style="align-items:baseline;gap:10px;margin-top:2px">' +
-      '<div style="font-size:42px;font-weight:800;letter-spacing:-0.03em;line-height:1;font-variant-numeric:tabular-nums" title="Health score ' + score + ' of 100">' + score + '</div>' +
-      '<div class="scoredelta ' + deltaCls + '" style="font-size:11px;padding:3px 8px">' + deltaIcon + " " + deltaTxt + "</div>" +
-    '</div>' +
-    '<div class="status-headline ' + (level === "ok" ? "ok" : "warn") + '" style="font-size:13px;margin-top:6px;font-weight:650">' + headline + '</div>' +
-    detailHtml +
-    '<div class="status-meta">' + chips +
-    '<span id="hero-spark" class="chip-trend" hidden></span>' +
-    '<button id="checkschip" type="button" class="lowbadge" hidden></button>' +
+    '<div class="sr-head">' +
+      '<span class="sr-k">Health</span>' +
+      (scoreDelta === null ? "" :
+        '<span class="scoredelta ' + deltaCls + '" title="' + esc(deltaTxt) + '">' + deltaIcon + " " + deltaShort + "</span>") +
     "</div>" +
+    '<div class="sr-score"><span class="sr-num" id="scorenum">0</span><span class="sr-out">/100</span></div>' +
+    '<div class="sr-pulse" role="img" aria-label="Health score ' + score + " of 100\">" +
+      '<svg viewBox="0 0 120 22" preserveAspectRatio="none" aria-hidden="true">' +
+        '<path class="pulse-track" d="' + trace + '" pathLength="100" vector-effect="non-scaling-stroke"></path>' +
+        '<path class="pulse-live" id="scorering" d="' + trace + '" pathLength="100" vector-effect="non-scaling-stroke" style="stroke-dashoffset:100"></path>' +
+      "</svg>" +
+      '<span class="pulse-dot" id="pulsedot" aria-hidden="true" style="left:' + score + '%"></span>' +
     "</div>" +
-    '<div class="stat-tiles">' +
-      '<div class="stat-tile"><b style="color:' + (high > 0 ? "var(--red)" : med > 0 ? "var(--yellow)" : "var(--green)") + '">' + (high + med) + "</b><span>problems</span></div>" +
-      '<div class="stat-tile"><b>' + (data.checksRun != null ? data.checksRun : "—") + "</b><span>checks" + (data.checksSkipped ? " · " + data.checksSkipped + " skipped" : "") + "</span></div>" +
-      '<div class="stat-tile"><b>' + (typeof data.cleanStreak === "number" && data.cleanStreak > 0 ? data.cleanStreak + "×" : "—") + "</b><span>clean streak</span></div>" +
-      '<div class="stat-tile"><b><span class="dot" id="statusdot"></span> <span id="statuspill-txt"></span></b><span>last check</span></div>' +
+    '<div class="sr-msg status-headline">' + esc(headline) + "</div>" +
+    '<div class="sr-line">' +
+      (high + med > 0
+        ? '<b>' + high + "</b> high · <b>" + med + "</b> medium" + (inf ? " · " + inf + " info" : "")
+        : esc(sublabel)) +
+    "</div>" +
+    '<div class="sr-meta">' +
+      chips +
+      '<span id="hero-spark" class="chip-trend" hidden></span>' +
+      '<button id="checkschip" type="button" class="lowbadge" hidden></button>' +
+    "</div>" +
+    '<div class="sr-foot">' +
+      '<span class="sr-fresh"><span class="dot" id="statusdot"></span> <span id="statuspill-txt"></span></span>' +
     "</div>";
 
   animateScore(score);

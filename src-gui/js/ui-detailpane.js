@@ -39,7 +39,7 @@ function paneFindingHtml(f) {
       "</div></details>";
   }
   html += '<div class="fix"><div class="fix-label">Recommended next step</div>' +
-    '<div class="fixtext">' + esc(f.fix || "No automated fix — review details above.") + "</div>" +
+    '<div class="fixtext">' + cmdCode(f.fix || "No automated fix — review details above.") + "</div>" +
     '<button data-copy="' + esc(f.fix || f.detail || f.title) + '">Copy fix</button>' +
     '<button data-ignore="' + esc(f.title) + '" title="Hide this finding in future runs">Dismiss</button>' +
     '<a class="reportbtn" href="' + wrongUrl(f) + '" target="_blank" rel="noopener">Report</a></div>';

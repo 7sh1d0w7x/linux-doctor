@@ -1,109 +1,48 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* === Wide desktop shell (≥1200px) ===
-   Uncaps the phone-first column and puts the monitor to work: fixed rail +
-   fluid main, components stretched over the grid, instrument-scale hero.
-   Below 1200 nothing changes — mobile and the 1100px sidebar rail keep
-   their exact behavior. Variables only, so all four themes hold. */
+/* === Wide desktop (≥1200px) ===
+   The shell is already edge-to-edge from 1100px; what wide adds is the
+   master-detail reading layout: the findings list on the left, the selected
+   finding's full body pinned on the right. */
 @media (min-width: 1200px) {
-  body { padding: 20px 24px 56px; }
+  /* The toolbar sticks under the header, so it must be opaque or the
+     scrolling rows show through it. */
+  html.wide .toolbar { background: var(--bg); margin-bottom: 12px; }
+  html.wide header.scrolled { background: var(--bg2); }
 
-  .wrap { max-width: none; }
-  .content, #report { max-width: none; }
-  .layout { gap: 40px; }
-
-  /* Header stays full-bleed: negative margins must match the new gutters. */
-  header { margin: -12px -24px 24px; padding: 12px 24px; }
-
-  /* Components capped to the old 1040px column now live on the grid.
-     The modal keeps its 740px measure on purpose (readable line length). */
-  #nexthep, .security-posture, .thresh-panel, .history, #trend { max-width: none; }
-
-  /* Hero drops from landing-page scale to instrument scale. The 42px
-     numeral is inline-styled by the renderer, hence the first-child rule;
-     the gauge stays 84px, which is already desktop-appropriate. */
-  .status { padding: 16px 22px; margin-bottom: 16px; }
-  .status-score-row > div:first-child { font-size: 32px !important; }
-
-  /* === Desktop density (phase 3) ===
-     The cards are already compact by default; what was airy at width is
-     the chrome around them. Tighter rows, denser groups, and rendering
-     skips for long collapsed info lists. */
-  html.wide .card summary { padding: 9px 12px; }
-  html.wide .card summary h3 { font-size: 13px; }
-  html.wide .card.crow summary { padding: 7px 10px; }
-  html.wide .group > summary { padding: 8px 4px; }
-  html.wide .group-body { gap: 6px; padding: 8px 0 6px; }
-  html.wide #report { gap: 12px; }
-  html.wide .fix { padding-top: 10px; }
-  html.wide .fix .fixtext { padding: 8px 10px; font-size: 12px; }
-
-  /* Sticky chrome must be opaque: the toolbar sticks under the header, so
-     without a background the scrolling findings show through it (classic
-     overlap artifact — very visible in the desktop webview). */
-  html.wide .toolbar { background: var(--bg); padding: 8px 0; margin-bottom: 12px; }
-  html.wide .toolbar.scrolled { background: var(--bg); }
-  html.wide header.scrolled { background: var(--bg); }
-
-  /* === Master-detail (phase 2) ===
-     The findings list stays on the left; the selected finding's full body
-     renders in a sticky pane on the right. Below 1200 .reportgrid is a
-     plain block and the pane stays hidden — mobile behavior untouched. */
+  /* === Master-detail ===
+     Below 1200 .reportgrid is a plain block and the pane stays hidden. */
   html.wide .reportgrid {
     display: grid;
     grid-template-columns: minmax(0, 1fr) clamp(340px, 30vw, 460px);
     gap: 0 24px;
     align-items: start;
   }
-  /* Explicit placement: without it auto-flow drops the no-match message into
-     the pane column when the report happens to be hidden. */
   html.wide .reportgrid > #drillhint,
   html.wide .reportgrid > #report,
   html.wide .reportgrid > #nomatch { grid-column: 1; }
   html.wide .reportgrid > #detailpane { grid-column: 2; }
   html.wide .detailpane {
-    position: sticky; top: 124px;
-    max-height: calc(100vh - 176px); overflow: auto;
+    position: sticky; top: 104px;
+    max-height: calc(100vh - 152px); overflow: auto;
     background: var(--card); border: 1px solid var(--border);
-    border-radius: 12px; padding: 14px 16px 16px;
+    border-radius: var(--radius); padding: 14px 16px 16px;
   }
   html.wide .detailpane::-webkit-scrollbar { width: 8px; }
   html.wide .detailpane::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; }
   html.wide .dp-kicker {
     display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
-    font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted2);
+    font-size: 10px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; color: var(--muted2);
   }
-  html.wide .dp-tag {
-    background: color-mix(in srgb, var(--green) 16%, transparent);
-    color: var(--green); border-radius: 5px; padding: 2px 7px;
-  }
+  html.wide .dp-tag { background: color-mix(in srgb, var(--green) 16%, transparent); color: var(--green); border-radius: 999px; padding: 2px 7px; }
   html.wide .dp-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-  html.wide .dp-head h3 { font-size: 16px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.3; flex: 1; min-width: 200px; }
+  html.wide .dp-head h3 { font-size: 15px; font-weight: 650; letter-spacing: -.015em; line-height: 1.3; flex: 1; min-width: 200px; }
   html.wide .dp-body .detail { padding: 10px 0 12px; border-top: 1px solid var(--border); margin-top: 10px; }
   html.wide .dp-lowconf { display: flex; gap: 6px; align-items: center; font-size: 11px; color: var(--muted2); margin-top: 6px; }
   html.wide .dp-evrow { display: flex; align-items: center; gap: 6px; margin: 0 0 10px; }
   html.wide .dp-body .fix { padding-top: 12px; }
   html.wide #report details.card.selected {
     background: var(--card);
-    border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
-    outline: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+    border-color: var(--border);
+    outline: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
   }
-
-  /* === Status bar (phase 4) ===
-     The footer becomes persistent desktop chrome: view, freshness, the
-     read-only promise, and the keyboard map — always on screen. */
-  html.wide body { padding-bottom: 16px; }
-  html.wide footer {
-    position: sticky; bottom: 0; z-index: 18;
-    display: flex; align-items: center; gap: 16px;
-    margin: 24px -24px -16px; padding: 7px 24px;
-    background: var(--bg);
-    border-top: 1px solid var(--border);
-    text-align: left; line-height: 1.4;
-  }
-  html.wide footer .sbar-view { display: inline; font-weight: 650; color: var(--muted); flex-shrink: 0; }
-  html.wide footer .sbar-check { display: inline; font-family: var(--mono); font-size: 11px; flex-shrink: 0; }
-  html.wide footer .sbar-check.stale { color: var(--yellow); }
-  html.wide footer .sbar-check[hidden] { display: none; }
-  html.wide footer .sbar-note { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  html.wide footer .sbar-hints { margin-left: auto; flex-shrink: 0; white-space: nowrap; }
 }

@@ -269,6 +269,7 @@ async function ignoreFinding(title, btn) {
 
 // Setup modules
 setupKeyboard();
+setupPalette();
 setupPolling();
 setupThresholds();
 setupNotifyButton();
@@ -289,6 +290,11 @@ $("#copyjson")?.addEventListener("click", async () => {
 
 // Keyboard shortcuts help (?)
 $("#helpbtn")?.addEventListener("click", openHelp);
+/* Empty-state escape hatches: the filtered-out message and any future one
+   carry a control, so a dead end is always one click from resolving. */
+document.addEventListener("click", (e) => {
+  if (e.target.closest("[data-clear-filters]")) $("#clearbtn")?.click();
+});
 
 // The hero "N checks" chip opens the matrix too.
 $("#checkschip")?.addEventListener("click", openChecksMatrix);

@@ -9,39 +9,53 @@
 <style>
 /* ── base.css ── */
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* === CSS Variables, Reset, Typography === */
+/* === CSS Variables, Reset, Typography ===
+   The canon: a professional Linux desktop tool. One neutral surface ladder
+   tinted from a single hue, one accent with exactly three jobs (primary
+   action, selected row, focus), and three severity inks that are the only
+   other colours on screen. Radii are two values. Severity inks live here so
+   every component inherits them and no component re-defines a colour. */
 :root {
   /* Native widgets (scrollbars, inputs) follow the dark chrome. */
   color-scheme: dark;
-  --bg: #080a11; --bg2: #0e121e; --card: #111625; --card2: #171d2e; --border: #1e2538;
-  --text: #eef1f7; --muted: #8a93a6; --muted2: #7f8aa1;
-  --red: #ff5a67; --yellow: #f0b429; --green: #2ed69a; --blue: #5b9cf6; --purple: #a78bfa;
-  --accent: #4a7bff; --accent2: #6b93ff; --hover: #1c2235; --evidence-bg: #0c1020;
-  --shadow: 0 1px 2px rgba(0,0,0,.24), 0 8px 24px rgba(0,0,0,.18);
-  --shadow-sm: 0 1px 2px rgba(0,0,0,.20);
-  --shadow-lg: 0 8px 24px rgba(0,0,0,.28), 0 16px 40px rgba(0,0,0,.20);
-  --radius: 14px; --radius-sm: 9px; --radius-lg: 18px;
+  /* Surface ladder — 1 the window, 2 the chrome, 3 the controls. */
+  --bg: #101216; --bg2: #15181d; --card: #171b21; --card2: #1e222a;
+  --border: #262b33;
+  --text: #e7eaef; --muted: #98a1ad; --muted2: #737d8a;
+  /* Severity inks — the only colours besides the accent. */
+  --red: #f0616d; --yellow: #e0b341; --green: #3fb950; --blue: #46bfd4; --purple: #a371f7;
+  --accent: #4c8dff; --accent2: #6fa2ff; --hover: #1b2028; --evidence-bg: #0d1014;
+  /* Ink that sits on an accent or green fill — verified ≥4.5:1 in all themes. */
+  --on-accent: #0b0e14; --on-ok: #06180d;
+  --shadow: 0 1px 2px rgba(0,0,0,.30);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.25);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,.46), 0 2px 6px rgba(0,0,0,.30);
+  --radius: 10px; --radius-sm: 6px; --radius-lg: 12px;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  --sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Cantarell, system-ui, sans-serif;
 }
 :root[data-theme="light"] {
   color-scheme: light;
-  --bg: #f4f6fa; --bg2: #eef1f6; --card: #ffffff; --card2: #f5f7fb; --border: #e2e7f0;
-  --text: #1a1f2b; --muted: #5e6878; --muted2: #667080;
-  --red: #e0464f; --yellow: #b07d00; --green: #0e9c5a; --blue: #2f6ad6; --purple: #843fe0;
-  --hover: #eef1f7; --evidence-bg: #f7f9fc;
-  --shadow: 0 1px 2px rgba(20,30,50,.06), 0 8px 24px rgba(20,30,50,.08);
+  --bg: #f7f8fa; --bg2: #eef1f5; --card: #ffffff; --card2: #e9edf3;
+  --border: #dfe3e9;
+  --text: #171a1f; --muted: #59616d; --muted2: #6b7480;
+  --red: #bf2c33; --yellow: #7d5407; --green: #0a6b3c; --blue: #0e7285; --purple: #7c3fd6;
+  --accent: #2f6ad6; --accent2: #5c8ce0; --hover: #e9edf3; --evidence-bg: #f4f6f9;
+  --on-accent: #ffffff; --on-ok: #ffffff;
+  --shadow: 0 1px 2px rgba(20,30,50,.06);
   --shadow-sm: 0 1px 2px rgba(20,30,50,.08);
+  --shadow-lg: 0 12px 32px rgba(20,30,50,.14), 0 2px 6px rgba(20,30,50,.08);
 }
 /* Terminal theme: phosphor-console look for sysadmins. Same layout, same
    contrast budget (all pairs ≥4.5:1, verified) — only variables change, so
    no component CSS needs theme-specific overrides. Mono takes over --sans,
    corners go sharp, shadows go flat. */
 :root[data-theme="terminal"] {
-  --bg: #060906; --bg2: #0a0f0a; --card: #0b100b; --card2: #0e140e; --border: #1d2b1d;
+  --bg: #060906; --bg2: #0a0d0a; --card: #0b100b; --card2: #0e140e; --border: #1d2b1d;
   --text: #d9ead9; --muted: #8fae8f; --muted2: #6f8f6f;
   --red: #ff5a5a; --yellow: #ffd433; --green: #3dff73; --blue: #6aa8ff; --purple: #b79aff;
   --accent: #3dff73; --accent2: #6dff92; --hover: #101a10; --evidence-bg: #070b07;
+  --on-accent: #04120a; --on-ok: #04120a;
   --shadow: none; --shadow-sm: none; --shadow-lg: none;
   --radius: 4px; --radius-sm: 2px; --radius-lg: 6px;
   --sans: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
@@ -52,18 +66,20 @@ html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 body {
   background: var(--bg);
   color: var(--text);
-  font: 14.5px/1.6 var(--sans);
-  padding: 32px 20px 80px;
-  letter-spacing: -0.011em;
+  font: 13.5px/1.5 var(--sans);
+  letter-spacing: 0;
+  /* The shell owns the padding: header, sidebar and status bar run full-bleed
+     to the window edge, so the page itself carries none. */
+  padding: 0;
 }
-.wrap { max-width: 1100px; margin: 0 auto; }
-.empty { text-align: center; color: var(--muted); padding: 48px 0; font-size: 13.5px; }
+.wrap { max-width: none; margin: 0; }
+.empty { text-align: center; color: var(--muted); padding: 48px 0; font-size: 13px; }
 kbd { font-family: var(--mono); font-size: 11px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 5px; padding: 1px 5px; background: var(--card2); }
 
 /* === Accessibility === */
 .skip-link {
   position: absolute; left: -9999px; top: 0; z-index: 100;
-  background: var(--accent); color: #fff; padding: 10px 16px;
+  background: var(--accent); color: var(--on-accent); padding: 10px 16px;
   border-radius: 0 0 10px 0; font-size: 13px; font-weight: 650;
 }
 .skip-link:focus { left: 0; }
@@ -82,182 +98,241 @@ body { transition: background-color .15s ease, color .15s ease; }
 
 /* ── layout.css ── */
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* === Header — reduced chrome === */
+/* === App shell — headerbar, rail, main column, status bar ===
+   Grammar from GNOME Settings (sidebar + rows), density and restraint from
+   Linear, the list-with-actions model from JetBrains Toolbox. The shell is
+   edge-to-edge: chrome owns the window, nothing floats in a page. */
+
+/* === Headerbar — 48px, identity as subtitle, one primary action === */
 header {
-  display: flex; align-items: center; gap: 14px; margin-bottom: 32px;
-  position: sticky; top: 0; z-index: 20; background: var(--bg);
-  margin: -12px -20px 24px; padding: 12px 20px;
-  border-bottom: 1px solid transparent;
-  transition: border-color .2s ease, box-shadow .2s ease, backdrop-filter .2s ease;
+  display: flex; align-items: center; gap: 12px;
+  height: 48px; padding: 0 12px;
+  position: sticky; top: 0; z-index: 30;
+  background: var(--bg2); border-bottom: 1px solid var(--border);
+  transition: border-color .2s ease, box-shadow .2s ease;
 }
-header.scrolled { border-bottom-color: var(--border); box-shadow: 0 4px 16px rgba(0,0,0,.12); background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(10px); }
+header.scrolled { border-bottom-color: var(--border); box-shadow: 0 1px 0 rgba(0,0,0,.3); }
+.hdr-id { display: flex; flex-direction: column; justify-content: center; gap: 1px; min-width: 0; }
 header .logo {
-  width: 40px; height: 40px; display: grid; place-items: center;
-  background: var(--card); border: 1px solid var(--border); border-radius: 11px;
-  color: var(--green);
+  width: 26px; height: 26px; display: grid; place-items: center; flex-shrink: 0;
+  border-radius: var(--radius-sm); color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
 }
-/* Brand home-link: logo + title behave as one link to Overview. */
-.brand { display: flex; align-items: center; gap: 14px; text-decoration: none; color: inherit; border-radius: 11px; }
-.brand:hover h1 { text-decoration: underline; text-underline-offset: 3px; }
-.brand:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+header .logo svg { width: 15px; height: 15px; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
+.brand:hover h1 { text-decoration: none; color: var(--accent); }
+.brand:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: var(--radius-sm); }
 .brand h1 { margin: 0; }
-header .logo svg { display: block; }
-h1 { font-size: 18px; font-weight: 750; letter-spacing: -0.025em; line-height: 1.2; }
-.sysinfo { color: var(--muted2); font-size: 12px; margin-top: 2px; font-weight: 450; }
-.sysinfo .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 18%, transparent); vertical-align: 1px; margin-right: 5px; }
-.sysinfo .dot.stale { background: var(--yellow); box-shadow: 0 0 0 3px color-mix(in srgb, var(--yellow) 18%, transparent); }
-.sysinfo .ver { font-family: var(--mono); font-size: 11px; letter-spacing: 0; color: var(--muted2); }
-.actions { margin-left: auto; display: flex; gap: 7px; align-items: center; }
+h1 { font-size: 13.5px; font-weight: 600; letter-spacing: -.005em; line-height: 1.2; }
+.sysinfo {
+  font-family: var(--mono); font-size: 11px; color: var(--muted2);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+}
+.sysinfo .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--green); vertical-align: 1px; margin-right: 5px; }
+.sysinfo .dot.stale { background: var(--yellow); }
+.sysinfo .ver { font-family: var(--mono); font-size: 11px; color: var(--muted2); }
+.actions { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+
+/* === Dropdown menu === */
 .dropdown { position: relative; }
 .dropdown-menu {
-  position: absolute; top: calc(100% + 8px); right: 0; min-width: 180px;
-  background: var(--card); border: 1px solid var(--border); border-radius: 11px;
-  box-shadow: var(--shadow-lg); padding: 6px; display: none; z-index: 40;
+  position: absolute; top: calc(100% + 6px); right: 0; min-width: 190px;
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow-lg); padding: 5px; display: none; z-index: 40;
 }
-.dropdown.open .dropdown-menu { display: block; animation: dropin .15s ease; }
-@keyframes dropin { from { opacity:0; transform: translateY(-4px) scale(.98); } to { opacity:1; transform: none; } }
+.dropdown.open .dropdown-menu { display: block; animation: dropin .12s ease; }
+@keyframes dropin { from { opacity:0; transform: translateY(-4px); } to { opacity:1; transform: none; } }
 .dropdown-item {
-  display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 11px;
-  border-radius: 7px; border: none; background: transparent; color: var(--text);
-  font-size: 13px; font-weight: 500; cursor: pointer; text-align: left;
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 9px;
+  border-radius: var(--radius-sm); border: none; background: transparent; color: var(--text);
+  font-size: 12.5px; font-weight: 450; cursor: pointer; text-align: left;
 }
 .dropdown-item:hover { background: var(--hover); }
 .dropdown-item kbd { margin-left: auto; font-size: 10px; }
+
+/* === Buttons — flat controls, one primary === */
 button {
   background: var(--card); color: var(--text); border: 1px solid var(--border);
-  padding: 7px 12px; border-radius: 9px; font-size: 12.5px; cursor: pointer; font-weight: 550;
-  transition: background .15s ease, border-color .15s ease, opacity .15s ease;
+  padding: 6px 11px; border-radius: var(--radius-sm); font-size: 12px; cursor: pointer;
+  font-weight: 500; line-height: 1.5;
+  transition: background .12s ease, border-color .12s ease, color .12s ease, opacity .12s ease;
 }
-button:hover { background: var(--hover); border-color: var(--border); }
+button:hover { background: var(--card2); border-color: var(--border); color: var(--text); }
 button:active { transform: none; }
 button.primary {
-  background: var(--accent); border-color: var(--accent); color: #0b1020;
-  font-weight: 600;
+  background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600;
 }
 button.primary:hover { background: var(--accent2); border-color: var(--accent2); }
 button:disabled { opacity: .45; cursor: default; }
+button.iconbtn { padding: 6px 8px; color: var(--muted); }
+button.iconbtn:hover { color: var(--text); }
 
-/* === Status Hero — BALANCED PREMIUM === */
-.status {
-  display: grid; grid-template-columns: 92px 1fr auto; gap: 24px; align-items: center;
-  padding: 22px 26px; margin-bottom: 22px;
-  background: var(--card); border: 1px solid var(--border); border-radius: 16px;
-  position: relative; overflow: hidden;
+/* === Health block (in the rail) — the score, read at a glance ===
+   Not a panel and not a dashboard hero: a label, the number, a progress
+   hairline, the headline, one counts line, the freshness footer. */
+.status { display: block; padding: 0 8px 2px; margin: 0; background: transparent; border: none; border-radius: 0; }
+.status.running { display: flex; align-items: center; justify-content: flex-start; color: var(--muted2); font-size: 12px; padding: 6px 0; }
+.sr-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.sr-k { font-size: 10px; font-weight: 650; letter-spacing: .1em; text-transform: uppercase; color: var(--muted2); }
+.sr-score { display: flex; align-items: baseline; gap: 3px; }
+.sr-num { font-size: 32px; font-weight: 700; line-height: 1; letter-spacing: -.04em; font-variant-numeric: tabular-nums; color: var(--text); }
+.sr-out { font-size: 11px; font-weight: 500; color: var(--muted2); font-variant-numeric: tabular-nums; }
+.sr-pulse { position: relative; height: 26px; margin: 10px 0 9px; }
+.sr-pulse svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.pulse-track { fill: none; stroke: var(--card2); stroke-width: 1.5; }
+.pulse-live { fill: none; stroke: var(--green); stroke-width: 1.75; stroke-linecap: round; }
+/* The dot is HTML, not a circle in the SVG: the viewBox is stretched
+   non-uniformly (preserveAspectRatio="none"), so a circle would render as an
+   ellipse. It marks the end of the trace — the current reading. */
+.pulse-dot {
+  position: absolute; top: 16.5px; left: 0; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px;
+  border-radius: 50%; background: var(--green);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 20%, transparent);
 }
-.status.running { display: flex; justify-content: center; color: var(--muted); padding: 40px; grid-template-columns: 1fr; }
-.status.calm { border-color: color-mix(in srgb, var(--green) 14%, var(--border)); }
-.status.calm::before {
-  content: ""; position: absolute; top: 0; left: 0; right: 0;
-  height: 2px; background: var(--green); opacity: .9;
-}
-.status.warn { border-color: color-mix(in srgb, var(--red) 18%, var(--border)); }
-.status-main { display: flex; flex-direction: column; align-items: center; gap: 0; position: relative; z-index: 1; }
-.status-body { flex: 1; min-width: 0; position: relative; z-index: 1; display: flex; flex-direction: column; gap: 6px; }
-.status-score-row { display: flex; align-items: baseline; gap: 12px; }
-
-/* Gauge — larger, quieter track */
-.gauge { position: relative; width: 96px; height: 96px; flex-shrink: 0; }
-.gauge svg { width: 100%; height: 100%; }
-.gauge .track { fill: none; stroke: var(--border); stroke-width: 5; opacity: .9; }
-.gauge .ring { fill: none; stroke-width: 5; stroke-linecap: round; transition: stroke .4s ease, stroke-dashoffset .9s cubic-bezier(.4,0,.2,1); }
-.gauge-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.scorenum { font-size: 38px; font-weight: 800; line-height: 1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
-.scoreout { font-size: 10px; color: var(--muted2); margin-top: -1px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
-.scoredelta { font-size: 12px; font-weight: 600; margin-top: 4px; font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 20px; background: var(--bg2); border: 1px solid var(--border); width: fit-content; }
+.status.warn .pulse-live { stroke: var(--yellow); }
+.status.warn .pulse-dot { background: var(--yellow); box-shadow: 0 0 0 3px color-mix(in srgb, var(--yellow) 20%, transparent); }
+.status.bad .pulse-live { stroke: var(--red); }
+.status.bad .pulse-dot { background: var(--red); box-shadow: 0 0 0 3px color-mix(in srgb, var(--red) 20%, transparent); }
+.sr-msg { font-size: 12.5px; font-weight: 600; color: var(--text); line-height: 1.35; }
+.sr-line { font-size: 11.5px; color: var(--muted); margin-top: 3px; }
+.sr-line b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.sr-meta { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; margin-top: 8px; }
+.sr-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 9px; padding-top: 9px; border-top: 1px solid var(--border); font-size: 10.5px; color: var(--muted2); }
+.sr-fresh { display: inline-flex; align-items: center; gap: 5px; min-width: 0; }
+.sr-checks { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.scoredelta { font-size: 10.5px; font-weight: 550; font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: 3px; padding: 1px 6px; border-radius: 999px; background: var(--card2); border: 1px solid var(--border); color: var(--muted); }
 .delta-up { color: var(--green); } .delta-down { color: var(--red); } .delta-flat { color: var(--muted2); }
-
-/* New hierarchy inside status-body */
-.status-headline { font-size: 22px; font-weight: 750; line-height: 1.25; letter-spacing: -0.02em; }
-.status-headline.ok { color: var(--text); }
-.status-headline.warn { color: var(--text); }
-.status-breakdown { font-size: 13px; line-height: 1.5; color: var(--muted); margin-top: 6px; }
-.status-breakdown b { color: var(--text); font-weight: 650; }
-.status-breakdown .sep { color: var(--muted2); margin: 0 6px; }
-/* Hero stat tiles (Beszel header-stats pattern): at-a-glance numbers filling
-   the space beside the score instead of two lost lines of small text. */
-.stat-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; min-width: 210px; align-self: center; }
-.stat-tile { background: var(--bg2); border: 1px solid var(--border); border-radius: 9px; padding: 8px 10px; min-width: 0; }
-.stat-tile b { display: block; font-size: 17px; font-weight: 750; letter-spacing: -0.02em; line-height: 1.15; color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.stat-tile span { font-size: 9.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted2); }
-.stat-tile .dot { width: 7px; height: 7px; }
-.status-meta { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 12px; color: var(--muted2); flex-wrap: wrap; }
-.status-meta .dot { width: 6px; height: 6px; }
-.spinner { display: inline-block; width: 14px; height: 14px; margin-right: 8px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -2px; }
+.sr-foot .dot { width: 6px; height: 6px; }
+.spinner { display: inline-block; width: 13px; height: 13px; margin-right: 8px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -2px; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.newbadge, .fixedbadge { font-size: 10px; font-weight: 700; letter-spacing: .03em; border-radius: 6px; padding: 3px 7px; flex-shrink: 0; font-variant-numeric: tabular-nums; border: 1px solid transparent; }
-.newbadge { color: var(--purple); background: color-mix(in srgb, var(--purple) 12%, transparent); border-color: color-mix(in srgb, var(--purple) 20%, transparent); }
-.fixedbadge { color: var(--green); background: color-mix(in srgb, var(--green) 12%, transparent); border-color: color-mix(in srgb, var(--green) 20%, transparent); }
-.lowbadge { font-size: 10px; font-weight: 600; letter-spacing: .04em; color: var(--muted2); background: transparent; border: 1px solid var(--border); border-radius: 5px; padding: 2px 6px; flex-shrink: 0; cursor: pointer; }
-.checkid { font-family: var(--mono); font-size: 10px; color: var(--muted2); border: none; background: var(--bg2); border-radius: 5px; padding: 2px 6px; flex-shrink: 0; }
+.newbadge, .fixedbadge { font-size: 10px; font-weight: 600; letter-spacing: .03em; border-radius: 999px; padding: 2px 7px; flex-shrink: 0; font-variant-numeric: tabular-nums; border: 1px solid transparent; }
+.newbadge { color: var(--purple); background: color-mix(in srgb, var(--purple) 12%, transparent); border-color: color-mix(in srgb, var(--purple) 22%, transparent); }
+.fixedbadge { color: var(--green); background: color-mix(in srgb, var(--green) 12%, transparent); border-color: color-mix(in srgb, var(--green) 22%, transparent); }
+.lowbadge { font-size: 10px; font-weight: 550; letter-spacing: .03em; color: var(--muted2); background: transparent; border: 1px solid var(--border); border-radius: 999px; padding: 2px 7px; flex-shrink: 0; cursor: pointer; }
+.checkid { font-family: var(--mono); font-size: 10px; color: var(--muted2); border: none; background: var(--card2); border-radius: var(--radius-sm); padding: 2px 6px; flex-shrink: 0; }
 
-/* === Toolbar — quieter secondary controls === */
+/* === Shell: rail + main column === */
+.layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
+.maincol { min-width: 0; padding: 16px 16px 0; }
+
+/* === Rail (≥1100px): the app's navigation, flush to the window edge === */
+.sidebar {
+  display: none;
+  position: sticky; top: 48px; align-self: start;
+  height: calc(100vh - 48px); overflow: auto;
+  background: var(--bg2); border-right: 1px solid var(--border);
+  padding: 10px 8px 12px;
+  scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+}
+.sidebar::-webkit-scrollbar { width: 8px; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; }
+.sb-block { margin-bottom: 16px; }
+.sb-block:last-child { margin-bottom: 4px; }
+.sb-block h2 {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--muted2); font-weight: 650; margin: 4px 8px 6px;
+}
+.sb-nav { display: flex; flex-direction: column; gap: 1px; }
+.sb-item {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 6px 8px; border-radius: var(--radius-sm); border: none; background: transparent;
+  color: var(--muted); font-size: 12.5px; font-weight: 450; cursor: pointer;
+  text-align: left; transition: background .1s ease, color .1s ease;
+}
+.sb-item:hover { background: var(--hover); color: var(--text); }
+.sb-item .sb-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sb-item .sb-count {
+  font-size: 11px; font-weight: 500; font-variant-numeric: tabular-nums;
+  color: var(--muted2); background: transparent; border: none; padding: 0; flex-shrink: 0;
+}
+.sb-item.high .sb-count { color: var(--red); }
+.sb-item.medium .sb-count { color: var(--yellow); }
+.sb-item.active { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--text); }
+@media (min-width: 1100px) {
+  .layout { grid-template-columns: 236px minmax(0, 1fr); gap: 0; align-items: start; }
+  .sidebar { display: block; }
+  .maincol { padding: 18px 24px 20px; }
+}
+
+/* === Views nav: rail on desktop, scrollable tab strip on mobile === */
+#sidebar .viewtabs { display: flex; flex-direction: column; gap: 1px; }
+#sidebar .viewtab {
+  display: flex; align-items: center; gap: 9px; width: 100%;
+  padding: 7px 8px; border-radius: var(--radius-sm); border: none; background: transparent;
+  color: var(--muted); font-size: 12.5px; font-weight: 450; cursor: pointer; text-align: left;
+  transition: background .1s ease, color .1s ease;
+}
+#sidebar .viewtab:hover { background: var(--hover); color: var(--text); }
+#sidebar .viewtab.active { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--text); font-weight: 500; }
+#sidebar .viewtab.active svg { color: var(--accent); }
+#sidebar .viewtab svg { flex-shrink: 0; color: var(--muted2); }
+#sidebar .tabbadge { margin-left: auto; }
+
+/* === Toolbar — filter pills + search === */
 .toolbar {
-  display: flex; gap: 10px; align-items: center;
-  margin: 0 0 20px; padding: 0;
-  background: transparent; border: none;
-  flex-wrap: wrap;
-  position: sticky; top: 64px; z-index: 19;
-  transition: background .2s ease;
+  display: flex; gap: 8px; align-items: center;
+  margin: 0 0 12px; padding: 0;
+  background: transparent; border: none; flex-wrap: wrap;
+  position: sticky; top: 48px; z-index: 20;
 }
 .toolbar.scrolled { background: transparent; }
-.filters {
-  display: flex; gap: 2px;
-  background: var(--card); border: 1px solid var(--border);
-  padding: 3px; border-radius: 999px;
-}
-.fpill { padding: 6px 13px; border-radius: 999px; font-size: 12px; font-weight: 600; border: none; background: transparent; color: var(--muted); cursor: pointer; transition: all .15s ease; letter-spacing: -0.01em; }
+.seg { display: flex; gap: 2px; background: var(--card2); border: 1px solid var(--border); padding: 2px; border-radius: var(--radius-sm); }
+.segbtn { padding: 5px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 500; border: none; background: transparent; color: var(--muted); cursor: pointer; }
+.segbtn:hover { color: var(--text); }
+.segbtn.active { background: var(--card); color: var(--text); }
+.filters { display: flex; gap: 2px; background: var(--card2); border: 1px solid var(--border); padding: 2px; border-radius: 999px; }
+.fpill { padding: 5px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 500; border: none; background: transparent; color: var(--muted); cursor: pointer; transition: all .12s ease; display: inline-flex; align-items: center; gap: 5px; }
 .fpill:hover { color: var(--text); background: var(--hover); }
-.fpill.active { background: var(--text); color: var(--bg); }
-.fpill.high.active { background: var(--red); color: #111; }
-.fpill.medium.active { background: var(--yellow); color: #111; }
-.fpill.info.active { background: var(--blue); color: #06121f; }
-:root[data-theme="light"] .fpill.info.active { color: #fff; }
+.fpill.active { background: var(--card); color: var(--text); }
+.fpill.high.active { color: var(--red); }
+.fpill.medium.active { color: var(--yellow); }
+.fpill.info.active { color: var(--blue); }
 .fpill:disabled { opacity: .3; cursor: default; }
-.pill-icon { font-size: 11px; margin-right: 3px; }
+.pill-icon { font-size: 11px; }
 #search {
-  flex: 1; min-width: 200px;
-  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
-  padding: 8px 12px 8px 34px; color: var(--text); font-size: 13px; font-weight: 450;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238a93a6' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20L16.5 16.5'/%3E%3C/svg%3E");
-  background-repeat: no-repeat; background-position: 11px 50%;
-  transition: border-color .15s ease, box-shadow .15s ease;
+  flex: 1; min-width: 180px;
+  background: var(--card2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 7px 12px 7px 32px; color: var(--text); font-size: 12.5px; font-weight: 400;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='%23737d8a' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20L16.5 16.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: 10px 50%;
+  transition: border-color .12s ease, box-shadow .12s ease;
 }
 #search::placeholder { color: var(--muted2); }
-#search:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent); }
-#search:hover { border-color: var(--border); }
-.toolbtn { padding: 6px 11px; font-size: 12px; border-radius: 9px; background: var(--card); font-weight: 550; border: 1px solid var(--border); color: var(--muted); }
-.toolbtn:hover { background: var(--card); border-color: var(--muted2); color: var(--text); transform: none; box-shadow: none; }
-.toolbtn.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
-#autorefresh.on { background: var(--accent); color: #0b1020; border-color: var(--accent); }
-#autorefresh.paused { background: color-mix(in srgb, var(--yellow) 12%, var(--card)); border-color: color-mix(in srgb, var(--yellow) 30%, transparent); color: var(--yellow); opacity: .9; }
+#search:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent); }
+.toolbtn { padding: 6px 10px; font-size: 11.5px; border-radius: var(--radius-sm); background: var(--card); font-weight: 500; border: 1px solid var(--border); color: var(--muted); }
+.toolbtn:hover { background: var(--card2); border-color: var(--border); color: var(--text); box-shadow: none; }
+.toolbtn.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+#autorefresh.on { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); border-color: color-mix(in srgb, var(--accent) 32%, transparent); }
+#autorefresh.paused { background: color-mix(in srgb, var(--yellow) 12%, transparent); border-color: color-mix(in srgb, var(--yellow) 30%, transparent); color: var(--yellow); }
 
-/* === Content grid — breathing room === */
-.content { display: grid; gap: 20px; max-width: 1040px; margin: 0 auto; width: 100%; }
-#report { display: flex; flex-direction: column; gap: 18px; max-width: 1040px; margin: 0 auto; width: 100%; }
+/* === Content === */
+.content { display: grid; gap: 14px; max-width: none; margin: 0; width: 100%; }
+#report { display: flex; flex-direction: column; gap: 10px; max-width: none; margin: 0; width: 100%; }
 #nomatch { text-align: center; color: var(--muted2); padding: 32px 0; font-size: 13px; }
-#drillhint { text-align: center; color: var(--muted2); padding: 24px 0; font-size: 13px; border: 1px dashed var(--border); border-radius: 12px; margin-bottom: 4px; background: color-mix(in srgb, var(--card) 50%, transparent); }
-.diff-sub { font-weight: 500; color: var(--muted2); font-size: 11px; }
+#drillhint { text-align: center; color: var(--muted2); padding: 20px 0; font-size: 12.5px; border: 1px dashed var(--border); border-radius: var(--radius); margin-bottom: 4px; }
+.diff-sub { font-weight: 400; color: var(--muted2); font-size: 11px; }
 
-/* === Groups — reduced chrome === */
+/* === Groups — section headings, not boxes === */
 .group { background: transparent; border: none; border-radius: 0; overflow: visible; box-shadow: none; }
-.group summary { list-style: none; display: flex; align-items: center; gap: 10px; padding: 10px 4px 10px; cursor: pointer; user-select: none; font-size: 13px; font-weight: 650; color: var(--text); border-bottom: 1px solid var(--border); transition: color .15s ease; }
-.group[open] summary { border-bottom-color: var(--border); background: transparent; }
-.group.high summary { color: var(--text); }
-.group.medium summary { color: var(--text); }
-.group.info summary { color: var(--muted); }
+.group summary {
+  list-style: none; display: flex; align-items: center; gap: 9px;
+  padding: 9px 2px; cursor: pointer; user-select: none;
+  font-size: 12.5px; font-weight: 600; letter-spacing: 0; text-transform: none;
+  color: var(--muted); border-bottom: 1px solid var(--border); transition: color .12s ease;
+}
+.group summary:hover { color: var(--muted); }
+.group[open] summary { border-bottom-color: var(--border); }
+.group.high summary, .group.medium summary { color: var(--muted2); }
+.group.info summary { color: var(--muted2); }
 .group summary::-webkit-details-marker { display: none; }
 .group summary b { color: var(--text); }
-.group summary .chev { margin-left: auto; font-size: 10px; transition: transform .18s ease; color: var(--muted2); }
+.group summary .chev { margin-left: auto; font-size: 10px; transition: transform .15s ease; color: var(--muted2); }
 .group[open] summary .chev { transform: rotate(90deg); }
-.group-body { padding: 14px 0 8px; display: grid; gap: 12px; grid-template-columns: 1fr; }
-.sevicon { font-size: 13px; line-height: 1; flex-shrink: 0; display: inline-flex; align-items: center; }
+.group-body { padding: 6px 0 6px; display: grid; gap: 1px; grid-template-columns: 1fr; }
+.sevicon { font-size: 12px; line-height: 1; flex-shrink: 0; display: inline-flex; align-items: center; }
 
-/* === Severity dots === */
-.sev-dot {
-  width: 9px; height: 9px; border-radius: 50%;
-  display: inline-block; flex-shrink: 0;
-  background: var(--muted2);
-}
+/* === Severity dots — the app's only colour besides the accent === */
+.sev-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; background: var(--muted2); }
 .sev-dot.high { background: var(--red); }
 .sev-dot.medium { background: var(--yellow); }
 .sev-dot.info { background: var(--blue); }
@@ -268,298 +343,329 @@ button:disabled { opacity: .45; cursor: default; }
 .sev-dot.na { background: transparent; border: 2px solid var(--muted2); }
 .sev-dot.atomic { background: var(--purple); }
 
-/* === Category icons === */
+/* === Category icons / icon fallback === */
 svg.cat-ic { display: inline-block; vertical-align: -2px; }
 .sb-ic { display: inline-flex; align-items: center; width: 16px; justify-content: center; flex-shrink: 0; }
-
-/* === Icon fallback === */
 .ico { position: relative; display: inline-flex; align-items: center; }
 .ico svg { display: block; }
 .ico .fb { display: none; font-size: 13px; line-height: 1; }
 html.no-svg .ico svg { display: none !important; }
 html.no-svg .ico .fb { display: inline !important; }
 
-/* === Footer === */
-footer { margin-top: 56px; color: var(--muted2); font-size: 11.5px; text-align: center; line-height: 1.6; }
-/* Status-bar spans exist only for the wide desktop chrome (wide.css);
-   on narrow screens the footer keeps its original single note + hints. */
+/* === Status bar (footer) === */
+footer { margin: 0; color: var(--muted2); font-size: 11px; text-align: left; line-height: 1.4; }
 footer .sbar-view, footer .sbar-check { display: none; }
+/* Built-by credit: the author's mark, quiet, at the end of the status bar. The
+   image is inlined at build time so the dashboard stays one self-contained file. */
+.sbar-brand { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; margin-left: auto; font-family: var(--mono); font-size: 10.5px; letter-spacing: .02em; color: var(--muted2); }
+.sbar-mark { height: 16px; width: auto; display: block; opacity: .85; flex: none; }
 
-/* === Two-column layout === */
-.layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
-.sidebar {
-  display: none;
-  position: sticky; top: 88px; align-self: start;
-  max-height: calc(100vh - 100px); overflow: auto;
-  scrollbar-width: thin; scrollbar-color: var(--border) transparent;
-  background: transparent; border: none; border-radius: 0;
-  box-shadow: none;
-  padding: 0 16px 0 0;
-}
-.sidebar::-webkit-scrollbar { width: 4px; }
-.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-.sb-block { margin-bottom: 24px; }
-.sb-block:last-child { margin-bottom: 4px; }
-.sb-block h2 {
-  font-size: 10px; text-transform: uppercase; letter-spacing: .12em;
-  color: var(--muted2); font-weight: 700; margin-bottom: 10px;
-}
-.sb-nav { display: flex; flex-direction: column; gap: 2px; }
-.sb-item {
-  display: flex; align-items: center; gap: 8px; width: 100%;
-  padding: 6px 8px; border-radius: 8px; border: none; background: transparent;
-  color: var(--muted); font-size: 12.5px; font-weight: 500; cursor: pointer;
-  text-align: left; transition: background .12s ease, color .12s ease;
-}
-.sb-item:hover { background: var(--hover); color: var(--text); }
-.sb-item .sb-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sb-item .sb-count {
-  font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums;
-  color: var(--muted2); background: transparent; border: none;
-  padding: 0; flex-shrink: 0;
-}
-.sb-item.high .sb-count { color: var(--red); }
-.sb-item.medium .sb-count { color: var(--yellow); }
-.sb-item.active { background: var(--card); color: var(--text); outline: 1px solid var(--border); }
-@media (min-width: 1100px) {
-  .layout { grid-template-columns: 240px minmax(0, 1fr); gap: 32px; }
-  .sidebar { display: block; }
-}
-
-/* === App views: Cockpit-style sidebar nav on desktop, scrollable tab bar
-   on mobile. One set of buttons (id="viewtabs") moves between the two
-   presentations purely through CSS. */
-#sidebar .viewtabs { display: flex; flex-direction: column; gap: 2px; }
-#sidebar .viewtab {
-  display: flex; align-items: center; gap: 8px; width: 100%;
-  padding: 7px 8px; border-radius: 8px; border: none; background: transparent;
-  color: var(--muted); font-size: 12.5px; font-weight: 500; cursor: pointer;
-  text-align: left;
-}
-#sidebar .viewtab:hover { background: var(--hover); color: var(--text); }
-#sidebar .viewtab.active { background: var(--card); color: var(--text); outline: 1px solid var(--border); }
-#sidebar .viewtab svg { flex-shrink: 0; }
-#sidebar .tabbadge { margin-left: auto; }
-/* Notices row under the full-width START HERE card: schedule strip and
-   security posture side by side (Cockpit gallery pattern); a lone visible
-   child spans the full width instead of leaving a gap. */
-#notices { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; margin-bottom: 12px; }
+/* === Notices row === */
+#notices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: start; margin-bottom: 10px; }
 #notices[hidden] { display: none; }
 #notices.single > :not([hidden]) { grid-column: 1 / -1; }
 @media (max-width: 900px) { #notices { grid-template-columns: 1fr; } }
-/* .layout/.history carry their own display values, which would override the
-   hidden attribute — views must stay hidden when told to. */
 .view[hidden] { display: none; }
-#checksview .mx-head { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
-#checksview .mx-sub { font-size: 12px; color: var(--muted2); margin-bottom: 12px; }
+/* === Checks view — the inventory read as a table ===
+   Focus (3s): which checks ran, and which of them are not clean. A counts
+   line, a filter that drops the clean rows, a sticky column rule, then the
+   registry. */
+#checksview .mx-tools { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
+#checksview .mx-sub { font-size: 12px; color: var(--muted2); margin: 0; flex: 1; min-width: 200px; }
+#checksview .mx-filter { margin-left: auto; }
+#checksview .mx-fcount { font-family: var(--mono); font-size: 10.5px; opacity: .8; font-variant-numeric: tabular-nums; }
+#checksview .mx-cols {
+  display: flex; align-items: center; padding: 6px 9px;
+  border-bottom: 1px solid var(--border);
+  font-size: 10px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; color: var(--muted2);
+}
+#checksview .mx-cols > :first-child { flex: 1; }
+#checksview .mx-list { padding-top: 2px; }
+#checksview .mx-none { padding: 24px 0; text-align: center; font-size: 13px; color: var(--muted); }
+@media (min-width: 1100px) {
+  /* The column rule sticks under the headerbar while the registry scrolls. */
+  #checksview .mx-cols { position: sticky; top: 48px; z-index: 15; background: var(--bg); }
+}
+@media (max-width: 700px) {
+  #checksview .mx-id { width: 86px; }
+  #checksview .mx-why { display: none; }
+  #checksview .mx-row { gap: 8px; padding: 7px 6px; }
+}
 .tabbadge {
-  font-size: 10px; font-weight: 700; font-variant-numeric: tabular-nums;
-  background: color-mix(in srgb, var(--text) 14%, transparent);
+  font-size: 10px; font-weight: 600; font-variant-numeric: tabular-nums;
+  background: color-mix(in srgb, var(--text) 12%, transparent);
   border-radius: 999px; padding: 1px 6px; margin-left: 5px;
 }
-/* Generic view card + fact rows (System view, Schedule view). */
-.viewcard {
-  background: var(--card); border: 1px solid var(--border); border-radius: 14px;
-  padding: 18px 20px; margin-bottom: 14px;
-}
-.sysfact {
-  display: flex; gap: 12px; align-items: baseline;
-  padding: 7px 0; border-top: 1px solid var(--border); font-size: 13px;
-}
+
+/* === View header + section rule (History, Checks, System, Schedule) ===
+   The four views that inherited the system without a pass of their own open
+   the same way: a title and one line of purpose, then content on the row
+   grammar — sections as label + hairline + count (the rule the Overview
+   groups already use), never a stack of competing cards. */
+.view-head { margin: 2px 0 16px; max-width: 1080px; }
+.vh-title { font-size: 15px; font-weight: 700; letter-spacing: -.012em; }
+.vh-sub { font-size: 12px; color: var(--muted2); margin-top: 3px; }
+.vsec { margin-top: 20px; }
+.vsec:first-of-type { margin-top: 4px; }
+.vsec-head { display: flex; align-items: center; gap: 8px; padding: 0 0 7px; border-bottom: 1px solid var(--border); font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted2); }
+.vsec-head .vsec-count { margin-left: auto; font-family: var(--mono); font-size: 10.5px; font-weight: 500; letter-spacing: 0; text-transform: none; font-variant-numeric: tabular-nums; }
+.vsec-head .vsec-sub { font-size: 11px; font-weight: 400; letter-spacing: 0; text-transform: none; }
+
+/* === Generic fact rows (System, Schedule) — flat, under a section rule === */
+.viewcard { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 12px; }
+.sysfact { display: flex; gap: 12px; align-items: baseline; padding: 7px 0; border-top: 1px solid var(--border); font-size: 12.5px; }
 .sysfact:first-of-type { border-top: none; }
 .sysfact-k { width: 170px; flex-shrink: 0; color: var(--muted2); font-size: 12px; }
 .sysfact-v { color: var(--text); min-width: 0; }
+.sysfact-v .mono, .idval { font-family: var(--mono); font-size: 12px; }
 .sched-static { margin: 12px 0 4px; }
-/* Run ledger (History view): one row per recorded run, newest first. */
-.ledger-head { font-size: 13px; font-weight: 700; margin: 18px 0 8px; }
-.ledger-sub { font-weight: 400; color: var(--muted2); font-size: 11px; margin-left: 6px; }
-.ledger {
-  background: var(--card); border: 1px solid var(--border); border-radius: 14px;
-  padding: 6px 16px;
+
+/* === System view — one list of sections, not four stacked cards ===
+   Focus (3s): what this machine IS. Grouped by how it is read: the identity
+   you read once, then the live state you read when something's wrong. */
+.syslist { max-width: 1080px; }
+.sys-sub { font-size: 11px; font-weight: 650; letter-spacing: .04em; color: var(--muted); margin: 16px 0 0; }
+.sys-sub:first-of-type { margin-top: 10px; }
+.sys-sub-d { margin-left: 6px; font-weight: 400; letter-spacing: 0; color: var(--muted2); }
+.sys-sub + .sysfact { border-top: none; }
+/* Identifiers are mono and copyable — the value is the thing you paste into
+   a bug report, so clicking it copies, with the glyph appearing on hover. */
+.idval {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--mono); font-size: 12px; color: var(--text);
+  background: transparent; border: none; padding: 0; min-height: 0; cursor: pointer; text-align: left;
 }
-.ledger-row {
-  display: flex; gap: 12px; align-items: baseline;
-  padding: 8px 0; border-top: 1px solid var(--border);
-  font-size: 12.5px; font-variant-numeric: tabular-nums;
+.idval::after {
+  content: ""; width: 11px; height: 11px; flex-shrink: 0; background: currentColor; opacity: 0;
+  -webkit-mask: var(--ic-copy) center / contain no-repeat; mask: var(--ic-copy) center / contain no-repeat;
+  transition: opacity .12s ease;
 }
-.ledger-row:first-child { border-top: none; }
-.ledger-when { color: var(--muted2); width: 110px; flex-shrink: 0; }
-.ledger-score { font-weight: 700; width: 64px; flex-shrink: 0; }
-.ledger-delta { width: 44px; flex-shrink: 0; color: var(--muted2); }
+.idval:hover { background: transparent; border-color: transparent; color: var(--accent); }
+.idval:hover::after, .idval:focus-visible::after { opacity: .7; }
+.idval:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: var(--radius-sm); }
+
+/* === Run ledger (History) — a real table under its section rule ===
+   Fixed columns with a header row, so the eye reads down "when · score ·
+   Δ · findings" instead of guessing what the second column means. */
+.ledger-head { display: flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted2); padding: 0 0 7px; border-bottom: 1px solid var(--border); margin: 20px 0 0; }
+.ledger-sub { font-weight: 400; color: var(--muted2); font-size: 11px; letter-spacing: 0; text-transform: none; }
+.ledger { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 4px 14px; margin-top: 10px; }
+/* Fixed columns, not a flex row with holes in the middle: the ledger is a
+   table, and the eye should be able to run down each column. */
+.ledger-cols, .ledger-row { display: grid; grid-template-columns: 96px 58px 46px minmax(0, 1fr); gap: 0 14px; align-items: baseline; padding: 7px 0; }
+.ledger-cols { border-bottom: 1px solid var(--border); font-size: 10px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--muted2); }
+.ledger-cols > :last-child { text-align: right; }
+.ledger-row { border-top: 1px solid var(--border); font-size: 12px; font-variant-numeric: tabular-nums; }
+.ledger-row:first-of-type { border-top: none; }
+.ledger-when { color: var(--muted2); font-family: var(--mono); font-size: 11px; }
+.ledger-score { font-weight: 650; }
+.ledger-delta { color: var(--muted2); }
 .ledger-delta.up { color: var(--green); }
 .ledger-delta.down { color: var(--red); }
-.ledger-counts { margin-left: auto; color: var(--muted); font-size: 11.5px; text-align: right; }
+.ledger-counts { color: var(--muted); font-size: 11px; text-align: right; }
+
+/* === Motion ===
+   Short and directional. Views fade up when switched, the health bar and
+   the score animate in once, rows never bounce. */
+.view { animation: viewIn .16s ease; }
+@keyframes viewIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+
+/* === Chrome depth ===
+   One hairline highlight on the chrome so the window reads as layered,
+   without any shadow theatre. */
+header { box-shadow: inset 0 1px 0 rgba(255,255,255,.03); }
+:root[data-theme="light"] header { box-shadow: inset 0 1px 0 rgba(255,255,255,.7); }
+:root[data-theme="terminal"] header { box-shadow: none; }
+
+/* Rail rhythm: a hairline between blocks, so the aside reads as rows too. */
+.sb-block + .sb-block { border-top: 1px solid var(--border); padding-top: 11px; }
+
+/* === Status bar (≥1100px) ===
+   The footer becomes persistent desktop chrome: current view, freshness, the
+   read-only promise, the keyboard map — always on screen. Declared after the
+   base rule that hides these spans, so the cascade lands the right way. */
+@media (min-width: 1100px) {
+  footer {
+    position: sticky; bottom: 0; z-index: 18;
+    display: flex; align-items: center; gap: 14px;
+    padding: 6px 24px;
+    background: var(--bg2); border-top: 1px solid var(--border);
+  }
+  footer .sbar-view { display: inline; font-weight: 600; color: var(--muted); flex-shrink: 0; }
+  footer .sbar-check { display: inline; font-family: var(--mono); flex-shrink: 0; }
+  footer .sbar-check.stale { color: var(--yellow); }
+  footer .sbar-check[hidden] { display: none; }
+  footer .sbar-note { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  footer .sbar-hints { margin-left: auto; flex-shrink: 0; white-space: nowrap; }
+  .sbar-brand { margin-left: 0; }
+}
+
+/* === Toolbar icons ===
+   One set, one stroke weight, drawn as masks so a JS label change (e.g.
+   "Expand all" → "Collapse all") never drops the icon, and the ink follows
+   the theme through currentColor. */
+:root {
+  --ic-rows: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M4 6h16M4 12h16M4 18h16'/%3E%3C/svg%3E");
+  --ic-checks: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l1.5 1.5L8 5m4 1h8M4 12l1.5 1.5L8 11m4 1h8M4 18l1.5 1.5L8 17m4 1h8'/%3E%3C/svg%3E");
+  --ic-x: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E");
+  --ic-expand: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 9l4-4 4 4M8 15l4 4 4-4'/%3E%3C/svg%3E");
+  --ic-pulse: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12h4l2-6 4 12 2-6h6'/%3E%3C/svg%3E");
+  --ic-prompt: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 8l4 4-4 4M12 18h7'/%3E%3C/svg%3E");
+  --ic-copy: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='9' y='9' width='11' height='11' rx='2'/%3E%3Cpath d='M5 15V5a2 2 0 0 1 2-2h10'/%3E%3C/svg%3E");
+}
+.toolbtn { display: inline-flex; align-items: center; gap: 6px; }
+#densitybtn::before, #checksmatrixbtn::before, #clearbtn::before, #expandall::before, #autorefresh::before {
+  content: ""; width: 13px; height: 13px; flex-shrink: 0; background: currentColor;
+  -webkit-mask: center / contain no-repeat; mask: center / contain no-repeat;
+}
+#densitybtn::before { -webkit-mask-image: var(--ic-rows); mask-image: var(--ic-rows); }
+#checksmatrixbtn::before { -webkit-mask-image: var(--ic-checks); mask-image: var(--ic-checks); }
+#clearbtn::before { -webkit-mask-image: var(--ic-x); mask-image: var(--ic-x); }
+#expandall::before { -webkit-mask-image: var(--ic-expand); mask-image: var(--ic-expand); }
+#autorefresh::before { -webkit-mask-image: var(--ic-pulse); mask-image: var(--ic-pulse); }
 
 
 /* ── cards.css ── */
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* === Finding Cards — reduced chrome, diagnostic storytelling === */
+/* === Findings — flat rows in a list, severity as a left ink dot ===
+   No per-item card. A row carries: severity dot · title · quiet code/NEW ·
+   chevron; the body opens in place. This is the Linear density (rows at
+   ~34px, hairline separators, hover) on the GNOME Settings row grammar. */
+
 .card {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 12px; overflow: hidden;
-  transition: border-color .15s ease, background .15s ease;
+  background: transparent; border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0; overflow: visible;
+  transition: background .12s ease;
 }
-.card:hover { border-color: var(--border); background: color-mix(in srgb, var(--card) 98%, var(--text) 2%); }
-.card.high { border-left: 3px solid var(--red); }
-.card.medium { border-left: 3px solid var(--yellow); }
-.card.info { border-left: 3px solid var(--border); }
-.card.high:hover { border-left-color: var(--red); }
-.card.medium:hover { border-left-color: var(--yellow); }
-
-.card summary { list-style: none; display: flex; align-items: center; gap: 10px; padding: 14px 16px; cursor: pointer; user-select: none; }
-.card summary h3 { font-size: 14px; font-weight: 600; flex: 1; letter-spacing: -0.015em; line-height: 1.35; color: var(--text); }
-.card summary .chev { color: var(--muted2); font-size: 11px; transition: transform .18s ease; flex-shrink: 0; }
+.card:last-child { border-bottom: none; }
+.card:hover { background: var(--hover); }
+.card[open] { background: var(--card); }
+.card summary { list-style: none; display: flex; align-items: center; gap: 10px; padding: 9px 10px; cursor: pointer; user-select: none; }
+.card summary h3 { font-size: 13px; font-weight: 500; flex: 1; letter-spacing: -.005em; line-height: 1.35; color: var(--text); }
+.card summary .chev { color: var(--muted2); font-size: 10px; transition: transform .15s ease; flex-shrink: 0; }
 .card[open] summary .chev { transform: rotate(90deg); }
-.card:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
-.card:focus:not(:focus-visible) { outline: none; }
+.card:focus { outline: none; }
+.card:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: var(--radius-sm); }
 
-/* Pills — quieter */
-.badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 3px 7px; border-radius: 6px; flex-shrink: 0; border: 1px solid transparent; }
-.badge.high { background: var(--red); color: #111; }
-.badge.medium { background: var(--yellow); color: #111; }
-.badge.info { background: var(--blue); color: #06121f; }
-:root[data-theme="light"] .badge.info { color: #fff; }
+/* Severity carried by a dot (SEV_ICONS renders .sev-dot) with a soft halo,
+   so a row's severity reads before its title does. Group headings keep their
+   category SVGs. */
+.card summary .sevicon, .group summary .sevicon { display: inline-flex; align-items: center; justify-content: center; width: 10px; flex-shrink: 0; }
+.card summary .sevicon .sev-dot.high { box-shadow: 0 0 0 3px color-mix(in srgb, var(--red) 15%, transparent); }
+.card summary .sevicon .sev-dot.medium { box-shadow: 0 0 0 3px color-mix(in srgb, var(--yellow) 15%, transparent); }
+.card summary .sevicon .sev-dot.info { box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 15%, transparent); }
+
+/* Pills — quiet */
+.badge { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; padding: 2px 7px; border-radius: 999px; flex-shrink: 0; border: 1px solid transparent; }
+.badge.high { background: color-mix(in srgb, var(--red) 16%, transparent); color: var(--red); border-color: color-mix(in srgb, var(--red) 26%, transparent); }
+.badge.medium { background: color-mix(in srgb, var(--yellow) 16%, transparent); color: var(--yellow); border-color: color-mix(in srgb, var(--yellow) 26%, transparent); }
+.badge.info { background: color-mix(in srgb, var(--blue) 16%, transparent); color: var(--blue); border-color: color-mix(in srgb, var(--blue) 26%, transparent); }
 .codepill {
-  font-family: var(--mono); font-size: 10.5px; font-weight: 500; letter-spacing: -0.01em;
+  font-family: var(--mono); font-size: 10.5px; font-weight: 400; letter-spacing: 0;
   color: var(--muted2); background: transparent; border: none;
   padding: 0; flex-shrink: 0; cursor: pointer;
 }
 .codepill:hover { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
-.codepill::before { content: "· "; color: var(--border); }
-.durpill { display: none; } /* moved to details — reduce summary chrome */
-.checkid { display: none; } /* keep for data but hide from summary — reduce chrome */
-
-/* Show durpill only when card is open, as subtle metadata */
+.codepill::before { content: ""; }
+.durpill { display: none; }
+.checkid { display: none; }
 .card[open] .durpill { display: inline-flex; }
 
-/* === Card Body — storytelling === */
-.card-body {
-  display: flex; flex-direction: column; gap: 0;
-  padding: 0 16px 16px;
-  animation: fadein .18s ease;
-}
+/* === Card body — evidence one click away === */
+.card-body { display: flex; flex-direction: column; gap: 0; padding: 0 10px 12px; animation: fadein .15s ease; }
 @keyframes fadein { from { opacity: 0; transform: translateY(-2px); } to { opacity: 1; transform: none; } }
-.card .detail {
-  font-size: 13.5px; line-height: 1.6; letter-spacing: -0.01em;
-  color: var(--muted); padding: 12px 0 14px; border-top: 1px solid var(--border);
-  margin-top: 0;
-}
+.card .detail { font-size: 12.5px; line-height: 1.6; letter-spacing: 0; color: var(--muted); padding: 10px 0 12px; border-top: 1px solid var(--border); margin-top: 0; }
 .card .detail b, .card .detail strong { color: var(--text); font-weight: 600; }
 
-/* Evidence — progressive disclosure, quieter */
-details.ev {
-  background: transparent; border: none; padding: 0; overflow: hidden;
-  margin: 0; border-top: 1px solid var(--border);
-}
-details.ev summary {
-  list-style: none; display: flex; align-items: center; gap: 8px;
-  padding: 10px 0; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
-  color: var(--muted2); cursor: pointer; user-select: none;
-}
+details.ev { background: transparent; border: none; padding: 0; overflow: hidden; margin: 0; border-top: 1px solid var(--border); }
+details.ev summary { list-style: none; display: flex; align-items: center; gap: 8px; padding: 9px 0; font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted2); cursor: pointer; user-select: none; }
 details.ev summary::before { content: "▸"; font-size: 10px; transition: transform .15s ease; }
 details.ev[open] summary::before { transform: rotate(90deg); }
 details.ev summary::-webkit-details-marker { display: none; }
 .evidence {
-  background: var(--bg2); border: 1px solid var(--border); border-radius: 9px;
-  max-height: 180px; overflow: auto;
-  padding: 10px 12px; margin: 0 0 10px;
+  background: var(--evidence-bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  max-height: 180px; overflow: auto; padding: 10px 12px; margin: 0 0 10px;
   font-family: var(--mono); font-size: 11.5px; color: var(--muted);
   white-space: pre-wrap; word-break: break-word;
 }
 .evidence.expanded { max-height: none; }
 .evidence::-webkit-scrollbar { width: 6px; height: 6px; }
 .evidence::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; }
-.ev-expand {
-  margin: 0; align-self: flex-start;
-  background: transparent; border: none; padding: 0; font-size: 12px; font-weight: 500; color: var(--blue); cursor: pointer;
-}
-.ev-expand:hover { color: var(--accent); }
-.ev-copy {
-  background: transparent; border: 1px solid var(--border); border-radius: 7px;
-  padding: 4px 9px; font-size: 11px; font-weight: 500; color: var(--muted2); cursor: pointer;
-}
+.ev-expand { margin: 0; align-self: flex-start; background: transparent; border: none; padding: 0; font-size: 12px; font-weight: 500; color: var(--accent); cursor: pointer; }
+.ev-expand:hover { color: var(--accent2); }
+.ev-copy { background: transparent; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 4px 9px; font-size: 11px; font-weight: 500; color: var(--muted2); cursor: pointer; }
 .ev-copy:hover { border-color: var(--muted2); color: var(--text); }
 
-/* Fix — Recommended Action, clear hierarchy */
-.fix {
-  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
-  margin-top: 0; padding-top: 14px;
-  border-top: 1px solid var(--border);
-}
-.fix-label {
-  font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
-  color: var(--muted2); width: 100%; margin-bottom: -2px;
-}
+/* Fix — the prescription. The one block that borrows the Doctor's own frame:
+   a mono slip with a margin rule and a prompt mark. The label wording stays
+   plain English because the CLI prints the same words (output parity). */
+.fix { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 0; padding: 12px 0 0; border-top: 1px solid var(--border); }
+.fix-label { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 650; letter-spacing: .07em; text-transform: uppercase; color: var(--muted2); width: 100%; margin-bottom: -1px; }
+.fix-label::before { content: ""; width: 12px; height: 12px; flex-shrink: 0; background: currentColor; -webkit-mask: var(--ic-prompt) center / contain no-repeat; mask: var(--ic-prompt) center / contain no-repeat; }
 .fix .fixtext {
-  flex: 1 1 100%; min-width: 260px;
-  background: var(--bg2); border: 1px solid var(--border);
-  border-radius: 9px; padding: 10px 12px;
-  font-size: 12.5px; line-height: 1.5;
+  flex: 1 1 100%; min-width: 240px;
+  background: var(--evidence-bg); color: var(--muted);
+  border: 1px solid var(--border); border-left: 2px solid var(--accent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 9px 11px; font-size: 12px; line-height: 1.6; font-family: var(--mono);
+}
+/* The commands are the point of the block — the prose around them is not. */
+.fix .fixtext code, .nh-hint code {
   font-family: var(--mono); color: var(--text);
+  background: color-mix(in srgb, var(--text) 9%, transparent);
+  border-radius: 4px; padding: 0 4px;
 }
 .fix .fixtext::before { display: none; }
-.fix button, .fix .reportbtn {
-  height: 32px; border-radius: 8px; font-weight: 600; font-size: 12px;
-  display: inline-flex; align-items: center; gap: 6px; padding: 0 12px;
-}
-.fix button[data-copy] {
-  background: var(--text); color: var(--bg); border-color: var(--text);
-}
-.fix button[data-copy]:hover { background: var(--text); opacity: .9; }
-.fix button[data-ignore] {
-  background: transparent; border-color: var(--border); color: var(--muted2);
-  font-weight: 500;
-}
-.fix button[data-ignore]:hover { border-color: var(--border); color: var(--muted); background: var(--hover); }
-.fix .reportbtn {
-  background: transparent; border: none; color: var(--muted2);
-  padding: 0 8px; text-decoration: none; font-size: 12px; height: auto;
-}
-.fix .reportbtn:hover { color: var(--muted); background: transparent; border-color: transparent; text-decoration: underline; }
+.fix button, .fix .reportbtn { height: 30px; border-radius: var(--radius-sm); font-weight: 500; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; padding: 0 11px; }
+.fix button[data-copy] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 600; }
+.fix button[data-copy]:hover { background: var(--accent2); border-color: var(--accent2); }
+.fix button[data-ignore] { background: transparent; border-color: var(--border); color: var(--muted2); }
+.fix button[data-ignore]:hover { border-color: var(--muted2); color: var(--text); background: var(--hover); }
+.fix .reportbtn { background: transparent; border: none; color: var(--muted2); padding: 0 8px; text-decoration: none; font-size: 12px; height: auto; }
+.fix .reportbtn:hover { color: var(--muted); background: transparent; text-decoration: underline; }
 .fix .reportbtn::before { content: "↗"; font-size: 11px; }
 
-/* Compact rows (info findings) — Uptime Kuma / alert-list pattern: a quiet
-   one-line row that expands to the full body on open. Doubled .card.crow
-   selectors so these always beat the .card rules above regardless of order. */
-.card.crow { border: 1px solid transparent; border-radius: 9px; margin-bottom: 2px; background: transparent; transition: background .15s ease, border-color .15s ease; }
-.card.crow:hover { background: var(--card); border-color: var(--border); }
-.card.crow summary { list-style: none; display: flex; align-items: center; gap: 8px; padding: 9px 10px; cursor: pointer; user-select: none; }
+/* Compact rows (info findings) — quiet one-liners that expand in place. */
+.card.crow { border-bottom: 1px solid var(--border); border-radius: 0; margin-bottom: 0; background: transparent; }
+.card.crow:last-child { border-bottom: none; }
+.card.crow:hover { background: var(--hover); }
+.card.crow summary { list-style: none; display: flex; align-items: center; gap: 9px; padding: 7px 10px; cursor: pointer; user-select: none; }
 .card.crow summary::-webkit-details-marker { display: none; }
-.card.crow summary h3 { font-size: 13px; font-weight: 500; flex: 1; letter-spacing: -0.01em; color: var(--muted); }
+.card.crow summary h3 { font-size: 12.5px; font-weight: 450; flex: 1; letter-spacing: -.005em; color: var(--muted); }
 .card.crow[open] summary h3 { color: var(--text); }
-.card.crow summary .chev { color: var(--muted2); font-size: 10px; transition: transform .18s ease; }
+.card.crow summary .chev { color: var(--muted2); font-size: 10px; transition: transform .15s ease; }
 .card.crow[open] summary .chev { transform: rotate(90deg); }
-.card.crow[open] { background: var(--card); border-color: var(--border); }
-.card.crow .card-body { gap: 10px; padding: 8px 10px 10px; }
-.card.crow .detail { font-size: 13px; padding: 8px 0; border-top: none; }
+.card.crow[open] { background: var(--card); }
+.card.crow .card-body { gap: 0; padding: 0 10px 10px; }
+.card.crow .detail { font-size: 12.5px; padding: 8px 0; border-top: 1px solid var(--border); }
 
 /* Search highlight */
 mark.hl { background: color-mix(in srgb, var(--yellow) 28%, transparent); color: inherit; padding: 0 2px; border-radius: 3px; }
 
 /* Compact density */
-body.compact .group summary { padding: 9px 4px; }
-body.compact .group-body { gap: 8px; padding: 10px 0 8px; }
-body.compact .card summary { padding: 11px 14px; }
-body.compact .card summary h3 { font-size: 13.5px; }
-body.compact .card-body { gap: 0; padding: 0 14px 14px; }
-body.compact .card .detail { font-size: 13px; }
-body.compact .fix { padding-top: 12px; }
-body.compact .fix .fixtext { padding: 8px 11px; font-size: 12px; }
-body.compact #report { gap: 14px; }
+body.compact .group summary { padding: 7px 2px; }
+body.compact .group-body { gap: 0; padding: 4px 0; }
+body.compact .card summary { padding: 7px 10px; }
+body.compact .card summary h3 { font-size: 12.5px; }
+body.compact .card-body { padding: 0 10px 10px; }
+body.compact .card .detail { font-size: 12px; }
+body.compact .fix { padding-top: 10px; }
+body.compact #report { gap: 8px; }
 
 
 /* ── components.css ── */
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 /* === Toast === */
 #toast-wrap { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); z-index: 50; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
-.toast { pointer-events: auto; display: flex; align-items: center; gap: 10px; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 13px; box-shadow: var(--shadow); animation: toastin .25s ease, toastout .25s ease 2.7s forwards; max-width: 92vw; }
-.toast button { pointer-events: auto; background: var(--accent); color: #0b1020; border-color: transparent; padding: 4px 10px; font-size: 12px; }
+.toast { pointer-events: auto; display: flex; align-items: center; gap: 10px; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; font-size: 13px; box-shadow: var(--shadow); animation: toastin .25s ease, toastout .25s ease 2.7s forwards; max-width: 92vw; }
+.toast button { pointer-events: auto; background: var(--accent); color: var(--on-accent); border-color: transparent; padding: 4px 10px; font-size: 12px; }
 @keyframes toastin { from { opacity:0; transform: translateY(8px);} to { opacity:1; transform:none;} }
 @keyframes toastout { to { opacity:0; transform: translateY(8px);} }
 
 /* === Threshold Panel === */
 .thresh-panel {
-  background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
   padding: 12px; margin: -12px 0 20px; box-shadow: var(--shadow-sm);
   max-width: 1040px; margin-left: auto; margin-right: auto; width: 100%;
 }
@@ -568,24 +674,21 @@ body.compact #report { gap: 14px; }
 .thresh-body { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
 .thresh-field { display: flex; flex-direction: column; gap: 4px; }
 .thresh-field label { font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted2); }
-.thresh-field input { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; color: var(--text); font-size: 12px; font-family: var(--mono); }
+.thresh-field input { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 8px; color: var(--text); font-size: 12px; font-family: var(--mono); }
 .thresh-field input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent); }
 .thresh-actions { display: flex; align-items: center; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 
-/* === History — NOW PROMINENT, NOT HIDDEN === */
-.history { max-width: 1040px; margin: 40px auto 0; width: 100%; }
-.history .hist-details { border: 1px solid var(--border); border-radius: 14px; background: var(--card); overflow: hidden; }
-.history .hist-summary { list-style: none; cursor: pointer; user-select: none; display: flex; align-items: center; gap: 10px; padding: 14px 16px; font-size: 13px; font-weight: 650; color: var(--text); }
-.history .hist-summary::-webkit-details-marker { display: none; }
-.history .hist-summary .hist-sub { font-size: 12px; font-weight: 450; color: var(--muted2); }
-.history .hist-summary .chev { margin-left: auto; transition: transform .18s ease; color: var(--muted2); font-size: 11px; }
-.history .hist-details[open] .chev { transform: rotate(90deg); }
-.history #trend { margin: 0; border: none; box-shadow: none; background: transparent; padding: 0 16px 16px; max-width: none; }
-.hist-empty { padding: 16px; font-size: 13px; line-height: 1.6; color: var(--muted); }
+/* === History — one instrument: the score and its shape, then the runs ===
+   Three seconds: has health held or slipped? The score sparkline sits right
+   under the score it belongs to (not floating at the bottom of a tall
+   column), each severity bar is one run with its date, and the ledger is a
+   real table with a header row. */
+.history { max-width: 1040px; margin: 0; width: 100%; }
+.hist-empty { border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); padding: 18px 20px; font-size: 13px; line-height: 1.6; color: var(--muted); }
 .hist-empty b { color: var(--text); font-variant-numeric: tabular-nums; }
 
 /* === Trend — COMPACT BUT MEANINGFUL === */
-#trend { background: transparent; border: none; padding: 0; max-width: 1040px; margin: 0 auto; width: 100%; }
+#trend { background: transparent; border: none; padding: 0; max-width: 1040px; margin: 0; width: 100%; }
 /* === Trend hero — matches render-charts.js classes (.trend-hero-*, up/down/flat) === */
 .trend-hero { display: flex; align-items: center; gap: 18px; padding: 14px 0 12px; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
 .trend-hero-score { display: flex; align-items: baseline; gap: 4px; }
@@ -625,7 +728,7 @@ body.compact #report { gap: 14px; }
 /* === Security posture — one line, louder only when high === */
 .security-posture {
   max-width: 1040px; margin: 0; width: 100%;
-  border: 1px solid var(--border); border-radius: 10px;
+  border: 1px solid var(--border); border-radius: var(--radius);
   padding: 6px 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
   background: var(--card); opacity: .92;
   font-size: 12px; color: var(--muted);
@@ -636,14 +739,14 @@ body.compact #report { gap: 14px; }
 .security-posture.high .sp-icon { opacity: 1; }
 .security-posture .sp-text { flex: 1; min-width: 160px; }
 .security-posture .sp-text b { font-weight: 650; }
-.security-posture button { font-size: 11px; padding: 5px 10px; border-radius: 7px; background: transparent; border: 1px solid var(--border); color: var(--muted2); }
+.security-posture button { font-size: 11px; padding: 5px 10px; border-radius: var(--radius-sm); background: transparent; border: 1px solid var(--border); color: var(--muted2); }
 .security-posture button:hover { color: var(--text); border-color: var(--muted2); }
 
 /* === Start Here — BALANCED PREMIUM === */
 #nexthep {
   max-width: 1040px; margin: 0 0 16px; width: 100%;
   border: 1px solid color-mix(in srgb, var(--green) 18%, var(--border));
-  border-radius: 12px; padding: 0; overflow: hidden;
+  border-radius: var(--radius); padding: 0; overflow: hidden;
   background: var(--card);
   box-shadow: 0 2px 8px rgba(0,0,0,.08);
 }
@@ -652,7 +755,7 @@ body.compact #report { gap: 14px; }
   background: color-mix(in srgb, var(--green) 8%, var(--card));
   border-bottom: 1px solid color-mix(in srgb, var(--green) 12%, var(--border));
 }
-#nexthep .nh-icon { font-size: 9px; color: #fff; font-weight: 800; letter-spacing: .07em; flex-shrink: 0; background: var(--green); padding: 2px 7px; border-radius: 4px; }
+#nexthep .nh-icon { font-size: 9px; color: var(--on-ok); font-weight: 800; letter-spacing: .07em; flex-shrink: 0; background: var(--green); padding: 2px 7px; border-radius: 4px; }
 #nexthep .nh-kicker { font-size: 9px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; color: var(--green); }
 #nexthep .nh-body { padding: 14px 16px 14px; }
 #nexthep .nh-title { font-size: 15px; font-weight: 700; letter-spacing: -0.015em; line-height: 1.35; color: var(--text); }
@@ -663,8 +766,8 @@ body.compact #report { gap: 14px; }
 #nexthep .nh-hint { font-size: 12px; color: var(--muted); line-height: 1.5; }
 #nexthep .nh-hint code { font-family: var(--mono); font-size: 10.5px; background: var(--bg2); padding: 1px 5px; border-radius: 4px; border: 1px solid var(--border); color: var(--text); }
 #nexthep .nh-actions { display: flex; gap: 7px; margin-top: 14px; flex-wrap: wrap; }
-#nexthep .nh-actions button { height: 32px; padding: 0 13px; border-radius: 8px; font-weight: 600; font-size: 12px; }
-#nexthep .nh-actions button[data-nhcopy] { background: var(--green); color: #06231a; border-color: var(--green); }
+#nexthep .nh-actions button { height: 32px; padding: 0 13px; border-radius: var(--radius-sm); font-weight: 600; font-size: 12px; }
+#nexthep .nh-actions button[data-nhcopy] { background: var(--green); color: var(--on-ok); border-color: var(--green); }
 #nexthep .nh-actions button[data-nhcopy]:hover { background: color-mix(in srgb, var(--green) 88%, #000); }
 #nexthep .nh-actions button[data-nhjump] { background: var(--card); border: 1px solid var(--border); color: var(--text); }
 #nexthep.flash { animation: nhflash 1.6s ease 1; }
@@ -678,7 +781,7 @@ body.compact #report { gap: 14px; }
 .bd-pen.high { color: var(--red); }
 .bd-pen.medium { color: var(--yellow); }
 .bd-code { font-family: var(--mono); font-size: 10px; color: var(--muted2); }
-.bd-bar { height: 3px; border-radius: 3px; background: var(--bg2); overflow: hidden; }
+.bd-bar { height: 3px; border-radius: 3px; background: var(--card2); overflow: hidden; margin-top: 5px; }
 .bd-fill { height: 100%; border-radius: 3px; background: var(--red); }
 .bd-fill.medium { background: var(--yellow); }
 .bd-more { font-size: 11px; color: var(--muted2); margin-top: 4px; }
@@ -686,19 +789,19 @@ body.compact #report { gap: 14px; }
 
 /* === Skeleton === */
 .skel {
-  height: 64px; border-radius: 12px; margin-bottom: 10px;
+  height: 64px; border-radius: var(--radius); margin-bottom: 10px;
   background: linear-gradient(90deg, var(--card) 25%, var(--hover) 50%, var(--card) 75%);
   background-size: 200% 100%; animation: shimmer 1.2s linear infinite;
   border: 1px solid var(--border);
 }
 .skel-hero {
-  height: 140px; border-radius: 18px; margin-bottom: 24px;
+  height: 140px; border-radius: var(--radius-lg); margin-bottom: 24px;
   background: linear-gradient(90deg, var(--card) 25%, var(--card2) 50%, var(--card) 75%);
   background-size: 200% 100%; animation: shimmer 1.2s linear infinite;
   border: 1px solid var(--border);
 }
 .skel-card {
-  height: 72px; border-radius: 12px; margin-bottom: 10px;
+  height: 72px; border-radius: var(--radius); margin-bottom: 10px;
   background: linear-gradient(90deg, var(--card) 25%, var(--hover) 50%, var(--card) 75%);
   background-size: 200% 100%; animation: shimmer 1.2s linear infinite;
   border: 1px solid var(--border);
@@ -737,7 +840,7 @@ body.compact #report { gap: 14px; }
 }
 .modal[hidden] { display: none; }
 .modal-card {
-  background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg);
   max-width: 740px; width: 100%;
   max-height: min(82vh, 780px); overflow: auto;
   box-shadow: var(--shadow-lg);
@@ -746,7 +849,7 @@ body.compact #report { gap: 14px; }
 }
 .modal-x {
   position: absolute; top: 12px; right: 12px;
-  padding: 4px 10px; font-size: 12px; border-radius: 8px;
+  padding: 4px 10px; font-size: 12px; border-radius: var(--radius-sm);
 }
 .mx-head { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 4px; padding-right: 36px; }
 .mx-sub { font-size: 12px; color: var(--muted2); margin-bottom: 12px; }
@@ -756,26 +859,33 @@ body.compact #report { gap: 14px; }
   display: flex; align-items: center; gap: 6px;
 }
 .mx-cat:first-of-type { margin-top: 4px; }
+.mx-cat-n { margin-left: 2px; font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: 0; color: var(--muted2); font-variant-numeric: tabular-nums; }
+.mx-cat-n::before { content: "\00b7"; margin-right: 4px; color: var(--border); }
 .mx-row {
   display: flex; gap: 10px; align-items: baseline;
-  padding: 6px 9px; border-radius: 8px; font-size: 12.5px;
+  padding: 6px 9px; border-radius: var(--radius-sm); font-size: 12.5px;
 }
 .mx-row.link { cursor: pointer; }
 .mx-row.link:hover { background: var(--hover); }
 .mx-st { width: 20px; text-align: center; flex-shrink: 0; }
 .mx-id { font-family: var(--mono); font-size: 10.5px; color: var(--muted2); flex-shrink: 0; width: 108px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mx-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.mx-note { font-size: 11px; color: var(--muted2); flex-shrink: 0; }
-.mx-note.high { color: var(--red); font-weight: 650; }
-.mx-note.medium { color: var(--yellow); font-weight: 650; }
-.mx-note.info { color: var(--blue); font-weight: 650; }
-.mx-note.ok { color: var(--green); }
+/* Result cell: a fixed state word carrying the severity ink, plus a quiet
+   reason. Never a sentence — the column vocabulary is the same in the modal
+   and the view. */
+.mx-res { display: inline-flex; align-items: baseline; gap: 6px; justify-content: flex-end; flex-shrink: 0; min-width: 0; }
+.mx-state { font-size: 11px; font-weight: 650; color: var(--muted); white-space: nowrap; }
+.mx-state.high { color: var(--red); }
+.mx-state.medium { color: var(--yellow); }
+.mx-state.info { color: var(--blue); }
+.mx-state.ok { color: var(--green); }
+.mx-why { font-size: 10.5px; color: var(--muted2); max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .help-grid { display: grid; grid-template-columns: auto 1fr; gap: 10px 14px; align-items: center; font-size: 13px; margin-top: 6px; }
 
 /* === All-clean hero state === */
 .cleanhero {
   display: flex; align-items: center; gap: 18px;
-  background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
   padding: 28px 28px;
   position: relative;
 }
@@ -796,7 +906,7 @@ body.compact #report { gap: 14px; }
 /* === Schedule strip: daily-check state, quiet by design === */
 .sched {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
   padding: 8px 12px; margin-bottom: 12px;
   font-size: 12px; color: var(--muted);
 }
@@ -819,197 +929,208 @@ body.compact #report { gap: 14px; }
 .ig-remove:hover, .ledger-clear:hover { border-color: var(--red); color: var(--red); }
 .ledger-head { display: flex; align-items: baseline; gap: 10px; }
 .ledger-clear { margin-left: auto; color: var(--muted); }
+/* === Skeletons — the shape of what is coming, not a spinner === */
+.skel-row { height: 38px; border-radius: var(--radius-sm); margin-bottom: 6px; }
+.skel-k { height: 10px; width: 46px; border-radius: 3px; margin-bottom: 12px; }
+.skel-v { height: 26px; width: 88px; border-radius: 6px; margin-bottom: 12px; }
+.skel-b { height: 4px; border-radius: 999px; }
+#status .skel { margin-bottom: 0; }
+
+/* === Command palette (Ctrl/Cmd+K) === */
+.palette { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-start; justify-content: center; padding: 12vh 16px 16px; background: rgba(6,8,12,.5); backdrop-filter: blur(3px); animation: palFade .12s ease; }
+.palette[hidden] { display: none; }
+@keyframes palFade { from { opacity: 0 } to { opacity: 1 } }
+.palette-card { width: min(560px, 100%); background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); overflow: hidden; animation: palRise .14s cubic-bezier(.2,.8,.3,1); }
+@keyframes palRise { from { transform: translateY(-6px); opacity: .6 } to { transform: none; opacity: 1 } }
+#palette-input { width: 100%; border: none; background: transparent; color: var(--text); font: 15px/1.4 var(--sans); padding: 15px 16px; outline: none; border-bottom: 1px solid var(--border); }
+#palette-input::placeholder { color: var(--muted2); }
+.palette-list { max-height: 44vh; overflow: auto; padding: 6px; }
+.pal-group { font-size: 10px; font-weight: 650; letter-spacing: .09em; text-transform: uppercase; color: var(--muted2); padding: 9px 10px 4px; }
+.pal-item { display: flex; align-items: baseline; gap: 10px; width: 100%; text-align: left; border: none; background: transparent; color: var(--text); padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer; }
+.pal-item .pal-label { font-size: 13px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pal-item .pal-hint { font: 10.5px/1 var(--mono); color: var(--muted2); flex-shrink: 0; }
+.pal-item.on, .pal-item:hover { background: var(--hover); }
+.pal-item.on { box-shadow: inset 2px 0 0 var(--accent); }
+.pal-empty { padding: 20px 12px; font-size: 13px; color: var(--muted2); text-align: center; }
+.palette-foot { display: flex; gap: 16px; padding: 8px 14px; border-top: 1px solid var(--border); font-size: 10.5px; color: var(--muted2); }
+.palette-foot kbd { font-size: 10px; }
+
+/* === Empty states — a short sentence and a way out === */
+.empty-cta { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 5px 11px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--card); color: var(--text); font-size: 12px; cursor: pointer; }
+.empty-cta:hover { background: var(--card2); }
+.empty-big { font-size: 14px; font-weight: 600; color: var(--text); }
+.empty-big.ok { color: var(--green); }
+
+/* === History, polished ===
+   The score and the severity mix sit side by side as two instruments. The
+   line under the chart repeated the hero word for word ("92/100 Stable 12
+   runs · 92↔92"), so the hero stands alone now. */
+.trend-wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 26px; align-items: start; }
+#trend .trendchart { min-width: 0; }
+/* The score, its direction chip and its sparkline are ONE instrument: the
+   hairline closes the whole block, not just the number. */
+.trend-hero { padding: 0 0 8px; margin-bottom: 0; border-bottom: none; }
+.trend-hero-num { font-size: 38px; letter-spacing: -0.035em; }
+.trend-hero ~ .trendtitle { display: none; }
+/* The score sparkline lives inside the score's own instrument, right under
+   the number and the direction chip — the shape comes from the data, the
+   same trace language as the rail's vitals pulse. */
+.hist-trace { padding: 0 0 12px; border-bottom: 1px solid var(--border); }
+.hist-trace svg { display: block; overflow: visible; }
+.sev-axis { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; color: var(--muted2); margin-top: -1px; }
+@media (max-width: 900px) { .trend-wrap { grid-template-columns: 1fr; gap: 20px; } }
+
+/* === Schedule view — is the machine watching itself, and when ===
+   Focus (3s): will this machine check itself tomorrow? The instrument row
+   answers last run / next run / timer state; the commands are printed as
+   recipes (the accent-ruled mono slip the findings already use) instead of
+   being hidden behind buttons. */
+#schedview { max-width: 780px; }
+.sched-instr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin: 12px 0 10px; }
+.si { background: var(--card); padding: 12px 14px; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.si-k { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted2); }
+.si-v { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text); }
+.si-v .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 18%, transparent); }
+.si-v .dot.stale { background: var(--yellow); box-shadow: 0 0 0 3px color-mix(in srgb, var(--yellow) 18%, transparent); }
+.sched-cap { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 11.5px; color: var(--muted2); }
+.sched-cap .sched-note { white-space: nowrap; }
+.sched-cap .sched-sep { color: var(--muted2); }
+.sched-idle { font-size: 12.5px; color: var(--muted); line-height: 1.6; margin: 14px 0 0; }
+.sched-none { font-size: 12.5px; color: var(--muted); margin-top: 10px; }
+.recipe { display: flex; align-items: stretch; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.recipe-cmd { flex: 1 1 300px; min-width: 0; display: flex; align-items: center; background: var(--evidence-bg); color: var(--text); border: 1px solid var(--border); border-left: 2px solid var(--accent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 8px 11px; font-family: var(--mono); font-size: 12px; white-space: nowrap; overflow-x: auto; scrollbar-width: thin; }
+.recipe-copy { flex-shrink: 0; padding: 0 12px; font-size: 11.5px; font-weight: 600; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.recipe-copy:hover { background: var(--card2); border-color: var(--border); }
+.recipe-copy.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.recipe-copy.primary:hover { background: var(--accent2); border-color: var(--accent2); }
+@media (max-width: 560px) { .sched-instr { grid-template-columns: 1fr; } .recipe-cmd { white-space: normal; overflow-wrap: anywhere; } }
 
 
 /* ── responsive.css ── */
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* === Mobile === */
-@media (max-width: 700px) {
-  header { flex-wrap: wrap; gap: 10px; padding: 12px 16px; }
-  header .logo { width: 38px; height: 38px; }
-  h1 { font-size: 17px; }
-  .actions { margin-left: 0; width: 100%; gap: 6px; }
-  /* The desktop 3-column hero (gauge / body / trend) cannot fit 390px:
-     grid needs an explicit single column — flex-wrap is a no-op on grid. */
-  .status { grid-template-columns: 1fr; gap: 14px; padding: 20px 18px; }
-  .status-main { width: 100%; justify-content: flex-start; flex-direction: row; }
-  .gauge { width: 72px; height: 72px; }
-  .stat-tiles { min-width: 0; width: 100%; }
-  /* The toolbar wraps instead of stacking. A column turned every control into
-     a full-width block — six rows of chrome before the first finding, which is
-     the worst possible first impression on a phone. Wrapping keeps the buttons
-     in rows of their own width; only the filters and the search take a row. */
-  .toolbar { top: 108px; flex-wrap: wrap; gap: 8px; padding: 12px; }
-  .toolbar .seg { flex: 0 0 auto; }
-  .filters { flex: 1 1 100%; justify-content: center; }
-  #search { flex: 1 1 100%; }
-  .toolbar .toolbtn { flex: 1 1 auto; }
-  #search { min-width: 0; }
-  .group-body { padding: 12px; }
-  .card summary { padding: 11px 12px; }
-  .card-body { padding: 12px; gap: 10px; }
-  .card .detail { font-size: 13px; }
-  .fix .fixtext { min-width: 0; font-size: 11.5px; }
-  .fix button, .fix .reportbtn { height: 40px; font-size: 12px; }
-  /* #nexthep is a block, not a flex container: flex-direction here would be a
-     no-op. Only the padding was ever doing anything. */
-  #nexthep { padding: 12px 14px; }
-  .history { margin-top: 36px; }
-  .status.calm::before { left: 16px; right: 16px; }
-  /* Touch targets: every interactive control reaches ~40px tall. */
-  button { min-height: 38px; }
-  .fpill, .segbtn { padding: 9px 14px; }
-  /* .sb-item needs no rule here: at ≤700px #sidebar .sb-block is already
-     display:none, and the visible strip holds .viewtab, not .sb-item. */
-  .evidence { font-size: 10.5px; max-height: 160px; }
-  .ev-copy, .ev-expand { padding: 8px 12px; min-height: 36px; }
-}
-
-/* Below the desktop sidebar breakpoint (1100px) the aside becomes the views
-   nav: only the Views section shows, as a horizontal scroll strip. */
+/* === Below the rail breakpoint (1100px) === */
 @media (max-width: 1099px) {
-  #sidebar { display: block; position: static; max-height: none; overflow: visible; padding: 0; margin: 0 0 12px; }
+  .maincol { padding: 12px 14px 0; }
+  /* The aside collapses to the views nav. The Health block and the views
+     strip stay; the breakdown/nav sections are desktop-only. */
+  #sidebar { display: block; position: static; top: auto; height: auto; max-height: none; overflow: visible; padding: 0; margin: 0 0 10px; background: transparent; border-right: none; }
   #sidebar .sb-block { display: none; }
+  #sidebar .sb-health { display: block; margin-bottom: 10px; }
   #sidebar .sb-views { display: block; margin-bottom: 0; }
   #sidebar .sb-views h2 { display: none; }
   #sidebar .viewtabs {
     flex-direction: row; overflow-x: auto; width: 100%;
-    background: var(--card); border: 1px solid var(--border);
-    padding: 3px; border-radius: 999px;
+    background: var(--card2); border: 1px solid var(--border);
+    padding: 2px; border-radius: var(--radius-sm);
   }
-  #sidebar .viewtab { width: auto; flex-shrink: 0; }
-  #sidebar .viewtab.active { background: var(--text); color: var(--bg); outline: none; }
+  #sidebar .viewtab { width: auto; flex-shrink: 0; padding: 6px 10px; }
+  #sidebar .viewtab.active { background: var(--card); color: var(--text); }
+}
+
+/* === Mobile === */
+@media (max-width: 700px) {
+  header { flex-wrap: wrap; height: auto; gap: 8px; padding: 10px 14px; }
+  .hdr-id { flex: 1 1 100%; }
+  header .logo { width: 24px; height: 24px; }
+  h1 { font-size: 13px; }
+  .actions { margin-left: 0; width: 100%; gap: 6px; }
+  .sr-num { font-size: 28px; }
+  /* The toolbar wraps instead of stacking: a column turns every control into
+     a full-width block, the worst possible first impression on a phone. */
+  .toolbar { top: 48px; flex-wrap: wrap; gap: 8px; }
+  .toolbar .seg { flex: 0 0 auto; }
+  .filters { flex: 1 1 100%; justify-content: center; }
+  #search { flex: 1 1 100%; min-width: 0; }
+  .toolbar .toolbtn { flex: 1 1 auto; }
+  .group-body { padding: 6px 0; }
+  .card summary { padding: 10px; }
+  .card-body { padding: 0 10px 12px; }
+  .fix .fixtext { min-width: 0; font-size: 11.5px; }
+  .fix button, .fix .reportbtn { height: 38px; font-size: 12px; }
+  #nexthep { padding: 12px 14px; }
+  .history { margin-top: 24px; }
+  /* Touch targets: every interactive control reaches ~38px tall. */
+  button { min-height: 36px; }
+  .fpill, .segbtn { padding: 7px 12px; }
+  .evidence { font-size: 10.5px; max-height: 160px; }
+  .ev-copy, .ev-expand { padding: 8px 12px; min-height: 34px; }
 }
 
 
 /* ── wide.css ── */
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* === Wide desktop shell (≥1200px) ===
-   Uncaps the phone-first column and puts the monitor to work: fixed rail +
-   fluid main, components stretched over the grid, instrument-scale hero.
-   Below 1200 nothing changes — mobile and the 1100px sidebar rail keep
-   their exact behavior. Variables only, so all four themes hold. */
+/* === Wide desktop (≥1200px) ===
+   The shell is already edge-to-edge from 1100px; what wide adds is the
+   master-detail reading layout: the findings list on the left, the selected
+   finding's full body pinned on the right. */
 @media (min-width: 1200px) {
-  body { padding: 20px 24px 56px; }
+  /* The toolbar sticks under the header, so it must be opaque or the
+     scrolling rows show through it. */
+  html.wide .toolbar { background: var(--bg); margin-bottom: 12px; }
+  html.wide header.scrolled { background: var(--bg2); }
 
-  .wrap { max-width: none; }
-  .content, #report { max-width: none; }
-  .layout { gap: 40px; }
-
-  /* Header stays full-bleed: negative margins must match the new gutters. */
-  header { margin: -12px -24px 24px; padding: 12px 24px; }
-
-  /* Components capped to the old 1040px column now live on the grid.
-     The modal keeps its 740px measure on purpose (readable line length). */
-  #nexthep, .security-posture, .thresh-panel, .history, #trend { max-width: none; }
-
-  /* Hero drops from landing-page scale to instrument scale. The 42px
-     numeral is inline-styled by the renderer, hence the first-child rule;
-     the gauge stays 84px, which is already desktop-appropriate. */
-  .status { padding: 16px 22px; margin-bottom: 16px; }
-  .status-score-row > div:first-child { font-size: 32px !important; }
-
-  /* === Desktop density (phase 3) ===
-     The cards are already compact by default; what was airy at width is
-     the chrome around them. Tighter rows, denser groups, and rendering
-     skips for long collapsed info lists. */
-  html.wide .card summary { padding: 9px 12px; }
-  html.wide .card summary h3 { font-size: 13px; }
-  html.wide .card.crow summary { padding: 7px 10px; }
-  html.wide .group > summary { padding: 8px 4px; }
-  html.wide .group-body { gap: 6px; padding: 8px 0 6px; }
-  html.wide #report { gap: 12px; }
-  html.wide .fix { padding-top: 10px; }
-  html.wide .fix .fixtext { padding: 8px 10px; font-size: 12px; }
-
-  /* Sticky chrome must be opaque: the toolbar sticks under the header, so
-     without a background the scrolling findings show through it (classic
-     overlap artifact — very visible in the desktop webview). */
-  html.wide .toolbar { background: var(--bg); padding: 8px 0; margin-bottom: 12px; }
-  html.wide .toolbar.scrolled { background: var(--bg); }
-  html.wide header.scrolled { background: var(--bg); }
-
-  /* === Master-detail (phase 2) ===
-     The findings list stays on the left; the selected finding's full body
-     renders in a sticky pane on the right. Below 1200 .reportgrid is a
-     plain block and the pane stays hidden — mobile behavior untouched. */
+  /* === Master-detail ===
+     Below 1200 .reportgrid is a plain block and the pane stays hidden. */
   html.wide .reportgrid {
     display: grid;
     grid-template-columns: minmax(0, 1fr) clamp(340px, 30vw, 460px);
     gap: 0 24px;
     align-items: start;
   }
-  /* Explicit placement: without it auto-flow drops the no-match message into
-     the pane column when the report happens to be hidden. */
   html.wide .reportgrid > #drillhint,
   html.wide .reportgrid > #report,
   html.wide .reportgrid > #nomatch { grid-column: 1; }
   html.wide .reportgrid > #detailpane { grid-column: 2; }
   html.wide .detailpane {
-    position: sticky; top: 124px;
-    max-height: calc(100vh - 176px); overflow: auto;
+    position: sticky; top: 104px;
+    max-height: calc(100vh - 152px); overflow: auto;
     background: var(--card); border: 1px solid var(--border);
-    border-radius: 12px; padding: 14px 16px 16px;
+    border-radius: var(--radius); padding: 14px 16px 16px;
   }
   html.wide .detailpane::-webkit-scrollbar { width: 8px; }
   html.wide .detailpane::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; }
   html.wide .dp-kicker {
     display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
-    font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted2);
+    font-size: 10px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; color: var(--muted2);
   }
-  html.wide .dp-tag {
-    background: color-mix(in srgb, var(--green) 16%, transparent);
-    color: var(--green); border-radius: 5px; padding: 2px 7px;
-  }
+  html.wide .dp-tag { background: color-mix(in srgb, var(--green) 16%, transparent); color: var(--green); border-radius: 999px; padding: 2px 7px; }
   html.wide .dp-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-  html.wide .dp-head h3 { font-size: 16px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.3; flex: 1; min-width: 200px; }
+  html.wide .dp-head h3 { font-size: 15px; font-weight: 650; letter-spacing: -.015em; line-height: 1.3; flex: 1; min-width: 200px; }
   html.wide .dp-body .detail { padding: 10px 0 12px; border-top: 1px solid var(--border); margin-top: 10px; }
   html.wide .dp-lowconf { display: flex; gap: 6px; align-items: center; font-size: 11px; color: var(--muted2); margin-top: 6px; }
   html.wide .dp-evrow { display: flex; align-items: center; gap: 6px; margin: 0 0 10px; }
   html.wide .dp-body .fix { padding-top: 12px; }
   html.wide #report details.card.selected {
     background: var(--card);
-    border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
-    outline: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+    border-color: var(--border);
+    outline: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
   }
-
-  /* === Status bar (phase 4) ===
-     The footer becomes persistent desktop chrome: view, freshness, the
-     read-only promise, and the keyboard map — always on screen. */
-  html.wide body { padding-bottom: 16px; }
-  html.wide footer {
-    position: sticky; bottom: 0; z-index: 18;
-    display: flex; align-items: center; gap: 16px;
-    margin: 24px -24px -16px; padding: 7px 24px;
-    background: var(--bg);
-    border-top: 1px solid var(--border);
-    text-align: left; line-height: 1.4;
-  }
-  html.wide footer .sbar-view { display: inline; font-weight: 650; color: var(--muted); flex-shrink: 0; }
-  html.wide footer .sbar-check { display: inline; font-family: var(--mono); font-size: 11px; flex-shrink: 0; }
-  html.wide footer .sbar-check.stale { color: var(--yellow); }
-  html.wide footer .sbar-check[hidden] { display: none; }
-  html.wide footer .sbar-note { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  html.wide footer .sbar-hints { margin-left: auto; flex-shrink: 0; white-space: nowrap; }
 }
 
 
 /* ── print.css ── */
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* === Print === */
+/* === Print ===
+   The score block lives in the rail on screen; on paper there is no rail, so
+   the Health block is pulled back into the flow and every other aside section
+   is dropped. */
 @media print {
   header .actions, .toolbar, #toast-wrap, footer, .history, #fixed, #skipped, #diff,
-  #sidebar, .skel, .skip-link, .modal { display: none !important; }
+  #sidebar .sb-views, #sidebar .sb-block:not(.sb-health), .skel, .skip-link, .modal { display: none !important; }
   .layout { display: block !important; }
   body { background: #fff !important; color: #111 !important; padding: 12px !important; background-image: none !important; }
   .status, .group, .card, .crow { box-shadow: none !important; break-inside: avoid; border: 1px solid #ddd !important; }
   .card-body { animation: none !important; }
 
+  /* The rail itself is gone on paper — only its Health block remains. */
+  .sidebar { display: block !important; background: none !important; border: none !important; padding: 0 !important; height: auto !important; position: static !important; }
+  .sb-health { display: block !important; margin-bottom: 12px; }
+
   /* Keep the brand mark and health colors in print — browsers strip
-     backgrounds by default and may drop var()-driven strokes. */
-  .logo, .gauge svg { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+     backgrounds by default and may drop var()-driven fills. */
+  .logo, .pulse-live, .pulse-dot { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .logo svg path { stroke: #0e9c5a !important; }   /* fixed brand green on paper */
-  .gauge .ring { stroke-width: 7 !important; }      /* ring keeps its inline stroke color */
+  .pulse-track { stroke: #e5e5e5 !important; }
 }
 
 </style>
@@ -1018,11 +1139,11 @@ body.compact #report { gap: 14px; }
 <a class="skip-link" href="#report">Skip to findings</a>
 <div class="wrap">
   <header>
-    <a id="brand" class="brand" href="#overview" aria-label="Linux Doctor — go to Overview">
-      <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M2 13h4l2.5-7 4 12 3-8 1.5 3H22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-      <h1>Linux Doctor</h1>
-    </a>
-    <div>
+    <div class="hdr-id">
+      <a id="brand" class="brand" href="#overview" aria-label="Linux Doctor — go to Overview">
+        <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M2 13h4l2.5-7 4 12 3-8 1.5 3H22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <h1>Linux Doctor</h1>
+      </a>
       <div class="sysinfo" id="sysinfo" role="status">Loading…</div>
     </div>
     <div class="actions">
@@ -1041,11 +1162,15 @@ body.compact #report { gap: 14px; }
       <button id="rerun" class="primary">↻ Re-run checks</button>
     </div>
   </header>
-  <div id="status" class="status running" aria-live="polite" role="status">
-    <span class="spinner" aria-hidden="true"></span>Reading your system…
-  </div>
   <div class="layout">
     <aside id="sidebar" class="sidebar" hidden aria-label="Report overview">
+      <section class="sb-block sb-health">
+        <div id="status" class="status running" aria-live="polite" role="status">
+          <div class="skel skel-k"></div>
+          <div class="skel skel-v"></div>
+          <div class="skel skel-b"></div>
+        </div>
+      </section>
       <section class="sb-block sb-views">
         <h2>Views</h2>
         <nav id="viewtabs" class="viewtabs" role="tablist" aria-label="Views">
@@ -1102,7 +1227,7 @@ body.compact #report { gap: 14px; }
         </div>
         <div class="reportgrid">
           <div id="drillhint" class="empty" hidden></div>
-          <div id="report"><div class="empty">Reading your system…</div></div>
+          <div id="report" aria-busy="true"><div class="skel skel-row"></div><div class="skel skel-row"></div><div class="skel skel-row"></div><div class="skel skel-row"></div></div>
           <div id="nomatch" class="empty" hidden></div>
           <aside id="detailpane" class="detailpane" hidden aria-live="polite" aria-label="Finding detail"></aside>
         </div>
@@ -1125,21 +1250,34 @@ body.compact #report { gap: 14px; }
       </main>
     </div>
   <div id="view-history" class="view" role="tabpanel" aria-label="History" hidden>
+  <div class="view-head">
+    <div class="vh-title">History</div>
+    <div class="vh-sub">How this machine's health moved, run by run</div>
+  </div>
   <section id="history" class="history" hidden>
-    <details class="hist-details">
-      <summary class="hist-summary">History <span class="hist-sub">score &amp; findings across recent runs</span><span class="chev">▸</span></summary>
-      <div id="trend"></div>
-      <div id="runledger"></div>
-    </details>
+    <div id="trend"></div>
+    <div id="runledger"></div>
   </section>
   </div>
   <div id="view-checks" class="view" role="tabpanel" aria-label="All checks" hidden>
+  <div class="view-head">
+    <div class="vh-title">Checks</div>
+    <div class="vh-sub">Every check this tool knows, and what it found on this machine</div>
+  </div>
     <div id="checksview"></div>
   </div>
   <div id="view-system" class="view" role="tabpanel" aria-label="System" hidden>
+  <div class="view-head">
+    <div class="vh-title">System</div>
+    <div class="vh-sub">The machine's profile, read straight from the report</div>
+  </div>
     <div id="systemview"></div>
   </div>
   <div id="view-schedule" class="view" role="tabpanel" aria-label="Schedule" hidden>
+  <div class="view-head">
+    <div class="vh-title">Schedule</div>
+    <div class="vh-sub">Will this machine check itself — and when</div>
+  </div>
     <div id="schedview"></div>
   </div>
     </div>
@@ -1148,10 +1286,18 @@ body.compact #report { gap: 14px; }
     <span id="sbar-view" class="sbar-view">Overview</span>
     <span id="sbar-check" class="sbar-check" hidden></span>
     <span class="sbar-note">Linux Doctor only reads system information — it never modifies anything.</span>
-    <span class="sbar-hints"><kbd>↑</kbd> <kbd>↓</kbd> navigate · <kbd>Enter</kbd> open/close · <kbd>/</kbd> search · <kbd>1</kbd>–<kbd>5</kbd> views · <kbd>Esc</kbd> clear</span>
+    <span class="sbar-hints"><kbd>↑</kbd> <kbd>↓</kbd> navigate · <kbd>Enter</kbd> open/close · <kbd>/</kbd> search · <kbd>Ctrl</kbd> <kbd>K</kbd> palette · <kbd>1</kbd>–<kbd>5</kbd> views · <kbd>Esc</kbd> clear</span>
+    <span class="sbar-brand" title="Built by 7sh1d0w7x"><img class="sbar-mark" src="data:image/png;base64,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" alt="" width="29" height="18">7sh1d0w7x</span>
   </footer>
 </div>
 <div id="toast-wrap" aria-live="polite" aria-atomic="true"></div>
+<div id="palette" class="palette" hidden role="dialog" aria-modal="true" aria-label="Command palette">
+  <div class="palette-card">
+    <input id="palette-input" type="text" placeholder="Search findings, views and actions…" autocomplete="off" spellcheck="false" aria-label="Command palette search" role="combobox" aria-expanded="true" aria-controls="palette-list">
+    <div id="palette-list" class="palette-list" role="listbox" aria-label="Results"></div>
+    <div class="palette-foot"><span><kbd>↑</kbd> <kbd>↓</kbd> move</span><span><kbd>↵</kbd> run</span><span><kbd>esc</kbd> close</span></div>
+  </div>
+</div>
 <div id="modal" class="modal" hidden role="dialog" aria-modal="true" aria-label="Details">
   <div class="modal-card">
     <button id="modal-x" class="modal-x" title="Close (Esc)" aria-label="Close">×</button>
@@ -1164,6 +1310,13 @@ body.compact #report { gap: 14px; }
 /* === DOM helpers === */
 const $ = (sel) => document.querySelector(sel);
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+/* Fix strings quote commands in backticks. The interface shows them as code,
+   not as backticks — and a stray one after a slice never reaches the screen. */
+function cmdCode(text) {
+  return esc(text)
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/`/g, "");
+}
 /* JS smooth-scrolls bypass the CSS reduced-motion guard, so gate the behavior here. */
 function prefersReducedMotion() {
   try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch { return false; }
@@ -1469,6 +1622,7 @@ function openHelp() {
     '<div class="help-grid">' +
     "<div><kbd>\u2191</kbd> <kbd>\u2193</kbd></div><div>Navigate findings</div>" +
     "<div><kbd>Enter</kbd> / <kbd>Space</kbd></div><div>Open or close a finding</div>" +
+    "<div><kbd>Ctrl</kbd> <kbd>K</kbd></div><div>Open the command palette</div>" +
     "<div><kbd>/</kbd></div><div>Focus the search box</div>" +
     "<div><kbd>1</kbd>–<kbd>5</kbd></div><div>Overview · History · Checks · System · Schedule views</div>" +
     "<div><kbd>Esc</kbd></div><div>Close this dialog \u00b7 clear search &amp; filters \u00b7 close thresholds</div>" +
@@ -1532,6 +1686,13 @@ function setupKeyboard() {
       return;
     }
 
+    // Ctrl/Cmd+K: the command palette (Linear's signature keystroke).
+    if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) {
+      e.preventDefault();
+      if (isPaletteOpen()) closePalette(); else openPalette();
+      return;
+    }
+
     // "/" focuses search (unless the user is already typing somewhere).
     if (e.key === "/" && !typing) {
       e.preventDefault();
@@ -1546,8 +1707,10 @@ function setupKeyboard() {
       return;
     }
 
-    // Escape: close the modal, then the thresholds panel, else clear search+filter.
+    // Escape: close the palette, then the modal, then the thresholds panel,
+    // else clear search+filter.
     if (e.key === "Escape") {
+      if (isPaletteOpen()) { closePalette(); return; }
       if (isModalOpen()) { closeModal(); return; }
       const panel = $("#threshpanel");
       if (panel && !panel.hidden) { panel.hidden = true; return; }
@@ -1603,6 +1766,143 @@ function setAllOpen(open) {
   });
   const btn = $("#expandall");
   if (btn) btn.textContent = open ? "\u229f Collapse all" : "\u229e Expand all";
+}
+
+
+/* ── ui-palette.js ── */
+// SPDX-License-Identifier: GPL-3.0-or-later
+/* === Command palette (Ctrl/Cmd+K) ===
+   One keystroke to jump anywhere: views, actions and findings, filtered as
+   you type. Arrow keys move, Enter runs, Esc closes. Linear's signature,
+   wired to the same functions the toolbar already calls. */
+let paletteItems = [];
+let paletteSel = 0;
+
+function isPaletteOpen() {
+  const el = $("#palette");
+  return !!el && !el.hidden;
+}
+
+/* Every entry is { group, label, hint, run }. Findings come from the report
+   that is already in memory; nothing extra is fetched. */
+function paletteCommands() {
+  const cmds = [];
+  for (const v of VIEWS) {
+    const label = v.charAt(0).toUpperCase() + v.slice(1);
+    cmds.push({ group: "Views", label, hint: "Open", run: () => switchView(v) });
+  }
+  cmds.push({ group: "Actions", label: "Re-run checks", run: () => $("#rerun")?.click() });
+  cmds.push({ group: "Actions", label: "Toggle theme", run: () => $("#theme")?.click() });
+  cmds.push({ group: "Actions", label: "Expand all findings", run: () => setAllOpen(true) });
+  cmds.push({ group: "Actions", label: "Collapse all findings", run: () => setAllOpen(false) });
+  cmds.push({ group: "Actions", label: "Toggle compact density", run: () => $("#densitybtn")?.click() });
+  cmds.push({ group: "Actions", label: "Open the all-checks matrix", run: () => $("#checksmatrixbtn")?.click() });
+  cmds.push({ group: "Actions", label: "Edit thresholds", run: () => $("#threshbtn")?.click() });
+  cmds.push({ group: "Actions", label: "Export report", run: () => $("#export-trigger")?.click() });
+  cmds.push({ group: "Actions", label: "Keyboard shortcuts", run: () => openHelp() });
+
+  const findings = (typeof lastReportData !== "undefined" && lastReportData && lastReportData.findings) || [];
+  for (const f of findings) {
+    cmds.push({
+      group: "Findings",
+      label: f.title || f.code || "Finding",
+      hint: (f.code ? f.code + " · " : "") + (SEV_NAMES[f.severity] || f.severity || ""),
+      run: () => jumpToFinding(f),
+    });
+  }
+  return cmds;
+}
+
+function jumpToFinding(f) {
+  switchView("overview");
+  const el = [...document.querySelectorAll("#report .card")].find((c) => (c.dataset.code || "") === (f.code || ""));
+  if (!el) return;
+  el.setAttribute("open", "");
+  if (typeof wideModeOn === "function" && wideModeOn() && typeof selectFinding === "function") selectFinding(el);
+  el.scrollIntoView({ block: "center" });
+  el.focus({ preventScroll: true });
+}
+
+function paletteFilter(q) {
+  const all = paletteCommands();
+  const needle = q.trim().toLowerCase();
+  if (!needle) return all.slice(0, 40);
+  const out = [];
+  for (const c of all) {
+    const hay = (c.label + " " + (c.hint || "") + " " + c.group).toLowerCase();
+    if (hay.includes(needle)) out.push(c);
+  }
+  return out.slice(0, 40);
+}
+
+function renderPalette(q) {
+  paletteItems = paletteFilter(q);
+  if (paletteSel >= paletteItems.length) paletteSel = 0;
+  const list = $("#palette-list");
+  if (!list) return;
+  if (!paletteItems.length) {
+    list.innerHTML = '<div class="pal-empty">Nothing matches \u201c' + esc(q.trim()) + "\u201d</div>";
+    return;
+  }
+  let html = "";
+  let last = "";
+  paletteItems.forEach((c, i) => {
+    if (c.group !== last) { html += '<div class="pal-group">' + esc(c.group) + "</div>"; last = c.group; }
+    html += '<button type="button" class="pal-item' + (i === paletteSel ? " on" : "") + '" data-i="' + i + '" role="option">' +
+      '<span class="pal-label">' + esc(c.label) + "</span>" +
+      (c.hint ? '<span class="pal-hint">' + esc(c.hint) + "</span>" : "") +
+      "</button>";
+  });
+  list.innerHTML = html;
+}
+
+function movePalette(d) {
+  if (!paletteItems.length) return;
+  paletteSel = (paletteSel + d + paletteItems.length) % paletteItems.length;
+  const list = $("#palette-list");
+  list.querySelectorAll(".pal-item").forEach((el, i) => el.classList.toggle("on", i === paletteSel));
+  list.querySelector(".pal-item.on")?.scrollIntoView({ block: "nearest" });
+}
+
+function runPalette(i) {
+  const cmd = paletteItems[i == null ? paletteSel : i];
+  closePalette();
+  if (cmd) setTimeout(() => cmd.run(), 0);
+}
+
+function openPalette() {
+  const el = $("#palette");
+  if (!el) return;
+  el.hidden = false;
+  paletteSel = 0;
+  const input = $("#palette-input");
+  if (input) input.value = "";
+  renderPalette("");
+  input?.focus();
+}
+
+function closePalette() {
+  const el = $("#palette");
+  if (el) el.hidden = true;
+}
+
+function setupPalette() {
+  const el = $("#palette");
+  if (!el) return;
+  el.addEventListener("click", (e) => { if (e.target === el) closePalette(); });
+  const input = $("#palette-input");
+  const list = $("#palette-list");
+  input?.addEventListener("input", (e) => { paletteSel = 0; renderPalette(e.target.value); });
+  input?.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowDown") { e.preventDefault(); movePalette(1); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); movePalette(-1); }
+    else if (e.key === "Enter") { e.preventDefault(); runPalette(); }
+    else if (e.key === "Escape") { e.preventDefault(); closePalette(); }
+  });
+  list?.addEventListener("click", (e) => {
+    const item = e.target.closest(".pal-item");
+    if (item) runPalette(Number(item.dataset.i));
+  });
 }
 
 
@@ -1680,7 +1980,10 @@ function applyFiltersNow() {
   });
   const nomatch = $("#nomatch");
   nomatch.hidden = !(activeFilter && qRaw && visible === 0);
-  if (!nomatch.hidden) nomatch.textContent = 'No findings match "' + qRaw + '".';
+  if (!nomatch.hidden) {
+    nomatch.innerHTML = '<div class="empty-big">No findings match \u201c' + esc(qRaw) + '\u201d</div>' +
+      '<button type="button" class="empty-cta" data-clear-filters>Clear filters</button>';
+  }
   // Wide: if the pane's selection was filtered out, pick the next visible
   // one; while it stays visible the pane is left alone (no scroll churn).
   if (typeof wideModeOn === "function" && wideModeOn()) {
@@ -1962,31 +2265,68 @@ function renderSchedule(s) {
   syncNotices();
 }
 
-/* Schedule view: the full picture — status, cadence, notify state, and the
-   exact commands to copy. Rendered lazily on activation (same fetch as the
-   strip, no extra endpoint). Pure builder kept separate for tests. */
-function scheduleViewHtml(s, notify) {
-  const strip = scheduleHtml(s, notify);
-  const head = '<div class="viewcard"><div class="mx-head">Scheduled checks</div>' +
-    '<div class="mx-sub">The timer runs the checks for you; the machine only speaks when something new breaks</div>';
-  if (!strip) {
-    return head + '<div class="detail">Schedule state is unavailable (static export or unreachable API).</div></div>';
+/* Schedule view: the full picture — last run, next run, timer state, and the
+   exact commands as recipes. Pure builders kept separate for tests. */
+
+/* Coarse relative freshness for the "last run" cell. */
+function schedAgo(iso) {
+  const t = Date.parse(iso || "");
+  if (!Number.isFinite(t)) return "\u2014";
+  const s = Math.max(0, Math.round((Date.now() - t) / 1000));
+  if (s < 60) return "just now";
+  if (s < 3600) return Math.floor(s / 60) + "m ago";
+  if (s < 86400) return Math.floor(s / 3600) + "h ago";
+  return Math.floor(s / 86400) + "d ago";
+}
+
+/* The command IS the information, so it is printed, not hidden behind a
+   button: an accent-ruled mono slip — the same recipe language as the
+   findings' Recommended next step — with a quiet copy next to it. */
+function recipeHtml(cmd, primary) {
+  return '<div class="recipe"><code class="recipe-cmd">' + esc(cmd) + "</code>" +
+    '<button class="recipe-copy' + (primary ? " primary" : "") + '" type="button" data-copy="' + esc(cmd) + '" title="Copy this command">Copy</button></div>';
+}
+
+function scheduleViewHtml(s, notify, generatedAt) {
+  const notifyBit = notify === "unavailable" ? ""
+    : '<span class="sched-note"><span class="sched-sep" aria-hidden="true">\u00b7</span><span>Browser alerts ' + (notify === "on" ? "on" : "off") + "</span></span>";
+  if (!s) {
+    return '<section class="vsec"><div class="vsec-head">Scheduled checks</div>' +
+      '<div class="sched-none">Schedule state is unavailable (static export or unreachable API).</div></section>';
   }
-  const cadence = '<div class="sysfact"><span class="sysfact-k">Cadence</span>' +
-    '<span class="sysfact-v">shortly after boot, then every 24h (Persistent — catches up missed runs)</span></div>';
-  const cmds = '<div class="sysfact"><span class="sysfact-k">Manage</span><span class="sysfact-v">' +
-    '<button class="toolbtn" data-copy="linux-doctor --install-timer">Copy install</button> ' +
-    '<button class="toolbtn" data-copy="linux-doctor --uninstall-timer">Copy remove</button></span></div>';
-  const pro = '<div class="sysfact"><span class="sysfact-k">Remote delivery [Pro]</span><span class="sysfact-v">' +
-    '<button class="toolbtn" data-copy="linux-doctor --alert https://ntfy.sh/your-topic">Copy alert example</button> ' +
-    '<button class="toolbtn" data-copy="linux-doctor --heartbeat https://hc-ping.com/your-uuid">Copy heartbeat example</button></span></div>';
-  return head + '<div class="sched sched-static">' + strip + "</div>" + cadence + cmds + pro + "</div>";
+  const on = !!s.active;
+  const needs = s.installed && !s.active;
+  const state = on ? "on" : needs ? "needs attention" : "off";
+  const lastMs = Date.parse(generatedAt || "");
+  const nextTxt = on && Number.isFinite(lastMs)
+    ? "by " + fmtWhen(new Date(lastMs + 86400000).toISOString())
+    : "\u2014";
+  const nextTitle = "The installed timer runs 24h after its last activation; Persistent catches up runs missed while the machine was off.";
+  const instr =
+    '<div class="sched-instr">' +
+      '<div class="si"><span class="si-k">Last run</span><span class="si-v">' + esc(schedAgo(generatedAt)) + "</span></div>" +
+      '<div class="si"><span class="si-k">Next run</span><span class="si-v" title="' + esc(nextTitle) + '">' + esc(nextTxt) + "</span></div>" +
+      '<div class="si"><span class="si-k">Timer</span><span class="si-v"><span class="dot' + (on ? "" : " stale") + '" aria-hidden="true"></span>' + esc(state) + "</span></div>" +
+    "</div>" +
+    '<div class="sched-cap">shortly after boot, then every 24h \u00b7 Persistent \u2014 catches up runs missed while the machine was off' + notifyBit + "</div>";
+  const idle = on
+    ? '<p class="sched-idle">Nothing to do \u2014 the timer runs the checks by itself and speaks up only when something new breaks.</p>'
+    : "";
+  const setup = on ? "" :
+    '<section class="vsec"><div class="vsec-head">Set it up</div>' + recipeHtml("linux-doctor --install-timer", true) + "</section>";
+  const manage = '<section class="vsec"><div class="vsec-head">Manage</div>' +
+    recipeHtml("linux-doctor --install-timer") +
+    recipeHtml("linux-doctor --uninstall-timer") + "</section>";
+  const pro = '<section class="vsec"><div class="vsec-head">Remote delivery <span class="vsec-sub">[Pro]</span></div>' +
+    recipeHtml("linux-doctor --alert https://ntfy.sh/your-topic") +
+    recipeHtml("linux-doctor --heartbeat https://hc-ping.com/your-uuid") + "</section>";
+  return '<section class="vsec"><div class="vsec-head">Scheduled checks</div>' + instr + idle + "</section>" + setup + manage + pro;
 }
 
 async function renderScheduleView() {
   const box = $("#schedview");
   if (!box) return;
-  box.innerHTML = scheduleViewHtml(await fetchSchedule(), browserNotifyState());
+  box.innerHTML = scheduleViewHtml(await fetchSchedule(), browserNotifyState(), (lastReportData || {}).generatedAt);
 }
 
 function refreshSchedule() {
@@ -2097,7 +2437,7 @@ function setStatus(generatedAt) {
   }
 }
 
-async function renderTrend(currentScore) {
+async function renderTrend() {
   if (STATIC_DATA) return;
   const trend = $("#trend");
   const runs = await fetchHistory();
@@ -2110,8 +2450,6 @@ async function renderTrend(currentScore) {
        what will grow here instead, using the score we already have. */
     if (data.length === 1 && !STATIC_DATA) {
       histEl.hidden = false;
-      const det = histEl.querySelector(".hist-details");
-      if (det) det.open = true;
       trend.innerHTML =
         '<div class="hist-empty">Only one run on record so far \u2014 it scored <b>' + data[0].score + "/100</b>." +
         "Run another check and your health-score trend appears here.</div>";
@@ -2133,11 +2471,6 @@ async function renderTrend(currentScore) {
 
   trend.innerHTML = '<div class="trend-wrap">' + scoreChart(data) + severityChart(data) + '</div>';
 
-  if (typeof currentScore === "number" && currentScore < 80) {
-    const det = document.querySelector(".hist-details");
-    if (det) det.open = true;
-  }
-
   setTimeout(() => {
     const histData = data;
     const showRun = (idx) => {
@@ -2149,8 +2482,6 @@ async function renderTrend(currentScore) {
       showToast(msg + " \u2014 opening Changes");
       const diffEl = $("#diff");
       if (diffEl) { diffEl.hidden = false; diffEl.open = true; diffEl.scrollIntoView({ behavior: scrollBehavior(), block: "start" }); }
-      const det = document.querySelector(".hist-details");
-      if (det) det.open = true;
     };
     // Keyboard parity: the chart marks are role="button", so Enter and Space
     // must do what the click does — the finding cards behave the same way.
@@ -2177,7 +2508,9 @@ function historyLedgerHtml(runs) {
   const rows = (runs || []).filter((r) => typeof r.score === "number").slice(-12);
   if (rows.length < 2) return "";
   let html = '<div class="ledger-head">Past runs <span class="ledger-sub">newest first</span>' +
-    '<button class="ledger-clear" id="histclear" title="Delete all stored runs">Clear history</button></div><div class="ledger">';
+    '<button class="ledger-clear" id="histclear" title="Delete all stored runs">Clear history</button></div>' +
+    '<div class="ledger">' +
+    '<div class="ledger-cols" aria-hidden="true"><span>When</span><span>Score</span><span>\u0394</span><span>Findings</span></div>';
   for (let i = rows.length - 1; i >= 0; i -= 1) {
     const r = rows[i];
     const prev = i > 0 ? rows[i - 1] : null;
@@ -2487,8 +2820,9 @@ function switchView(name, { focusTab = false } = {}) {
     if (pane) pane.hidden = id !== name;
   }
   // The sidebar itself is persistent, but the report sections inside it
-  // (breakdown, severity, categories) only make sense on Overview.
-  document.querySelectorAll("#sidebar .sb-block:not(.sb-views)").forEach((b) => {
+  // (breakdown, severity, categories) only make sense on Overview. The
+  // Health block is global — it stays on every view.
+  document.querySelectorAll("#sidebar .sb-block:not(.sb-views):not(.sb-health)").forEach((b) => {
     b.hidden = name !== "overview";
   });
   viewTabs().forEach((b) => {
@@ -2660,7 +2994,7 @@ function paneFindingHtml(f) {
       "</div></details>";
   }
   html += '<div class="fix"><div class="fix-label">Recommended next step</div>' +
-    '<div class="fixtext">' + esc(f.fix || "No automated fix — review details above.") + "</div>" +
+    '<div class="fixtext">' + cmdCode(f.fix || "No automated fix — review details above.") + "</div>" +
     '<button data-copy="' + esc(f.fix || f.detail || f.title) + '">Copy fix</button>' +
     '<button data-ignore="' + esc(f.title) + '" title="Hide this finding in future runs">Dismiss</button>' +
     '<a class="reportbtn" href="' + wrongUrl(f) + '" target="_blank" rel="noopener">Report</a></div>';
@@ -2744,7 +3078,19 @@ function setupDetailPane() {
    not-applicable for this profile, atomic skips, or runtime errors.
    Rows with findings deep-link back to their cards in the report. */
 
-function checksMatrixHtml(data, checks) {
+/* Result states — a fixed vocabulary, not free prose. The three finding
+   words are the ones the report and the severity legend already use, so a
+   result column reads the same everywhere in the product. */
+const MX_STATE = {
+  high: "needs attention", medium: "warning", info: "observation",
+  ok: "clean", na: "not applicable", skip: "skipped", err: "failed to run",
+};
+const MX_CLS = { high: "high", medium: "medium", info: "info", ok: "ok", na: "na", skip: "na", err: "err" };
+
+/* Build the matrix once, returned in parts: the view frames it with its own
+   header and column rule, the modal keeps the "All checks" heading. */
+function checksMatrixBody(data, checks, opts) {
+  const problemsOnly = !!(opts && opts.problemsOnly);
   const findingsByCheck = new Map();
   for (const f of data.findings || []) {
     if (!findingsByCheck.has(f.check)) findingsByCheck.set(f.check, []);
@@ -2755,22 +3101,17 @@ function checksMatrixHtml(data, checks) {
 
   const SEV_RANK = { high: 0, medium: 1, info: 2 };
   const dot = (cls) => '<span class="sev-dot ' + cls + '"></span>';
-  const ST = {
-    err:    { i: dot("err"),    t: "failed" },
-    ok:     { i: dot("ok"),     t: "clean" },
-    na:     { i: dot("na"),     t: "" },
-    atomic: { i: dot("atomic"), t: "" },
-  };
   function statusOf(c) {
-    if (errors.has(c.id)) return { rank: 0, icon: ST.err.i, cls: "err", note: esc(errors.get(c.id) || "failed to run") };
+    if (errors.has(c.id)) return { rank: 0, key: "err", icon: dot("err"), why: esc(errors.get(c.id) || "failed to run") };
     const fs = findingsByCheck.get(c.id) || [];
     if (fs.length) {
       fs.sort((a, b) => (SEV_RANK[a.severity] ?? 9) - (SEV_RANK[b.severity] ?? 9));
-      return { rank: 1, icon: dot(fs[0].severity), cls: fs[0].severity, note: fs.length + " finding" + (fs.length > 1 ? "s" : ""), goto: true };
+      const sev = fs[0].severity;
+      return { rank: 1, key: sev, icon: dot(sev), why: fs.length > 1 ? fs.length + " findings" : "", goto: true };
     }
-    if (!c.appliesHere) return { rank: 3, icon: ST.na.i, cls: "na", note: "runs on: " + (c.appliesTo || []).join(", ") };
-    if (c.skipOnAtomic || atomic.has(c.id)) return { rank: 3, icon: ST.atomic.i, cls: "na", note: c.atomicReason || "skipped on immutable/atomic systems" };
-    return { rank: 2, icon: ST.ok.i, cls: "ok", note: "clean" };
+    if (!c.appliesHere) return { rank: 3, key: "na", icon: dot("na"), why: "runs on: " + (c.appliesTo || []).join(", ") };
+    if (c.skipOnAtomic || atomic.has(c.id)) return { rank: 3, key: "skip", icon: dot("atomic"), why: c.atomicReason || "skipped on immutable/atomic systems" };
+    return { rank: 2, key: "ok", icon: dot("ok"), why: "" };
   }
 
   const cats = new Map();
@@ -2780,39 +3121,56 @@ function checksMatrixHtml(data, checks) {
     cats.get(cat).push(c);
   }
 
+  // Stats are computed over the whole registry, so the summary never changes
+  // shape when the "problems only" filter is on.
+  const all = new Map();
   let problemCount = 0, errorCount = 0, cleanCount = 0, naCount = 0;
-  let body = "";
-  for (const cat of CATEGORY_ORDER) {
-    const list = cats.get(cat);
-    if (!list || !list.length) continue;
+  for (const [cat, list] of cats) {
     const rows = list.map((c) => ({ c, s: statusOf(c) }))
       .sort((a, b) => a.s.rank - b.s.rank || a.c.id.localeCompare(b.c.id));
-    body += '<div class="mx-cat">' + catIcon(cat, 12) + " " + esc(CATEGORY_LABELS[cat] || cat) + "</div>";
-    for (const { c, s } of rows) {
+    for (const { s } of rows) {
       if (s.rank === 1) problemCount++;
       else if (s.rank === 0) errorCount++;
       else if (s.rank === 2) cleanCount++;
       else naCount++;
+    }
+    all.set(cat, rows);
+  }
+
+  let body = "";
+  for (const cat of CATEGORY_ORDER) {
+    const rows = (all.get(cat) || []).filter((r) => !problemsOnly || r.s.rank <= 1);
+    if (!rows.length) continue;
+    body += '<div class="mx-cat">' + catIcon(cat, 12) + " " + esc(CATEGORY_LABELS[cat] || cat) +
+      '<span class="mx-cat-n">' + rows.length + "</span></div>";
+    for (const { c, s } of rows) {
       const gotoAttr = s.goto
         ? ' data-goto-code="' + esc(((findingsByCheck.get(c.id) || [])[0] || {}).code || "") + '" data-goto-check="' + esc(c.id) + '" tabindex="0" role="button" aria-label="Show ' + esc(c.id) + ' finding"'
         : "";
+      const why = s.why ? '<span class="mx-why" title="' + esc(s.why) + '">' + s.why + "</span>" : "";
+      const cls = MX_CLS[s.key];
       body += '<div class="mx-row' + (s.goto ? " link" : "") + '"' + gotoAttr + ">" +
         '<span class="mx-st" aria-hidden="true">' + s.icon + '</span>' +
         '<span class="mx-id">' + esc(c.id) + '</span>' +
         '<span class="mx-title">' + esc(c.title) + '</span>' +
-        '<span class="mx-note ' + s.cls + '">' + s.note + "</span></div>";
+        '<span class="mx-res ' + cls + '"><span class="mx-state ' + cls + '">' + MX_STATE[s.key] + "</span>" + why + "</span></div>";
     }
   }
 
   const total = checks.length;
-  return '<div class="mx-head">All checks</div>' +
-    '<div class="mx-sub">' + total + " registered \u00b7 " +
+  const summary = total + " registered \u00b7 " +
     problemCount + " with findings \u00b7 " +
     cleanCount + " clean \u00b7 " +
     (errorCount ? errorCount + " failed to run \u00b7 " : "") +
     naCount + " not applicable here" +
-    (STATIC_DATA ? " \u00b7 static report: live check list unavailable" : "") + "</div>" +
-    body;
+    (STATIC_DATA ? " \u00b7 static report: live check list unavailable" : "");
+  return { body, summary, problems: problemCount + errorCount };
+}
+
+function checksMatrixHtml(data, checks, opts) {
+  const m = checksMatrixBody(data, checks, opts);
+  const head = opts && opts.head === false ? "" : '<div class="mx-head">All checks</div>';
+  return head + '<div class="mx-sub">' + m.summary + "</div>" + m.body;
 }
 
 /* The persistent state the GUI can otherwise only set (Dismiss) lives here:
@@ -2885,13 +3243,38 @@ function setupChecksMatrix() {
   });
 }
 
-/* Checks view: the same matrix, inline instead of in a modal. Rendered
-   lazily on every activation so it never goes stale behind the report. */
+/* Checks view: the same matrix, inline and framed as its own view. The
+   inventory needs to be scannable (a real column rule), countable (a count
+   per category), and quietable (a filter that drops everything clean).
+   Cached so the filter repaints without another fetch. */
+let lastChecks = null;
+let checksProblemsOnly = false;
+
+function paintChecksView() {
+  const box = $("#checksview");
+  if (!box) return;
+  const data = lastReportData || {};
+  const checks = lastChecks || [];
+  const m = checksMatrixBody(data, checks, { problemsOnly: checksProblemsOnly });
+  const empty = checksProblemsOnly && m.problems === 0
+    ? '<div class="mx-none">Nothing needs attention — every check came back clean.</div>'
+    : "";
+  box.innerHTML =
+    '<div class="mx-tools">' +
+      '<div class="mx-sub">All checks \u00b7 ' + m.summary + "</div>" +
+      '<button class="fpill mx-filter' + (checksProblemsOnly ? " active" : "") + '" id="mx-problems" type="button" aria-pressed="' + (checksProblemsOnly ? "true" : "false") + '">Problems only <span class="mx-fcount">' + m.problems + "</span></button>" +
+    "</div>" +
+    '<div class="mx-cols" aria-hidden="true"><span>Check</span><span>Result</span></div>' +
+    empty +
+    '<div class="mx-list">' + m.body + "</div>";
+}
+
 async function renderChecksView() {
   const box = $("#checksview");
   if (!box) return;
   const checks = STATIC_DATA ? [] : await fetchChecks();
-  box.innerHTML = checksMatrixHtml(lastReportData || {}, checks);
+  lastChecks = checks;
+  paintChecksView();
 }
 
 function setupChecksView() {
@@ -2901,6 +3284,11 @@ function setupChecksView() {
   if (cv && !cv.dataset.bound) {
     cv.dataset.bound = "1";
     cv.addEventListener("click", (e) => {
+      if (e.target.closest("#mx-problems")) {
+        checksProblemsOnly = !checksProblemsOnly;
+        paintChecksView();
+        return;
+      }
       const row = e.target.closest("[data-goto-check]");
       if (!row) return;
       switchView("overview");
@@ -3016,8 +3404,11 @@ function scoreChart(data) {
   const scores = data.map((r) => r.score);
   const min = Math.min(...scores), max = Math.max(...scores);
   const span = Math.max(1, max - min);
+  /* A flat series has no shape to show; pin it to the middle of the trace
+     instead of drawing a hairline along the floor, which reads as a border. */
+  const flat = max === min;
   const X = (i) => pad + (i * (W - 2 * pad)) / (scores.length - 1);
-  const Y = (s) => H - pad - ((s - min) / span) * (H - 2 * pad);
+  const Y = (s) => (flat ? H / 2 : H - pad - ((s - min) / span) * (H - 2 * pad));
   const pts = scores.map((s, i) => [X(i).toFixed(1), Y(s).toFixed(1)]);
   const last = scores[scores.length - 1];
   const first = scores[0];
@@ -3039,10 +3430,10 @@ function scoreChart(data) {
     '<div class="trend-hero-meta"><span class="trend-direction ' + dir.cls + '">' + dir.icon + ' ' + dir.txt + '</span><span class="trend-hero-range">' + range + '</span></div></div>';
   return '<div class="trendchart">' +
     hero +
-    '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Health score trend">' +
+    '<div class="hist-trace"><svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Health score trend">' +
     thresh + '<path d="' + area + '" fill="' + dir.col + '" opacity="0.10"/>' +
     '<polyline points="' + line + '" fill="none" stroke="' + dir.col + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
-    dots + '<circle cx="' + end[0] + '" cy="' + end[1] + '" r="2.5" fill="' + dir.col + '" stroke="var(--card)" stroke-width="1.5"/></svg>' +
+    dots + '<circle cx="' + end[0] + '" cy="' + end[1] + '" r="2.5" fill="' + dir.col + '" stroke="var(--card)" stroke-width="1.5"/></svg></div>' +
     '<div class="trendtitle" style="margin-top:6px"><b>' + last + '/100</b> <span class="' + dir.cls + '">' + dir.txt + '</span> <span class="trendrange">' + range + '</span></div>' +
     '</div>';
 }
@@ -3073,9 +3464,15 @@ function severityChart(data) {
       '<rect x="' + x + '" y="' + yMed + '" width="' + bw.toFixed(1) + '" height="' + mH.toFixed(1) + '" rx="2" fill="var(--yellow)" opacity="0.85"><title>' + tip + '</title></rect>' +
       '<rect x="' + x + '" y="' + yHigh + '" width="' + bw.toFixed(1) + '" height="' + hH.toFixed(1) + '" rx="2" fill="var(--red)" opacity="0.9"><title>' + tip + '</title></rect></g>';
   }).join("");
+  const oldest = counts.length ? fmtWhen(counts[0].at) : "";
+  const newest = counts.length ? fmtWhen(counts[counts.length - 1].at) : "";
+  const axis = (oldest || newest)
+    ? '<div class="sev-axis"><span>' + (oldest || "\u2014") + "</span><span>" + (newest || "\u2014") + "</span></div>"
+    : "";
   return '<div class="trendchart">' +
     '<div class="trendtitle" style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--muted2)">Findings by severity</div>' +
     '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Severity over time">' + bars + '</svg>' +
+    axis +
     '<div class="sevlegend"><span class="lg high"></span>needs attention <span class="lg medium"></span>warnings <span class="lg info"></span>observations</div>' +
     '</div>';
 }
@@ -3136,7 +3533,7 @@ function renderCard(f, sev) {
 
   html += '<div class="fix">';
   html += '<div class="fix-label">Recommended next step</div>';
-  if (f.fix) html += '<div class="fixtext">' + esc(f.fix) + '</div>';
+  if (f.fix) html += '<div class="fixtext">' + cmdCode(f.fix) + '</div>';
   else html += '<div class="fixtext" style="color:var(--muted2)">No automated fix — review details above.</div>';
   html += '<button data-copy="' + esc(f.fix || f.detail || f.title) + '">Copy fix</button>';
   html += '<button data-ignore="' + esc(f.title) + '" title="Hide this finding in future runs">Dismiss</button>';
@@ -3299,10 +3696,10 @@ function renderNextStep(data) {
       '<div class="nh-section"><div class="nh-section-label">What happened</div><div class="nh-hint">' + esc(detail || "An issue was detected that needs attention.") + '</div></div>' +
       (evidence ? '<div class="nh-section"><div class="nh-section-label">Evidence</div><div style="font-family:var(--mono);font-size:11px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;overflow:auto;max-height:120px;white-space:pre-wrap;color:var(--muted)">' + esc(String(evidence).split("\n").slice(0,5).join("\n")) + '</div></div>' : '') +
       (whyText ? '<div class="nh-section"><div class="nh-section-label">Why it matters</div><div class="nh-hint">' + esc(whyText) + '</div></div>' : '') +
-      '<div class="nh-section"><div class="nh-section-label">Recommended next step</div><div class="nh-hint">' + esc(firstSentence(pick.fix).slice(0, 160)) + '</div></div>' +
+      '<div class="nh-section"><div class="nh-section-label">Recommended next step</div><div class="nh-hint">' + cmdCode(firstSentence(pick.fix).slice(0, 160)) + '</div></div>' +
       '<div class="nh-actions">' +
         // Primary: actually inspect — jumps to the finding card (delegated handler)
-        (code ? '<button data-nhjump="' + esc(code) + '" style="background:var(--green);border-color:var(--green);color:#06231a">Inspect details</button>' : '') +
+        (code ? '<button data-nhjump="' + esc(code) + '" style="background:var(--green);border-color:var(--green);color:var(--on-ok)">Inspect details</button>' : '') +
         // Secondary: single copy path via the delegated [data-nhcopy] handler in init.js
         '<button data-nhcopy="' + esc(pick.fix) + '" style="background:var(--card);border:1px solid var(--border);color:var(--text)">Copy fix</button>' +
       '</div>' +
@@ -3408,13 +3805,20 @@ function renderGauge(score, size) {
 
 function animateScore(target) {
   const num = $("#scorenum");
-  const ring = $("#scorering");
+  const live = $("#scorering");
+  const dot = $("#pulsedot");
   if (!num) return;
   let reduce = false;
   try { reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch {}
+  /* The trace is drawn up to the score and ends in a dot — the machine's own
+     vital sign. pathLength="100" makes the dash arithmetic trivial. */
+  const setPulse = (v) => {
+    if (live) live.style.strokeDashoffset = String(100 - v);
+    if (dot) dot.setAttribute("cx", String((120 * v) / 100));
+  };
   if (reduce) {
     num.textContent = target;
-    if (ring) ring.style.strokeDashoffset = SCORE_RING_C * (1 - target / 100);
+    setPulse(target);
     return;
   }
   const t0 = performance.now();
@@ -3423,10 +3827,41 @@ function animateScore(target) {
     const p = Math.min(1, (now - t0) / dur);
     const v = target * (1 - Math.pow(1 - p, 3));
     num.textContent = Math.round(v);
-    if (ring) ring.style.strokeDashoffset = SCORE_RING_C * (1 - v / 100);
+    setPulse(v);
     if (p < 1) requestAnimationFrame(step);
   };
   requestAnimationFrame(step);
+}
+
+/* The product's own motif: a heartbeat, not a dashboard gauge. Same waveform
+   as the brand mark and the favicon, but the shape comes from the report —
+   a steady monitoring rhythm, with one taller beat for every finding that
+   needs attention (taller still for a high severity). A clean machine draws
+   the rhythm alone. */
+function pulsePath(w, amps) {
+  const mid = 14;
+  if (!amps.length) return "M0 " + mid + " H" + w;
+  const step = w / amps.length;
+  let d = "M0 " + mid;
+  amps.forEach((amp, i) => {
+    const a = 3.5 + 9 * amp;
+    const peak = 16 - a;
+    const trough = peak + a * 0.6 + 3;
+    d += " H" + (i * step + step * 0.42).toFixed(1);
+    d += " l2 2 l1 " + (-a).toFixed(1) + " l1 " + (a * 0.6 + 3).toFixed(1) + " l2 " + (-(trough - mid)).toFixed(1);
+    d += " H" + ((i + 1) * step).toFixed(1);
+  });
+  return d;
+}
+
+/* What the trace is made of: a fixed monitoring rhythm, with the beats that
+   carry a finding made taller in proportion to its severity. */
+function pulseTrace(findings) {
+  const high = findings.filter((f) => f.severity === "high").length;
+  const med = findings.filter((f) => f.severity === "medium").length;
+  const issues = Math.min(5, high + med);
+  const amp = high ? 1 : med ? 0.55 : 0;
+  return pulsePath(120, [1, 2, 3, 4, 5].map((_, i) => (i < issues ? amp : 0.16)));
 }
 
 function renderStatusMessage(findings) {
@@ -3466,7 +3901,7 @@ function renderStatus(data) {
   const med = findings.filter((f) => f.severity === "medium").length;
   const inf = findings.filter((f) => f.severity === "info").length;
 
-  const { headline, sublabel, level } = renderStatusMessage(findings);
+  const { headline, sublabel } = renderStatusMessage(findings);
 
   const scoreDelta = typeof data.scoreDelta === "number" ? data.scoreDelta : null;
   const deltaCls = scoreDelta === null ? "" : scoreDelta > 0 ? "delta-up" : scoreDelta < 0 ? "delta-down" : "delta-flat";
@@ -3474,55 +3909,46 @@ function renderStatus(data) {
   const deltaTxt = scoreDelta === null ? "no baseline yet" : (scoreDelta > 0 ? "+" + scoreDelta : String(scoreDelta)) + " since last check";
   const score = typeof data.score === "number" ? data.score : 0;
 
-  // Build breakdown: human language, distinguish issues vs findings
-  let breakdownHtml = "";
-  if (high + med > 0) {
-    const parts = [];
-    if (high) parts.push("<b>" + high + "</b> high-severity " + (high === 1 ? "issue" : "issues"));
-    if (med) parts.push("<b>" + med + "</b> medium " + (med === 1 ? "finding" : "findings"));
-    breakdownHtml = '<div class="status-breakdown">' + parts.join('<span class="sep">·</span>') + '</div>';
-    if (inf) breakdownHtml += '<div class="status-breakdown" style="margin-top:2px;color:var(--muted2)">' + inf + " informational " + (inf === 1 ? "note" : "notes") + " — no action needed</div>";
-  } else if (inf) {
-    breakdownHtml = '<div class="status-breakdown">' + inf + " informational " + (inf === 1 ? "finding" : "findings") + "</div>";
-  }
-
   const chips =
     (data.newCount > 0 ? '<span class="newbadge">NEW ' + data.newCount + "</span>" : "") +
     (data.fixedCount > 0 ? '<span class="fixedbadge">FIXED ' + data.fixedCount + "</span>" : "");
 
   const status = $("#status");
-  status.className = "status" + (high + med === 0 ? " calm" : high > 0 ? " warn" : "");
-
-  // Hierarchy: [Gauge] score + delta / headline / one detail line / chips
-  // One message line only: the breakdown when there is something to act on,
-  // the plain-language sublabel when healthy (it carries the "no high or
-  // medium issues" phrasing pinned by output-parity). The eyebrow and the
-  // big "/100" duplicated the headline and the gauge, so they are gone.
-  const detailHtml = (high + med > 0)
-    ? breakdownHtml.replace('status-breakdown', 'status-breakdown" style="font-size:12px;margin-top:6px').replace('margin-top:2px;color:var(--muted2)', 'margin-top:2px;color:var(--muted2);font-size:11px')
-    : '<div style="font-size:12px;color:var(--muted);margin-top:1px">' + sublabel + '</div>';
+  /* The score lives in the rail now: a compact Health block — number, a
+     progress hairline, the headline and one counts line. No gauge, no KPI
+     tiles: those belong to a dashboard, and this is an application. */
+  const band = score >= 80 ? "ok" : score >= 50 ? "warn" : "bad";
+  status.className = "status " + band;
+  const deltaShort = scoreDelta === null ? "" : (scoreDelta > 0 ? "+" + scoreDelta : String(scoreDelta));
+  const trace = pulseTrace(findings);
 
   status.innerHTML =
-    '<div class="status-main">' +
-    renderGauge(score, 84) +
-    '</div>' +
-    '<div class="status-body" style="gap:4px">' +
-    '<div class="status-score-row" style="align-items:baseline;gap:10px;margin-top:2px">' +
-      '<div style="font-size:42px;font-weight:800;letter-spacing:-0.03em;line-height:1;font-variant-numeric:tabular-nums" title="Health score ' + score + ' of 100">' + score + '</div>' +
-      '<div class="scoredelta ' + deltaCls + '" style="font-size:11px;padding:3px 8px">' + deltaIcon + " " + deltaTxt + "</div>" +
-    '</div>' +
-    '<div class="status-headline ' + (level === "ok" ? "ok" : "warn") + '" style="font-size:13px;margin-top:6px;font-weight:650">' + headline + '</div>' +
-    detailHtml +
-    '<div class="status-meta">' + chips +
-    '<span id="hero-spark" class="chip-trend" hidden></span>' +
-    '<button id="checkschip" type="button" class="lowbadge" hidden></button>' +
+    '<div class="sr-head">' +
+      '<span class="sr-k">Health</span>' +
+      (scoreDelta === null ? "" :
+        '<span class="scoredelta ' + deltaCls + '" title="' + esc(deltaTxt) + '">' + deltaIcon + " " + deltaShort + "</span>") +
     "</div>" +
+    '<div class="sr-score"><span class="sr-num" id="scorenum">0</span><span class="sr-out">/100</span></div>' +
+    '<div class="sr-pulse" role="img" aria-label="Health score ' + score + " of 100\">" +
+      '<svg viewBox="0 0 120 22" preserveAspectRatio="none" aria-hidden="true">' +
+        '<path class="pulse-track" d="' + trace + '" pathLength="100" vector-effect="non-scaling-stroke"></path>' +
+        '<path class="pulse-live" id="scorering" d="' + trace + '" pathLength="100" vector-effect="non-scaling-stroke" style="stroke-dashoffset:100"></path>' +
+      "</svg>" +
+      '<span class="pulse-dot" id="pulsedot" aria-hidden="true" style="left:' + score + '%"></span>' +
     "</div>" +
-    '<div class="stat-tiles">' +
-      '<div class="stat-tile"><b style="color:' + (high > 0 ? "var(--red)" : med > 0 ? "var(--yellow)" : "var(--green)") + '">' + (high + med) + "</b><span>problems</span></div>" +
-      '<div class="stat-tile"><b>' + (data.checksRun != null ? data.checksRun : "—") + "</b><span>checks" + (data.checksSkipped ? " · " + data.checksSkipped + " skipped" : "") + "</span></div>" +
-      '<div class="stat-tile"><b>' + (typeof data.cleanStreak === "number" && data.cleanStreak > 0 ? data.cleanStreak + "×" : "—") + "</b><span>clean streak</span></div>" +
-      '<div class="stat-tile"><b><span class="dot" id="statusdot"></span> <span id="statuspill-txt"></span></b><span>last check</span></div>' +
+    '<div class="sr-msg status-headline">' + esc(headline) + "</div>" +
+    '<div class="sr-line">' +
+      (high + med > 0
+        ? '<b>' + high + "</b> high · <b>" + med + "</b> medium" + (inf ? " · " + inf + " info" : "")
+        : esc(sublabel)) +
+    "</div>" +
+    '<div class="sr-meta">' +
+      chips +
+      '<span id="hero-spark" class="chip-trend" hidden></span>' +
+      '<button id="checkschip" type="button" class="lowbadge" hidden></button>' +
+    "</div>" +
+    '<div class="sr-foot">' +
+      '<span class="sr-fresh"><span class="dot" id="statusdot"></span> <span id="statuspill-txt"></span></span>' +
     "</div>";
 
   animateScore(score);
@@ -3549,40 +3975,56 @@ function systemType(sys) {
   return "classic";
 }
 
+/* A fact row. Values that are identifiers (kernel, hostname, version, the
+   profile, the desktop) are mono and copyable — clicking copies, the same
+   delegated data-copy handler the findings use. */
 function systemFactsHtml(data) {
   const sys = data.system || {};
   const counts = { high: 0, medium: 0, info: 0 };
   for (const f of data.findings || []) counts[f.severity] = (counts[f.severity] || 0) + 1;
-  const fact = (k, v) => '<div class="sysfact"><span class="sysfact-k">' + k + "</span>" +
-    '<span class="sysfact-v">' + esc(v == null || v === "" ? "—" : String(v)) + "</span></div>";
-  const card = (title, sub, body) => '<div class="viewcard"><div class="mx-head">' + title + "</div>" +
-    '<div class="mx-sub">' + sub + "</div>" + body + "</div>";
+  const fact = (k, v, opts) => {
+    opts = opts || {};
+    const val = v == null || v === "" ? "\u2014" : String(v);
+    const cell = opts.copy
+      ? '<button class="idval" type="button" data-copy="' + esc(val) + '" title="Copy ' + esc(val) + '" aria-label="Copy ' + esc(k) + '">' + esc(val) + "</button>"
+      : '<span' + (opts.mono ? ' class="mono"' : "") + ">" + esc(val) + "</span>";
+    return '<div class="sysfact"><span class="sysfact-k">' + k + '</span><span class="sysfact-v">' + cell + "</span></div>";
+  };
+  const sub = (t, d) => '<div class="sys-sub">' + t + (d ? '<span class="sys-sub-d">' + d + "</span>" : "") + "</div>";
+  const rows = (n) => '<span class="vsec-count">' + n + (n === 1 ? " fact" : " facts") + "</span>";
+  const group = (label, n, body) => '<section class="vsec"><div class="vsec-head">' + label + rows(n) + "</div>" + body + "</section>";
 
   const mem = fmtGB(sys.memTotalBytes);
   const cpu = [sys.cpuModel, sys.cores && sys.cores !== "unknown" ? sys.cores + " cores" : null]
-    .filter(Boolean).join(" · ") || null;
-  return card("Operating system", "What software this machine runs",
+    .filter(Boolean).join(" \u00b7 ") || null;
+
+  const os = sub("Operating system", "what software this machine runs") +
     fact("Distribution", sys.distro) +
-    fact("Version", (sys.osRelease || {}).VERSION_ID) +
+    fact("Version", (sys.osRelease || {}).VERSION_ID, { copy: true }) +
     fact("Family", sys.family) +
-    fact("Architecture", sys.arch) +
-    fact("Kernel", sys.kernel) +
+    fact("Architecture", sys.arch, { mono: true }) +
+    fact("Kernel", sys.kernel, { copy: true }) +
     fact("System type", systemType(sys)) +
-    fact("Package manager", (sys.atomic || {}).pkg)) +
-  card("Hardware", "What this machine is",
+    fact("Package manager", (sys.atomic || {}).pkg, { mono: true });
+  const hw = sub("Hardware", "What this machine is") +
     fact("CPU", cpu) +
-    fact("Memory", mem) +
-    fact("Hostname", sys.hostname)) +
-  card("Session", "How this machine is running right now",
+    fact("Memory", mem, { mono: true }) +
+    fact("Hostname", sys.hostname, { copy: true });
+
+  const session = sub("Session", "how this machine is running right now") +
     fact("Uptime", sys.uptime) +
-    fact("Profile", sys.kind) +
-    fact("Desktop", sys.desktop) +
-    fact("Session type", sys.sessionType)) +
-  card("This report", "Generated " + esc(data.generatedAt || "—"),
-    fact("Health score", typeof data.score === "number" ? data.score + "/100" : "—") +
-    fact("Findings", counts.high + " high · " + counts.medium + " medium · " + counts.info + " info") +
-    fact("Checks", (data.checksRun != null ? data.checksRun + " ran" : "—") +
-      (data.checksSkipped ? " · " + data.checksSkipped + " skipped" : "")));
+    fact("Profile", sys.kind, { copy: true }) +
+    fact("Desktop", sys.desktop, { copy: true }) +
+    fact("Session type", sys.sessionType);
+  const report = sub("This report", "how this run turned out") +
+    fact("Health score", typeof data.score === "number" ? data.score + "/100" : "\u2014", { mono: true }) +
+    fact("Findings", counts.high + " high \u00b7 " + counts.medium + " medium \u00b7 " + counts.info + " info") +
+    fact("Checks", (data.checksRun != null ? data.checksRun + " ran" : "\u2014") +
+      (data.checksSkipped ? " \u00b7 " + data.checksSkipped + " skipped" : "")) +
+    fact("Generated", data.generatedAt, { mono: true });
+
+  return group("Read once \u2014 what this machine is", 10, os + hw) +
+    group("Read when something's wrong", 8, session + report);
 }
 
 function renderSystemView(data) {
@@ -3644,6 +4086,7 @@ function render(data) {
     if (ev.textContent.length > 500 || ev.scrollHeight > 228) btn.hidden = false;
   });
 
+  $("#report").removeAttribute("aria-busy");
   applyFilters();
   refreshSchedule();
   renderSystemView(data);
@@ -3654,7 +4097,7 @@ function render(data) {
   renderFixed(data);
   renderDiff(data);
   maybeNotify(data);
-  renderTrend(counts.score);
+  renderTrend();
   renderSkipped();
   applyWideGroups();
   syncDetailPane();
@@ -3933,6 +4376,7 @@ async function ignoreFinding(title, btn) {
 
 // Setup modules
 setupKeyboard();
+setupPalette();
 setupPolling();
 setupThresholds();
 setupNotifyButton();
@@ -3953,6 +4397,11 @@ $("#copyjson")?.addEventListener("click", async () => {
 
 // Keyboard shortcuts help (?)
 $("#helpbtn")?.addEventListener("click", openHelp);
+/* Empty-state escape hatches: the filtered-out message and any future one
+   carry a control, so a dead end is always one click from resolving. */
+document.addEventListener("click", (e) => {
+  if (e.target.closest("[data-clear-filters]")) $("#clearbtn")?.click();
+});
 
 // The hero "N checks" chip opens the matrix too.
 $("#checkschip")?.addEventListener("click", openChecksMatrix);

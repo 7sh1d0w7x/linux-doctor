@@ -28,8 +28,11 @@ function scoreChart(data) {
   const scores = data.map((r) => r.score);
   const min = Math.min(...scores), max = Math.max(...scores);
   const span = Math.max(1, max - min);
+  /* A flat series has no shape to show; pin it to the middle of the trace
+     instead of drawing a hairline along the floor, which reads as a border. */
+  const flat = max === min;
   const X = (i) => pad + (i * (W - 2 * pad)) / (scores.length - 1);
-  const Y = (s) => H - pad - ((s - min) / span) * (H - 2 * pad);
+  const Y = (s) => (flat ? H / 2 : H - pad - ((s - min) / span) * (H - 2 * pad));
   const pts = scores.map((s, i) => [X(i).toFixed(1), Y(s).toFixed(1)]);
   const last = scores[scores.length - 1];
   const first = scores[0];
@@ -51,10 +54,10 @@ function scoreChart(data) {
     '<div class="trend-hero-meta"><span class="trend-direction ' + dir.cls + '">' + dir.icon + ' ' + dir.txt + '</span><span class="trend-hero-range">' + range + '</span></div></div>';
   return '<div class="trendchart">' +
     hero +
-    '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Health score trend">' +
+    '<div class="hist-trace"><svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Health score trend">' +
     thresh + '<path d="' + area + '" fill="' + dir.col + '" opacity="0.10"/>' +
     '<polyline points="' + line + '" fill="none" stroke="' + dir.col + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
-    dots + '<circle cx="' + end[0] + '" cy="' + end[1] + '" r="2.5" fill="' + dir.col + '" stroke="var(--card)" stroke-width="1.5"/></svg>' +
+    dots + '<circle cx="' + end[0] + '" cy="' + end[1] + '" r="2.5" fill="' + dir.col + '" stroke="var(--card)" stroke-width="1.5"/></svg></div>' +
     '<div class="trendtitle" style="margin-top:6px"><b>' + last + '/100</b> <span class="' + dir.cls + '">' + dir.txt + '</span> <span class="trendrange">' + range + '</span></div>' +
     '</div>';
 }
@@ -85,9 +88,15 @@ function severityChart(data) {
       '<rect x="' + x + '" y="' + yMed + '" width="' + bw.toFixed(1) + '" height="' + mH.toFixed(1) + '" rx="2" fill="var(--yellow)" opacity="0.85"><title>' + tip + '</title></rect>' +
       '<rect x="' + x + '" y="' + yHigh + '" width="' + bw.toFixed(1) + '" height="' + hH.toFixed(1) + '" rx="2" fill="var(--red)" opacity="0.9"><title>' + tip + '</title></rect></g>';
   }).join("");
+  const oldest = counts.length ? fmtWhen(counts[0].at) : "";
+  const newest = counts.length ? fmtWhen(counts[counts.length - 1].at) : "";
+  const axis = (oldest || newest)
+    ? '<div class="sev-axis"><span>' + (oldest || "\u2014") + "</span><span>" + (newest || "\u2014") + "</span></div>"
+    : "";
   return '<div class="trendchart">' +
     '<div class="trendtitle" style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--muted2)">Findings by severity</div>' +
     '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Severity over time">' + bars + '</svg>' +
+    axis +
     '<div class="sevlegend"><span class="lg high"></span>needs attention <span class="lg medium"></span>warnings <span class="lg info"></span>observations</div>' +
     '</div>';
 }

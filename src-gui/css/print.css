@@ -1,16 +1,23 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* === Print === */
+/* === Print ===
+   The score block lives in the rail on screen; on paper there is no rail, so
+   the Health block is pulled back into the flow and every other aside section
+   is dropped. */
 @media print {
   header .actions, .toolbar, #toast-wrap, footer, .history, #fixed, #skipped, #diff,
-  #sidebar, .skel, .skip-link, .modal { display: none !important; }
+  #sidebar .sb-views, #sidebar .sb-block:not(.sb-health), .skel, .skip-link, .modal { display: none !important; }
   .layout { display: block !important; }
   body { background: #fff !important; color: #111 !important; padding: 12px !important; background-image: none !important; }
   .status, .group, .card, .crow { box-shadow: none !important; break-inside: avoid; border: 1px solid #ddd !important; }
   .card-body { animation: none !important; }
 
+  /* The rail itself is gone on paper — only its Health block remains. */
+  .sidebar { display: block !important; background: none !important; border: none !important; padding: 0 !important; height: auto !important; position: static !important; }
+  .sb-health { display: block !important; margin-bottom: 12px; }
+
   /* Keep the brand mark and health colors in print — browsers strip
-     backgrounds by default and may drop var()-driven strokes. */
-  .logo, .gauge svg { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+     backgrounds by default and may drop var()-driven fills. */
+  .logo, .pulse-live, .pulse-dot { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .logo svg path { stroke: #0e9c5a !important; }   /* fixed brand green on paper */
-  .gauge .ring { stroke-width: 7 !important; }      /* ring keeps its inline stroke color */
+  .pulse-track { stroke: #e5e5e5 !important; }
 }

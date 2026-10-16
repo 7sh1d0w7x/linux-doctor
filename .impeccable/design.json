@@ -1,0 +1,83 @@
+{
+  "$schema": "https://impeccable.dev/schema/design.json",
+  "name": "linux-doctor",
+  "surface": "desktop app + exported dashboard (one frontend, two faces)",
+  "source": {
+    "tokens": "src-gui/css/base.css",
+    "styles": "src-gui/css/*.css",
+    "scripts": "src-gui/js/*.js",
+    "markup": "scripts/build-gui.mjs",
+    "build": "npm run build:gui"
+  },
+  "world": {
+    "summary": "A professional Linux desktop tool: sidebar + rows, one accent, density with air.",
+    "craftBar": [
+      { "product": "Linear", "for": "density, one accent, keyboard-first, restraint" },
+      { "product": "JetBrains Toolbox", "for": "list-with-actions, dark professional chrome" },
+      { "product": "GNOME Settings / libadwaita", "for": "sidebar + rows; recognizable as a Linux app" }
+    ],
+    "commitment": "Execute the canon at full fidelity, without irony and without smuggled quirk."
+  },
+  "rules": [
+    "One accent with exactly three jobs: primary action, selected row, focus.",
+    "Severity is the only other colour on screen.",
+    "No per-item cards for findings; findings are rows.",
+    "No hard-coded colour outside base.css (print.css excepted)."
+  ],
+  "themes": {
+    "dark": {
+      "default": true,
+      "bg": "#101216", "bg2": "#15181d", "card": "#171b21", "card2": "#1e222a", "border": "#262b33",
+      "text": "#e7eaef", "muted": "#98a1ad", "muted2": "#737d8a",
+      "red": "#f0616d", "yellow": "#e0b341", "green": "#3fb950", "blue": "#4c8dff", "purple": "#a371f7",
+      "accent": "#4c8dff", "accent2": "#6fa2ff", "hover": "#1b2028", "evidence": "#0d1014",
+      "onAccent": "#0b0e14", "onOk": "#06180d",
+      "radius": "10px", "radiusSm": "6px", "radiusLg": "12px"
+    },
+    "light": {
+      "bg": "#f7f8fa", "bg2": "#eef1f5", "card": "#ffffff", "card2": "#e9edf3", "border": "#dfe3e9",
+      "text": "#171a1f", "muted": "#59616d", "muted2": "#6b7480",
+      "red": "#bf2c33", "yellow": "#7d5407", "green": "#0a6b3c", "blue": "#2f6ad6", "purple": "#7c3fd6",
+      "accent": "#2f6ad6", "accent2": "#5c8ce0", "hover": "#e9edf3", "evidence": "#f4f6f9",
+      "onAccent": "#ffffff", "onOk": "#ffffff",
+      "radius": "10px", "radiusSm": "6px", "radiusLg": "12px"
+    },
+    "terminal": {
+      "bg": "#060906", "bg2": "#0a0d0a", "card": "#0b100b", "card2": "#0e140e", "border": "#1d2b1d",
+      "text": "#d9ead9", "muted": "#8fae8f", "muted2": "#6f8f6f",
+      "red": "#ff5a5a", "yellow": "#ffd433", "green": "#3dff73", "blue": "#6aa8ff", "purple": "#b79aff",
+      "accent": "#3dff73", "accent2": "#6dff92", "hover": "#101a10", "evidence": "#070b07",
+      "onAccent": "#04120a", "onOk": "#04120a",
+      "radius": "4px", "radiusSm": "2px", "radiusLg": "6px",
+      "overrides": { "sans": "mono", "shadows": "none" }
+    }
+  },
+  "type": {
+    "sans": "Inter, system-ui, Cantarell",
+    "mono": "ui-monospace (identifiers and counts only)",
+    "scale": { "label": "10px", "meta": "11px", "body": "12.5px", "title": "13.5px", "score": "32px" },
+    "rules": ["tabular-nums for every number in a column", "uppercase only for labels, never for sentences"]
+  },
+  "components": [
+    { "name": "headerbar", "height": "48px", "notes": "full-bleed, identity as two lines, one primary action, inset hairline highlight" },
+    { "name": "rail", "width": "236px", "breakpoint": ">=1100px", "notes": "Health block on top, then section blocks separated by hairlines" },
+    { "name": "health", "notes": "score, progress hairline, headline, counts line, freshness; no gauge, no KPI tiles" },
+    { "name": "toolbar", "notes": "sticky under headerbar; segmented group-by, severity pills, search, icon+label buttons" },
+    { "name": "toolbar-icons", "notes": "CSS masks from one 13px single-stroke set; survive JS label changes" },
+    { "name": "row", "notes": "severity dot with halo, title, mono code / NEW, chevron; hover is a surface change" },
+    { "name": "group-heading", "notes": "sentence-case label, hairline underline, count" },
+    { "name": "detail-pane", "breakpoint": ">=1200px", "notes": "master-detail; below 1200 the row expands inline" },
+    { "name": "status-bar", "notes": "view, freshness, read-only promise, keyboard map" },
+    { "name": "command-palette", "trigger": "Ctrl/Cmd+K", "notes": "views, actions, in-memory findings; arrows move, Enter runs, Esc closes" },
+    { "name": "skeleton", "notes": "shape of incoming content on load instead of a spinner" },
+    { "name": "empty-state", "notes": "short sentence + a way out (e.g. Clear filters)" }
+  ],
+  "a11y": {
+    "contrast": { "verified": true, "failures": 0, "method": "scripts/check-contrast.mjs (WCAG relative luminance)", "minBody": 4.5, "minLabel": 3.0, "minOnFill": 4.5 },
+    "focus": ":focus-visible, 2px accent outline (offset -2px inside rows)",
+    "motion": "short and directional; fully disabled under prefers-reduced-motion",
+    "keyboard": ["/ search", "Ctrl K palette", "arrows navigate", "Enter open", "1-5 views", "Esc close/clear", "? help"]
+  },
+  "do": ["use the token ladders", "carry severity in a dot/ink", "one accent, three jobs", "pair empty states with an action"],
+  "dont": ["hard-code a hex outside base.css", "red left border on a card", "a second accent", "uppercase sentences", "icon-only buttons without a label"]
+}

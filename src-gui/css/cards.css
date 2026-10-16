@@ -1,154 +1,126 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* === Finding Cards — reduced chrome, diagnostic storytelling === */
+/* === Findings — flat rows in a list, severity as a left ink dot ===
+   No per-item card. A row carries: severity dot · title · quiet code/NEW ·
+   chevron; the body opens in place. This is the Linear density (rows at
+   ~34px, hairline separators, hover) on the GNOME Settings row grammar. */
+
 .card {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 12px; overflow: hidden;
-  transition: border-color .15s ease, background .15s ease;
+  background: transparent; border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0; overflow: visible;
+  transition: background .12s ease;
 }
-.card:hover { border-color: var(--border); background: color-mix(in srgb, var(--card) 98%, var(--text) 2%); }
-.card.high { border-left: 3px solid var(--red); }
-.card.medium { border-left: 3px solid var(--yellow); }
-.card.info { border-left: 3px solid var(--border); }
-.card.high:hover { border-left-color: var(--red); }
-.card.medium:hover { border-left-color: var(--yellow); }
-
-.card summary { list-style: none; display: flex; align-items: center; gap: 10px; padding: 14px 16px; cursor: pointer; user-select: none; }
-.card summary h3 { font-size: 14px; font-weight: 600; flex: 1; letter-spacing: -0.015em; line-height: 1.35; color: var(--text); }
-.card summary .chev { color: var(--muted2); font-size: 11px; transition: transform .18s ease; flex-shrink: 0; }
+.card:last-child { border-bottom: none; }
+.card:hover { background: var(--hover); }
+.card[open] { background: var(--card); }
+.card summary { list-style: none; display: flex; align-items: center; gap: 10px; padding: 9px 10px; cursor: pointer; user-select: none; }
+.card summary h3 { font-size: 13px; font-weight: 500; flex: 1; letter-spacing: -.005em; line-height: 1.35; color: var(--text); }
+.card summary .chev { color: var(--muted2); font-size: 10px; transition: transform .15s ease; flex-shrink: 0; }
 .card[open] summary .chev { transform: rotate(90deg); }
-.card:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
-.card:focus:not(:focus-visible) { outline: none; }
+.card:focus { outline: none; }
+.card:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: var(--radius-sm); }
 
-/* Pills — quieter */
-.badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 3px 7px; border-radius: 6px; flex-shrink: 0; border: 1px solid transparent; }
-.badge.high { background: var(--red); color: #111; }
-.badge.medium { background: var(--yellow); color: #111; }
-.badge.info { background: var(--blue); color: #06121f; }
-:root[data-theme="light"] .badge.info { color: #fff; }
+/* Severity carried by a dot (SEV_ICONS renders .sev-dot) with a soft halo,
+   so a row's severity reads before its title does. Group headings keep their
+   category SVGs. */
+.card summary .sevicon, .group summary .sevicon { display: inline-flex; align-items: center; justify-content: center; width: 10px; flex-shrink: 0; }
+.card summary .sevicon .sev-dot.high { box-shadow: 0 0 0 3px color-mix(in srgb, var(--red) 15%, transparent); }
+.card summary .sevicon .sev-dot.medium { box-shadow: 0 0 0 3px color-mix(in srgb, var(--yellow) 15%, transparent); }
+.card summary .sevicon .sev-dot.info { box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 15%, transparent); }
+
+/* Pills — quiet */
+.badge { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; padding: 2px 7px; border-radius: 999px; flex-shrink: 0; border: 1px solid transparent; }
+.badge.high { background: color-mix(in srgb, var(--red) 16%, transparent); color: var(--red); border-color: color-mix(in srgb, var(--red) 26%, transparent); }
+.badge.medium { background: color-mix(in srgb, var(--yellow) 16%, transparent); color: var(--yellow); border-color: color-mix(in srgb, var(--yellow) 26%, transparent); }
+.badge.info { background: color-mix(in srgb, var(--blue) 16%, transparent); color: var(--blue); border-color: color-mix(in srgb, var(--blue) 26%, transparent); }
 .codepill {
-  font-family: var(--mono); font-size: 10.5px; font-weight: 500; letter-spacing: -0.01em;
+  font-family: var(--mono); font-size: 10.5px; font-weight: 400; letter-spacing: 0;
   color: var(--muted2); background: transparent; border: none;
   padding: 0; flex-shrink: 0; cursor: pointer;
 }
 .codepill:hover { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
-.codepill::before { content: "· "; color: var(--border); }
-.durpill { display: none; } /* moved to details — reduce summary chrome */
-.checkid { display: none; } /* keep for data but hide from summary — reduce chrome */
-
-/* Show durpill only when card is open, as subtle metadata */
+.codepill::before { content: ""; }
+.durpill { display: none; }
+.checkid { display: none; }
 .card[open] .durpill { display: inline-flex; }
 
-/* === Card Body — storytelling === */
-.card-body {
-  display: flex; flex-direction: column; gap: 0;
-  padding: 0 16px 16px;
-  animation: fadein .18s ease;
-}
+/* === Card body — evidence one click away === */
+.card-body { display: flex; flex-direction: column; gap: 0; padding: 0 10px 12px; animation: fadein .15s ease; }
 @keyframes fadein { from { opacity: 0; transform: translateY(-2px); } to { opacity: 1; transform: none; } }
-.card .detail {
-  font-size: 13.5px; line-height: 1.6; letter-spacing: -0.01em;
-  color: var(--muted); padding: 12px 0 14px; border-top: 1px solid var(--border);
-  margin-top: 0;
-}
+.card .detail { font-size: 12.5px; line-height: 1.6; letter-spacing: 0; color: var(--muted); padding: 10px 0 12px; border-top: 1px solid var(--border); margin-top: 0; }
 .card .detail b, .card .detail strong { color: var(--text); font-weight: 600; }
 
-/* Evidence — progressive disclosure, quieter */
-details.ev {
-  background: transparent; border: none; padding: 0; overflow: hidden;
-  margin: 0; border-top: 1px solid var(--border);
-}
-details.ev summary {
-  list-style: none; display: flex; align-items: center; gap: 8px;
-  padding: 10px 0; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
-  color: var(--muted2); cursor: pointer; user-select: none;
-}
+details.ev { background: transparent; border: none; padding: 0; overflow: hidden; margin: 0; border-top: 1px solid var(--border); }
+details.ev summary { list-style: none; display: flex; align-items: center; gap: 8px; padding: 9px 0; font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted2); cursor: pointer; user-select: none; }
 details.ev summary::before { content: "▸"; font-size: 10px; transition: transform .15s ease; }
 details.ev[open] summary::before { transform: rotate(90deg); }
 details.ev summary::-webkit-details-marker { display: none; }
 .evidence {
-  background: var(--bg2); border: 1px solid var(--border); border-radius: 9px;
-  max-height: 180px; overflow: auto;
-  padding: 10px 12px; margin: 0 0 10px;
+  background: var(--evidence-bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  max-height: 180px; overflow: auto; padding: 10px 12px; margin: 0 0 10px;
   font-family: var(--mono); font-size: 11.5px; color: var(--muted);
   white-space: pre-wrap; word-break: break-word;
 }
 .evidence.expanded { max-height: none; }
 .evidence::-webkit-scrollbar { width: 6px; height: 6px; }
 .evidence::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; }
-.ev-expand {
-  margin: 0; align-self: flex-start;
-  background: transparent; border: none; padding: 0; font-size: 12px; font-weight: 500; color: var(--blue); cursor: pointer;
-}
-.ev-expand:hover { color: var(--accent); }
-.ev-copy {
-  background: transparent; border: 1px solid var(--border); border-radius: 7px;
-  padding: 4px 9px; font-size: 11px; font-weight: 500; color: var(--muted2); cursor: pointer;
-}
+.ev-expand { margin: 0; align-self: flex-start; background: transparent; border: none; padding: 0; font-size: 12px; font-weight: 500; color: var(--accent); cursor: pointer; }
+.ev-expand:hover { color: var(--accent2); }
+.ev-copy { background: transparent; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 4px 9px; font-size: 11px; font-weight: 500; color: var(--muted2); cursor: pointer; }
 .ev-copy:hover { border-color: var(--muted2); color: var(--text); }
 
-/* Fix — Recommended Action, clear hierarchy */
-.fix {
-  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
-  margin-top: 0; padding-top: 14px;
-  border-top: 1px solid var(--border);
-}
-.fix-label {
-  font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
-  color: var(--muted2); width: 100%; margin-bottom: -2px;
-}
+/* Fix — the prescription. The one block that borrows the Doctor's own frame:
+   a mono slip with a margin rule and a prompt mark. The label wording stays
+   plain English because the CLI prints the same words (output parity). */
+.fix { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 0; padding: 12px 0 0; border-top: 1px solid var(--border); }
+.fix-label { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 650; letter-spacing: .07em; text-transform: uppercase; color: var(--muted2); width: 100%; margin-bottom: -1px; }
+.fix-label::before { content: ""; width: 12px; height: 12px; flex-shrink: 0; background: currentColor; -webkit-mask: var(--ic-prompt) center / contain no-repeat; mask: var(--ic-prompt) center / contain no-repeat; }
 .fix .fixtext {
-  flex: 1 1 100%; min-width: 260px;
-  background: var(--bg2); border: 1px solid var(--border);
-  border-radius: 9px; padding: 10px 12px;
-  font-size: 12.5px; line-height: 1.5;
+  flex: 1 1 100%; min-width: 240px;
+  background: var(--evidence-bg); color: var(--muted);
+  border: 1px solid var(--border); border-left: 2px solid var(--accent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 9px 11px; font-size: 12px; line-height: 1.6; font-family: var(--mono);
+}
+/* The commands are the point of the block — the prose around them is not. */
+.fix .fixtext code, .nh-hint code {
   font-family: var(--mono); color: var(--text);
+  background: color-mix(in srgb, var(--text) 9%, transparent);
+  border-radius: 4px; padding: 0 4px;
 }
 .fix .fixtext::before { display: none; }
-.fix button, .fix .reportbtn {
-  height: 32px; border-radius: 8px; font-weight: 600; font-size: 12px;
-  display: inline-flex; align-items: center; gap: 6px; padding: 0 12px;
-}
-.fix button[data-copy] {
-  background: var(--text); color: var(--bg); border-color: var(--text);
-}
-.fix button[data-copy]:hover { background: var(--text); opacity: .9; }
-.fix button[data-ignore] {
-  background: transparent; border-color: var(--border); color: var(--muted2);
-  font-weight: 500;
-}
-.fix button[data-ignore]:hover { border-color: var(--border); color: var(--muted); background: var(--hover); }
-.fix .reportbtn {
-  background: transparent; border: none; color: var(--muted2);
-  padding: 0 8px; text-decoration: none; font-size: 12px; height: auto;
-}
-.fix .reportbtn:hover { color: var(--muted); background: transparent; border-color: transparent; text-decoration: underline; }
+.fix button, .fix .reportbtn { height: 30px; border-radius: var(--radius-sm); font-weight: 500; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; padding: 0 11px; }
+.fix button[data-copy] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 600; }
+.fix button[data-copy]:hover { background: var(--accent2); border-color: var(--accent2); }
+.fix button[data-ignore] { background: transparent; border-color: var(--border); color: var(--muted2); }
+.fix button[data-ignore]:hover { border-color: var(--muted2); color: var(--text); background: var(--hover); }
+.fix .reportbtn { background: transparent; border: none; color: var(--muted2); padding: 0 8px; text-decoration: none; font-size: 12px; height: auto; }
+.fix .reportbtn:hover { color: var(--muted); background: transparent; text-decoration: underline; }
 .fix .reportbtn::before { content: "↗"; font-size: 11px; }
 
-/* Compact rows (info findings) — Uptime Kuma / alert-list pattern: a quiet
-   one-line row that expands to the full body on open. Doubled .card.crow
-   selectors so these always beat the .card rules above regardless of order. */
-.card.crow { border: 1px solid transparent; border-radius: 9px; margin-bottom: 2px; background: transparent; transition: background .15s ease, border-color .15s ease; }
-.card.crow:hover { background: var(--card); border-color: var(--border); }
-.card.crow summary { list-style: none; display: flex; align-items: center; gap: 8px; padding: 9px 10px; cursor: pointer; user-select: none; }
+/* Compact rows (info findings) — quiet one-liners that expand in place. */
+.card.crow { border-bottom: 1px solid var(--border); border-radius: 0; margin-bottom: 0; background: transparent; }
+.card.crow:last-child { border-bottom: none; }
+.card.crow:hover { background: var(--hover); }
+.card.crow summary { list-style: none; display: flex; align-items: center; gap: 9px; padding: 7px 10px; cursor: pointer; user-select: none; }
 .card.crow summary::-webkit-details-marker { display: none; }
-.card.crow summary h3 { font-size: 13px; font-weight: 500; flex: 1; letter-spacing: -0.01em; color: var(--muted); }
+.card.crow summary h3 { font-size: 12.5px; font-weight: 450; flex: 1; letter-spacing: -.005em; color: var(--muted); }
 .card.crow[open] summary h3 { color: var(--text); }
-.card.crow summary .chev { color: var(--muted2); font-size: 10px; transition: transform .18s ease; }
+.card.crow summary .chev { color: var(--muted2); font-size: 10px; transition: transform .15s ease; }
 .card.crow[open] summary .chev { transform: rotate(90deg); }
-.card.crow[open] { background: var(--card); border-color: var(--border); }
-.card.crow .card-body { gap: 10px; padding: 8px 10px 10px; }
-.card.crow .detail { font-size: 13px; padding: 8px 0; border-top: none; }
+.card.crow[open] { background: var(--card); }
+.card.crow .card-body { gap: 0; padding: 0 10px 10px; }
+.card.crow .detail { font-size: 12.5px; padding: 8px 0; border-top: 1px solid var(--border); }
 
 /* Search highlight */
 mark.hl { background: color-mix(in srgb, var(--yellow) 28%, transparent); color: inherit; padding: 0 2px; border-radius: 3px; }
 
 /* Compact density */
-body.compact .group summary { padding: 9px 4px; }
-body.compact .group-body { gap: 8px; padding: 10px 0 8px; }
-body.compact .card summary { padding: 11px 14px; }
-body.compact .card summary h3 { font-size: 13.5px; }
-body.compact .card-body { gap: 0; padding: 0 14px 14px; }
-body.compact .card .detail { font-size: 13px; }
-body.compact .fix { padding-top: 12px; }
-body.compact .fix .fixtext { padding: 8px 11px; font-size: 12px; }
-body.compact #report { gap: 14px; }
+body.compact .group summary { padding: 7px 2px; }
+body.compact .group-body { gap: 0; padding: 4px 0; }
+body.compact .card summary { padding: 7px 10px; }
+body.compact .card summary h3 { font-size: 12.5px; }
+body.compact .card-body { padding: 0 10px 10px; }
+body.compact .card .detail { font-size: 12px; }
+body.compact .fix { padding-top: 10px; }
+body.compact #report { gap: 8px; }

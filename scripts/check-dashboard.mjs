@@ -3,7 +3,7 @@
  * Load the web dashboard in headless Chromium and verify the invariants that
  * matter: no JS console/page errors, the report renders, "All" is the active
  * filter on load, High groups open while the rest stay collapsed, filtering
- * enables Clear, and the overview sidebar populates on wide viewports.
+ * enables Clear, and the overview sidebar populates at the rail breakpoint.
  * Uses playwright-core from a temp install (npm i --no-save playwright-core)
  * with the cached browser.
  *
@@ -43,7 +43,11 @@ if (!exe) {
 }
 
 const browser = await chromium.launch({ executablePath: exe, headless: true, args: ["--no-sandbox"] });
-const page = await browser.newPage({ viewport: { width: 1280, height: 1200 } });
+// 1100px, not 1280: this asserts the ACCORDION policy (High open, the rest
+// collapsed), which only applies below the 1200px wide breakpoint — at/above
+// it ui-wide.js deliberately opens every group (a workbench shows its data).
+// 1100 still shows the rail, so the sidebar assertion below stays meaningful.
+const page = await browser.newPage({ viewport: { width: 1100, height: 1200 } });
 
 const consoleErrors = [];
 const pageErrors = [];
@@ -70,12 +74,15 @@ try {
   const cards = await page.locator("#report .card").count();
   const crowRows = await page.locator("#report .crow").count();
   const visibleGroups = await page.locator("#report .group:not([hidden])").count();
+  const highGroups = await page.locator("#report .group.high").count();
   const openHigh = await page.locator("#report .group.high[open]").count();
   const closedMedium = await page.locator("#report .group.medium:not([open])").count();
   const mediumGroups = await page.locator("#report .group.medium").count();
   const closedInfo = await page.locator("#report .group.info:not([open])").count();
   const infoGroups = await page.locator("#report .group.info").count();
-  const highOpenOk = openHigh >= 1 || (openHigh === 0 && cards + crowRows === 0);
+  // A report with no high-severity finding has no High group to open, so the
+  // assertion is vacuous there (a clean machine is not a failure).
+  const highOpenOk = highGroups === 0 || openHigh >= 1;
   const othersClosedOk = closedMedium === mediumGroups && closedInfo === infoGroups;
 
   // START HERE banner: shown only when there is a recommended action.

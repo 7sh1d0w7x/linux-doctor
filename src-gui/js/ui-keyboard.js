@@ -16,6 +16,13 @@ function setupKeyboard() {
       return;
     }
 
+    // Ctrl/Cmd+K: the command palette (Linear's signature keystroke).
+    if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) {
+      e.preventDefault();
+      if (isPaletteOpen()) closePalette(); else openPalette();
+      return;
+    }
+
     // "/" focuses search (unless the user is already typing somewhere).
     if (e.key === "/" && !typing) {
       e.preventDefault();
@@ -30,8 +37,10 @@ function setupKeyboard() {
       return;
     }
 
-    // Escape: close the modal, then the thresholds panel, else clear search+filter.
+    // Escape: close the palette, then the modal, then the thresholds panel,
+    // else clear search+filter.
     if (e.key === "Escape") {
+      if (isPaletteOpen()) { closePalette(); return; }
       if (isModalOpen()) { closeModal(); return; }
       const panel = $("#threshpanel");
       if (panel && !panel.hidden) { panel.hidden = true; return; }

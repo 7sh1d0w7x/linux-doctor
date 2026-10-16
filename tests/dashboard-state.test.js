@@ -433,7 +433,7 @@ test("renderCard: evidence summary carries its line count", () => {
   assert.match(html, /Evidence — how we detected it · 3 lines/);
 });
 
-test("renderStatus: hero right side is stat tiles preserving live ids", () => {
+test("renderStatus: the rail Health block renders and keeps the live ids", () => {
   const s = makeSandbox();
   const counts = vm.runInContext(
     `renderStatus({ findings: [{ severity: "high" }, { severity: "medium" }, { severity: "info" }], system: { distro: "D", kernel: "K", cores: "4", uptime: "1h" }, score: 70, scoreDelta: 2, newCount: 0, fixedCount: 0, checksRun: 41, checksSkipped: 8, cleanStreak: 3 })`,
@@ -441,10 +441,11 @@ test("renderStatus: hero right side is stat tiles preserving live ids", () => {
   );
   assert.deepEqual([counts.high, counts.medium, counts.info], [1, 1, 1]);
   const html = s.el("#status").innerHTML;
-  assert.ok(html.includes("stat-tile"), "tiles rendered");
-  assert.match(html, /problems/);
-  assert.match(html, /clean streak/);
-  assert.match(html, /last check/);
+  assert.ok(html.includes("sr-num") && html.includes("sr-pulse"), "health block rendered");
+  assert.ok(html.includes('id="scorering"') && html.includes('id="pulsedot"'), "the vital trace and its dot are rendered");
+  assert.match(html, /Health/);
+  assert.match(html, /1<\/b> high · <b>1<\/b> medium/);
+  assert.ok(html.includes('id="scorenum"'), "score id kept");
   assert.ok(html.includes('id="statusdot"') && html.includes('id="statuspill-txt"'), "live checked-ago ids preserved");
 });
 
@@ -452,7 +453,7 @@ test("renderStatus: hero right side is stat tiles preserving live ids", () => {
 test("switchView: sidebar report blocks show only on Overview", () => {
   const s = makeSandbox();
   const blocks = [{ hidden: false }, { hidden: false }];
-  s.lists.set("#sidebar .sb-block:not(.sb-views)", blocks);
+  s.lists.set("#sidebar .sb-block:not(.sb-views):not(.sb-health)", blocks);
   vm.runInContext("switchView('history')", s.ctx);
   assert.ok(blocks.every((b) => b.hidden === true), "report sections hide off-overview");
   assert.equal(s.el("#sidebar").hidden, false, "the sidebar itself stays visible");
