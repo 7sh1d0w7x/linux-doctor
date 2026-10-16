@@ -32,7 +32,9 @@ export const audio = defineCheck({
         title: "No sound server is running",
         detail: "Neither PipeWire nor PulseAudio is running, so the system has no sound. This is usually a missing or disabled audio stack.",
         evidence: `pipewire: ${pipewire.stdout.trim()}\npipewire-pulse: ${pwPulse.stdout.trim()}\npulseaudio: ${pulse.stdout.trim()}`,
-        fix: `${install}, then start it with \`systemctl --user enable --now pipewire pipewire-pulse wireplumber\`.`,
+        fix: (ctx.dist?.init || "systemd") === "systemd"
+          ? `${install}, then start it with \`systemctl --user enable --now pipewire pipewire-pulse wireplumber\`.`
+          : `${install}, then start the PipeWire services for the session (there is no per-user systemd instance on this init system).`,
         confidence: "high",
       }));
       return findings;

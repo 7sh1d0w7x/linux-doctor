@@ -2,6 +2,7 @@
 import { lines } from "../utils.js";
 import { defineCheck } from "./define.js";
 import { finding } from "../findings.js";
+import { svcCmd } from "../distro.js";
 
 /**
  * SSH server posture. Read-only: greps sshd_config (and conf.d drop-ins),
@@ -41,7 +42,7 @@ export const ssh = defineCheck({
         title: "SSH allows root login with a password",
         detail: "The SSH server permits direct root logins with password authentication, so a brute-force attack on port 22 can target root itself.",
         evidence: cfg.stdout.trim() || "defaults (PermitRootLogin yes, PasswordAuthentication yes)",
-        fix: "In /etc/ssh/sshd_config (or a drop-in in sshd_config.d) set `PermitRootLogin no` (or `prohibit-password` to keep key-only root logins), then `sudo systemctl restart sshd`.",
+        fix: `In /etc/ssh/sshd_config (or a drop-in in sshd_config.d) set \`PermitRootLogin no\` (or \`prohibit-password\` to keep key-only root logins), then \`${svcCmd(ctx.dist, "restart", "sshd")}\`.`,
         confidence: "high",
       }));
     } else if (rootLogin === "yes") {
@@ -51,7 +52,7 @@ export const ssh = defineCheck({
         title: "SSH allows direct root login",
         detail: "Direct root logins over SSH are allowed. Key-only root access is safer — a leaked password then cannot log in as root.",
         evidence: cfg.stdout.trim() || "defaults",
-        fix: "Set `PermitRootLogin prohibit-password` (SSH keys still work) in /etc/ssh/sshd_config, then `sudo systemctl restart sshd`.",
+        fix: `Set \`PermitRootLogin prohibit-password\` (SSH keys still work) in /etc/ssh/sshd_config, then \`${svcCmd(ctx.dist, "restart", "sshd")}\`.`,
         confidence: "high",
       }));
     } else {

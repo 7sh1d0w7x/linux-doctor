@@ -697,7 +697,28 @@ test("updates: openSUSE (zypper) counts pending updates", async () => {
   const findings = await updates.run(ctx);
   assert.equal(findings.length, 1);
   assert.match(findings[0].title, /4 update/i);
+  // Tumbleweed is rolling: `zypper up` is the wrong verb there, `dup` is the
+  // supported full upgrade.
+  assert.match(findings[0].fix, /zypper dup/);
+});
+
+test("updates: openSUSE Leap keeps 'zypper update' (only Tumbleweed needs dup)", async () => {
+  const ctx = {
+    osRelease: { id: "opensuse-leap", id_like: "suse" },
+    dist: detectDistro({ id: "opensuse-leap", id_like: "suse" }),
+    run: async (cmd) => {
+      if (cmd.startsWith("zypper -q lu")) {
+        return { ok: true, code: 0, stdout:
+          "S  | Repository                 | Name     | Current Version | Available Version | Arch\n" +
+          "---+----------------------------+----------+-----------------+-------------------+-------\n" +
+          "v  | openSUSE-Leap-Oss          | aaa_base | 1.0-1           | 1.1-1             | x86_64\n", stderr: "" };
+      }
+      return { ok: false, code: 1, stdout: "", stderr: "" };
+    },
+  };
+  const findings = await updates.run(ctx);
   assert.match(findings[0].fix, /zypper update/);
+  assert.doesNotMatch(findings[0].fix, /zypper dup/);
 });
 
 test("updates: the apk header is not counted as a package", async () => {

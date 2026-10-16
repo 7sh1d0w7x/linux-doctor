@@ -3,6 +3,7 @@ import { lines, plural, shq } from "../utils.js";
 
 import { defineCheck } from "./define.js";
 import { finding } from "../findings.js";
+import { svcCmd, svcLogs } from "../distro.js";
 
 export const services = defineCheck({
   id: "services",
@@ -35,7 +36,7 @@ export const services = defineCheck({
         title: `${failed.length} service${failed.length > 1 ? "s" : ""} failed to start`,
         detail: `These ${plural(failed.length, "service")} are in a failed state: ${failed.map((f) => `\`${f.name}\` (${f.scope})`).join(", ")}. A failed service usually means a broken package, a bad configuration, or a hook that errored.`,
         evidence: failed.map((f) => `${f.name}\t${f.scope}`).join("\n"),
-        fix: `Inspect one with \`systemctl status ${failed[0].name}\` (or \`systemctl --user status ${failed[0].name}\` for user services). If it is not something you need, disable it with \`systemctl disable ${failed[0].name}\`.`,
+        fix: `Inspect one with \`${svcCmd(ctx.dist, "status", failed[0].name)}\`${(ctx.dist?.init || "systemd") === "systemd" ? ` (user services: \`systemctl --user status ${failed[0].name}\`)` : ""}. If it is not something you need, stop it with \`${svcCmd(ctx.dist, "stop", failed[0].name)}\`.`,
         confidence: "high",
       }));
     } else if (sys.missing && user.missing) {
@@ -76,7 +77,7 @@ export const services = defineCheck({
           title: `${looping.length} service${looping.length > 1 ? "s" : ""} stuck in a restart loop`,
           detail: `These units are in an "auto-restart" loop — systemd keeps restarting them because they keep exiting: ${looping.join(", ")}. A green "active" status hides the fact that they never stay up. This is usually a broken config, a missing dependency, or an out-of-memory kill (exit 137).`,
           evidence: looping.join("\n"),
-          fix: `Find the root error with \`journalctl -u ${looping[0].split(" ")[0]} --since "30 min ago"\`. Fix the cause, then \`sudo systemctl reset-failed ${looping[0].split(" ")[0]}\`.`,
+          fix: `Find the root error with \`${svcLogs(ctx.dist, looping[0].split(" ")[0])}\`. Fix the cause, then restart it with \`${svcCmd(ctx.dist, "restart", looping[0].split(" ")[0])}\`.`,
           confidence: "high",
         }));
       }

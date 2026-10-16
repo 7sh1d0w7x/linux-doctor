@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { lines, pct, num } from "../utils.js";
 import { finding } from "../findings.js";
+import { pkgCacheClean } from "../distro.js";
 import { defineCheck } from "./define.js";
 
 /**
@@ -21,7 +22,7 @@ const EXCLUDED_FS = new Set([
  * several mounts share one pool, so findings for the same device are collapsed
  * by dedupe — one pool, one penalty, not one per subvolume/dataset.
  */
-function diskFinding({ mount, use, avail, evidence, root = false, t, device }) {
+function diskFinding({ mount, use, avail, evidence, root = false, t, device, dist }) {
   const label = root ? "Root partition" : `Partition ${mount}`;
   const free = `${Math.round(avail / 1024 ** 3)} GB free`;
   if (use >= t.diskFullPct) {
@@ -33,8 +34,8 @@ function diskFinding({ mount, use, avail, evidence, root = false, t, device }) {
       detail: `${root ? "The root partition (/) " : `The partition mounted at ${mount} `}is ${use}% full with only ${free}. A full disk can slow the system and break updates.`,
       evidence,
       fix: root
-        ? "Free up space: `sudo journalctl --vacuum-size=500M`, clean the package cache (`sudo dnf clean all` or `sudo apt-get clean`), then find large files with `du -xh / | sort -rh | head -20`."
-        : `Find large files with \`du -xh ${mount} | sort -rh | head -20\` and delete or move what you no longer need.`,
+        ? `Free up space: \`sudo journalctl --vacuum-size=500M\`, then ${pkgCacheClean(dist)}, and find large files with \`du -xh -d1 / 2>/dev/null | sort -rh | head -20\`.`
+        : `Find large files with \`du -xh -d1 ${mount} 2>/dev/null | sort -rh | head -20\` and delete or move what you no longer need.`,
       confidence: "high",
     });
   }
@@ -46,7 +47,7 @@ function diskFinding({ mount, use, avail, evidence, root = false, t, device }) {
       title: `${label} is getting full`,
       detail: `${root ? "The root partition (/) " : `The partition mounted at ${mount} `}is ${use}% full (${free}). It is not urgent yet, but it is worth cleaning up.`,
       evidence,
-      fix: `Check \`du -xh ${mount} | sort -rh | head -20\` and clean up large files or logs.`,
+      fix: `Check \`du -xh -d1 ${mount} 2>/dev/null | sort -rh | head -20\` and clean up large files or logs.`,
       confidence: "high",
     });
   }
@@ -88,7 +89,7 @@ export const disk = defineCheck({
       const use = pct(p[4]);
       const avail = num(p[3]);
       if (use <= 0 || mount === "/") continue; // root handled separately below
-      const f = diskFinding({ mount, use, avail, evidence: l, t, device: p[0] });
+      const f = diskFinding({ mount, use, avail, evidence: l, t, device: p[0], dist: ctx.dist });
       if (f) findings.push(f);
     }
 
@@ -99,7 +100,7 @@ export const disk = defineCheck({
       const fs = p[0];
       const isVirtualRoot = fs.includes("composefs") || fs.includes("ostree") || EXCLUDED_FS.has(fs);
       if (!isVirtualRoot) {
-        const f = diskFinding({ mount: "/", use: pct(p[4]), avail: num(p[3]), evidence: rootLine, root: true, t, device: p[0] });
+        const f = diskFinding({ mount: "/", use: pct(p[4]), avail: num(p[3]), evidence: rootLine, root: true, t, device: p[0], dist: ctx.dist });
         if (f) findings.push(f);
       }
     }
