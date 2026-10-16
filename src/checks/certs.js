@@ -2,7 +2,7 @@
 import { lines, plural, shq } from "../utils.js";
 import { defineCheck } from "./define.js";
 import { finding } from "../findings.js";
-import { pkgInstall } from "../distro.js";
+import { pkgInstall, svcCmd } from "../distro.js";
 
 /**
  * TLS certificate expiry: the classic silent outage. ACME automation works
@@ -103,7 +103,7 @@ export const certs = defineCheck({
         title: `${plural(bad.length, "TLS certificate")} expiring or expired`,
         detail: `These certificates are expired or expire within ${critDays} days: ${bad.map(fmt).join(", ")}. An expired certificate takes the service behind it offline for every browser and API client — this is a leading cause of "it worked yesterday" outages.`,
         evidence: bad.map((c) => `${c.name}\t${c.days}d\t${c.where}`).join("\n"),
-        fix: "Renew now (`sudo certbot renew --force-renewal`), then reload the service serving the cert (`sudo systemctl reload nginx` / `apache2` / your reverse proxy) so the new cert is actually deployed.",
+        fix: `Renew now (\`sudo certbot renew --force-renewal\`), then reload the service serving the cert (\`${svcCmd(ctx.dist, "reload", "nginx")}\` / \`${svcCmd(ctx.dist, "reload", "apache2")}\` / your reverse proxy) so the new cert is actually deployed.`,
         confidence: "high",
       }));
     } else if (expiring.length > 0) {

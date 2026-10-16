@@ -2,6 +2,7 @@
 import { lines, shq } from "../utils.js";
 import { defineCheck } from "./define.js";
 import { finding } from "../findings.js";
+import { pkgInstall } from "../distro.js";
 
 /**
  * Checks whether this system has any backup or snapshot mechanism set up:
@@ -45,7 +46,9 @@ export const backup = defineCheck({
         title: "No backup or snapshot tool detected",
         detail: "No backup tool (Borg, Restic, Timeshift, …) and no snapshot system (Snapper, Timeshift) was found. If this disk fails, the data on it is gone.",
         evidence: "tools: none · snapper configs: none · timeshift: none",
-        fix: "Install one, e.g. `sudo dnf install timeshift` (Fedora/Bazzite), `sudo apt install timeshift` (Debian/Ubuntu), or a file-level tool like Borg (`sudo dnf install borgbackup`) and point it at an external disk.",
+        fix: ctx.dist?.imageBased
+          ? "Install one at user level rather than layering the base image — e.g. `brew install borgbackup`, or a Flatpak backup app — and point it at an external disk."
+          : `Install one and point it at an external disk — ${pkgInstall(ctx.dist, { fedora: "borgbackup", debian: "borgbackup", arch: "borg", suse: "borgbackup", alpine: "borgbackup", void: "borg", "*": "borgbackup" })}. Timeshift also works on Debian-family.`,
         confidence: "high",
       }));
       return findings;

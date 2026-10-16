@@ -245,7 +245,7 @@ const CATALOG = {
   "boot/no-config": () => [{ cmd: "sudo grub2-mkconfig -o /boot/grub2/grub.cfg 2>/dev/null || sudo grub-mkconfig -o /boot/grub/grub.cfg 2>/dev/null || sudo bootctl install", tier: "manual" }],
 
   /** Cache and trash bloat */
-  "cache/large": () => [{ cmd: "du -sh ~/.cache/* 2>/dev/null | sort -rh | head -20; echo '---'; rm -rf ~/.cache/thumbnails/* 2>/dev/null; echo 'Cleared thumbnails'", tier: "manual" }],
+  "cache/large": () => [{ cmd: "du -xh -d1 ~/.cache 2>/dev/null | sort -rh | head -20; echo '--- flatpak caches ---'; du -sh ~/.var/app/*/cache 2>/dev/null | sort -rh | head -20; echo '--- thumbnails ---'; rm -rf ~/.cache/thumbnails/* 2>/dev/null; echo 'Cleared thumbnails'", tier: "manual" }],
   "cache/trash": () => [{ cmd: "gio trash --empty 2>/dev/null || rm -rf ~/.local/share/Trash/*", tier: "manual" }],
 
   /** WiFi blocked: unblocking is the fix everywhere; NetworkManager is not. */

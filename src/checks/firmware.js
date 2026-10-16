@@ -3,6 +3,7 @@ import { lines, plural, TIMEOUT_MS } from "../utils.js";
 import { readCache, writeCache } from "../cache.js";
 import { defineCheck } from "./define.js";
 import { finding } from "../findings.js";
+import { svcCmd } from "../distro.js";
 
 const FIRMWARE_CACHE_MS = 30 * 60 * 1000;
 
@@ -45,7 +46,7 @@ export const firmware = defineCheck({
         title: "Firmware updates not checked",
         detail: "The fwupd service is not running, so we could not look for firmware updates.",
         evidence: daemon.stdout.trim() || "fwupd inactive",
-        fix: "Start it with: `sudo systemctl enable --now fwupd`",
+        fix: `Start it with: \`${svcCmd(ctx.dist, "enable-now", "fwupd")}\``,
         confidence: "medium",
       }));
       if (useCache) writeCache("firmware", findings);

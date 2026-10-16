@@ -73,7 +73,7 @@ export const cache = defineCheck({
         title: `User caches are very large (${fmtBytes(totalCache)})`,
         detail: `Caches are using ${fmtBytes(totalCache)}${flatpak.length > 0 ? `, ${fmtBytes(flatpakBytes)} of it in Flatpak app caches` : ""}. Browser caches, thumbnails, and build caches (pip, npm) accumulate in ~/.cache for months, and Flatpak keeps one cache per app under ~/.var/app, so they silently fill the disk.`,
         evidence: cacheEvidence.join("\n"),
-        fix: "Review both with `du -sh ~/.cache/* | sort -rh | head -20` and `du -sh ~/.var/app/*/cache | sort -rh`. `rm -rf ~/.cache/thumbnails/*` is always safe; browser caches are best cleared from inside the browser, and a Flatpak app's cache belongs to that app.",
+        fix: "Review both with `du -xh -d1 ~/.cache 2>/dev/null | sort -rh | head -20` and `du -sh ~/.var/app/*/cache 2>/dev/null | sort -rh | head -20` (the second lists Flatpak app caches only). `rm -rf ~/.cache/thumbnails/*` is always safe. A Flatpak app's cache is regenerable, but close the app first, and expect it to re-download what it needs: `rm -rf ~/.var/app/<app-id>/cache/*`. Browser caches are best cleared from inside the browser.",
         confidence: "high",
       }));
     } else if (totalCache >= CACHE_WARN) {
@@ -83,7 +83,7 @@ export const cache = defineCheck({
         title: `User caches are getting large (${fmtBytes(totalCache)})`,
         detail: `Caches are using ${fmtBytes(totalCache)}${flatpak.length > 0 ? `, ${fmtBytes(flatpakBytes)} of it in Flatpak app caches` : ""}. Not urgent yet, but worth a glance if disk space is tight.`,
         evidence: cacheEvidence.join("\n"),
-        fix: "Check `du -sh ~/.cache/* | sort -rh | head -20` and `du -sh ~/.var/app/*/cache | sort -rh`, then remove what you no longer need.",
+        fix: "Check `du -xh -d1 ~/.cache 2>/dev/null | sort -rh | head -20` and `du -sh ~/.var/app/*/cache 2>/dev/null | sort -rh | head -20`, then remove what you no longer need.",
         confidence: "high",
       }));
     }

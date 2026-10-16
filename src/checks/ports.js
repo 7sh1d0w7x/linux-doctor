@@ -3,7 +3,7 @@ import { lines } from "../utils.js";
 import { defineCheck } from "./define.js";
 import { finding } from "../findings.js";
 import { detectFirewall } from "./shared.js";
-import { pkgInstall } from "../distro.js";
+import { pkgInstall, svcCmd } from "../distro.js";
 
 /**
  * Risky services listening on non-loopback interfaces. A database that
@@ -118,7 +118,9 @@ export const ports = defineCheck({
       title: `${exposed.length} risky service${exposed.length > 1 ? "s" : ""} exposed with no firewall`,
       detail: `These services accept connections from outside this machine and no active firewall was detected: ${exposed.map((e) => `${e.svc} on :${e.port} (${e.addr})`).join(", ")}. Databases and plaintext protocols on a public interface are a routine entry point for automated attacks.`,
       evidence: exposed.map((e) => `${e.svc}\t:${e.port}\t${e.addr}`).join("\n"),
-      fix: "Bind each service to 127.0.0.1 in its own config, or enable a firewall (`sudo systemctl enable --now firewalld`, `sudo ufw enable`) and allow only what you need.",
+      fix: (ctx.dist?.init || "systemd") === "systemd"
+        ? `Bind each service to 127.0.0.1 in its own config, or enable a firewall (\`${svcCmd(ctx.dist, "enable-now", "firewalld")}\`, \`sudo ufw enable\`) and allow only what you need.`
+        : "Bind each service to 127.0.0.1 in its own config, or set up a firewall (`awall` on Alpine, `nftables` anywhere) and allow only what you need.",
       confidence: "medium",
     }));
     return findings;

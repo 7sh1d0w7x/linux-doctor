@@ -2,6 +2,7 @@
 import { lines } from "../utils.js";
 import { defineCheck } from "./define.js";
 import { finding } from "../findings.js";
+import { svcCmd, svcLogs } from "../distro.js";
 
 /**
  * Checks Bluetooth health: whether any controller exists, whether the
@@ -48,7 +49,7 @@ export const bluetooth = defineCheck({
         title: "Bluetooth service is in a failed state",
         detail: `The Bluetooth service failed to start, even though the controller (${ctrls[0]}) is present. Bluetooth will not work until this is fixed.`,
         evidence: "systemctl is-failed bluetooth → failed",
-        fix: "See why it failed with `systemctl status bluetooth` and `journalctl -u bluetooth -b`, then fix the cause and restart it with `sudo systemctl restart bluetooth`.",
+        fix: `See why it failed with \`${svcCmd(ctx.dist, "status", "bluetooth")}\` and \`${svcLogs(ctx.dist, "bluetooth")}\`, then fix the cause and restart it with \`${svcCmd(ctx.dist, "restart", "bluetooth")}\`.`,
         confidence: "high",
       }));
       return findings;
@@ -61,9 +62,7 @@ export const bluetooth = defineCheck({
         title: "Bluetooth service is not running",
         detail: `A Bluetooth controller (${ctrls[0]}) is present, but the bluetoothd daemon is not running, so Bluetooth devices cannot connect.`,
         evidence: "controller: " + ctrls[0] + "\nbluetoothd: not running",
-        fix: ctx.dist.family === "arch"
-          ? "Start it with `sudo systemctl enable --now bluetooth` (or `rc-service bluetooth start` on non-systemd systems)."
-          : "Start it with `sudo systemctl enable --now bluetooth` (on non-systemd systems, start the bluetooth service for your init system).",
+        fix: `Start it with \`${svcCmd(ctx.dist, "enable-now", "bluetooth")}\`.`,
         confidence: "high",
       }));
       return findings;
