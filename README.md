@@ -7,7 +7,7 @@
 [![Write-up](https://img.shields.io/badge/dev.to-20%20ways%20it%20was%20wrong-0A0A0A?logo=devdotto&logoColor=white)](https://dev.to/7sh1d0w7x/linux-doctor-heal-thyself-20-ways-my-linux-health-checker-was-wrong-1b2a)
 
 <p align="center">
-  <img src="docs/banner.png" alt="Linux Doctor — read-only health checks for your Linux system. Nothing is ever modified. Free and open source, by 7sh1d0w7x" width="100%">
+  <img src="https://raw.githubusercontent.com/7sh1d0w7x/linux-doctor/main/docs/banner.png?v=3" alt="Linux Doctor — read-only health checks for your Linux system. Nothing is ever modified. Free and open source, by 7sh1d0w7x" width="100%">
 </p>
 
 **Linux diagnostics that explain the problem and remember what changed.**
