@@ -125,8 +125,32 @@ const LOCK_PROBE =
   'printf \'%s %s\\n\' "$pid" "$(ps -o pgid= -p "$pid" 2>/dev/null | tr -d \' \')"; done';
 
 
-test("packages: a broken dpkg database is high", async () => {
-  const ctx = stubCtx({
+// Immutable/atomic systems (Bazzite, Silverblue, bootc) ship a pre-solved
+// image, so the full depsolve only re-confirms the image build — and at ~15 s
+// on a 2 900-package image it is slow enough to be killed by the command cap
+// and answer nothing at all. The check verifies the rpmdb instead, which is
+// fast, and says plainly that the dependency check was not run.
+const ATOMIC_OS = { id: "bazzite", id_like: "fedora", variant: "kinoite", image_version: "44" };
+
+test("packages: an immutable system verifies the rpmdb and names what it did not run", async () => {
+  const ctx = stubCtx({ "rpm --verifydb 2>&1": "" }, ATOMIC_OS);
+  const findings = await packages.run(ctx);
+  assert.equal(findings.length, 1);
+  assert.equal(findings[0].code, "packages/ok");
+  assert.equal(findings[0].severity, "info");
+  assert.match(findings[0].evidence, /rpm --verifydb: ok/);
+  assert.match(findings[0].evidence, /dependency check: not run/);
+});
+
+test("packages: an unreadable rpmdb on an immutable system claims nothing", async () => {
+  // No entry in the stub map means the command failed: the check must stay
+  // silent rather than report an intact database it never read.
+  const ctx = stubCtx({}, ATOMIC_OS);
+  const findings = await packages.run(ctx);
+  assert.deepEqual(findings, []);
+});
+
+test("packages: a broken dpkg database is high", async () => {  const ctx = stubCtx({
     "dpkg --audit 2>&1 | head -20": "The following packages are in a mess due to serious problems during installation:\n libfoo\n",
     "apt-get check 2>&1 | head -20": "",
     [LOCK_PROBE]: "",

@@ -39,6 +39,16 @@ All notable changes to Linux Doctor are documented here. The format follows
   arrived while it was in flight awaited it and served that `undefined` as an
   empty body ("Unexpected end of JSON input"), and poisoned the cache with
   it. The scan now always resolves to the body string.
+- **A Re-run no longer waits on a depsolve that never finished.** `packages`
+  ran `dnf check` — a full depsolve of every installed package, ~15 s on a
+  2 900-package image — under the generic 8 s command cap, so on Fedora
+  systems it was killed and the check answered nothing at all. It now gets the
+  package-manager budget, caches a clean depsolve for ten minutes
+  (`LINUX_DOCTOR_PACKAGES_TTL_MS`; bad news is never cached), and on immutable
+  images (Bazzite, Silverblue, bootc) verifies the RPM database instead of
+  re-solving an image that was solved at build time — and says so in its
+  evidence. A full refresh on the reference machine went from ~8.6 s to
+  ~2.2 s.
 - **A Re-run could be swallowed by a background poll and record no
   history.** With stale-while-revalidate, the background scan and the blocking
   path shared one single-flight promise, so a Re-run that arrived while a

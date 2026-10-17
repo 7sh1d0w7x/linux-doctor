@@ -1,7 +1,45 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-import { lines } from "../utils.js";
+import { lines, run as realRun, TIMEOUT_MS } from "../utils.js";
+import { readCache, writeCache } from "../cache.js";
 import { defineCheck } from "./define.js";
 import { finding } from "../findings.js";
+
+/**
+ * A full depsolve of every installed package — `dnf check` here takes ~15 s of
+ * CPU on a 2 900-package Fedora image, and `apt-get check` is the same kind of
+ * work. It is the single longest probe in a run: everything else finishes in
+ * under two seconds, so this one check decides how long "Re-run" takes.
+ *
+ * The answer only changes when a package transaction leaves the database
+ * inconsistent, so a CLEAN result is cached for 10 minutes (override
+ * LINUX_DOCTOR_PACKAGES_TTL_MS; 0 disables). Bad news is never cached: a
+ * broken or locked database is re-probed on every run, so a fix shows up on
+ * the next click instead of trailing a stale high for the length of the TTL.
+ * Same contract as the `updates` check's metadata cache — a bonus, never a
+ * dependency: an unwritable cache means the probe simply runs.
+ */
+const PACKAGES_CACHE_MS = 10 * 60 * 1000;
+
+function packagesCacheTtl() {
+  const ttl = Number(process.env.LINUX_DOCTOR_PACKAGES_TTL_MS || PACKAGES_CACHE_MS);
+  return Number.isFinite(ttl) && ttl > 0 ? ttl : 0;
+}
+
+/** Cache only a clean result; writeCache never throws. */
+function remember(findings, ttlMs) {
+  if (ttlMs && findings.every((f) => f.severity === "info")) writeCache("packages", findings);
+  return findings;
+}
+
+/**
+ * The cache is for real scans only. Tests and fixture replays hand the check a
+ * stub runner, and a cache shared with them would make their assertions depend
+ * on the developer's machine (and let a fixture's "healthy" land in the real
+ * cache). Identity against the imported runner is the one signal the check has.
+ */
+function cacheTtlFor(ctx) {
+  return ctx.run === realRun ? packagesCacheTtl() : 0;
+}
 
 /**
  * `apt-get check` refusing the dpkg frontend lock. These lines say nothing
@@ -52,24 +90,70 @@ export const packages = defineCheck({
   async run(ctx) {
     const findings = [];
     const { pkg, family } = ctx.dist || {};
+    const ttlMs = cacheTtlFor(ctx);
+    const cached = ttlMs ? readCache("packages", ttlMs) : null;
+
+    // Immutable / atomic systems (Bazzite, Silverblue, bootc): the installed
+    // package set is a signed, pre-solved image, and layered packages arrive
+    // through rpm-ostree, which refuses a transaction it cannot solve. A full
+    // depsolve of ~3 000 packages (`dnf check`, 15 s here) can only re-confirm
+    // what the image build already guaranteed — while being slow enough to hit
+    // the command cap and answer nothing at all. Verify the database itself,
+    // which takes half a second, and say exactly what was not run.
+    if (ctx.dist && ctx.dist.imageBased) {
+      if (cached) return cached;
+      const verify = await ctx.run("rpm --verifydb 2>&1");
+      if (!verify.ok) return findings; // unreadable database: claim nothing
+      findings.push(finding({
+        severity: "info",
+        code: "packages/ok",
+        title: "Package database is intact",
+        detail: "This is an immutable system: packages come from a pre-solved image and rpm-ostree refuses transactions it cannot solve, so the full dependency check is not run. The local RPM database verified clean.",
+        evidence: "rpm --verifydb: ok \u00b7 dependency check: not run on immutable systems",
+        fix: null,
+        confidence: "high",
+      }));
+      return remember(findings, ttlMs);
+    }
 
     // Debian/Ubuntu family
     if (pkg === "apt" || family === "debian") {
-      const [dpkgAudit, aptCheck, lockRes] = await Promise.all([
-        ctx.run("dpkg --audit 2>&1 | head -20"),
-        ctx.run("apt-get check 2>&1 | head -20"),
-        // Lock probe. Holders in our own process group are skipped: `apt-get
-      // check` below takes the same frontend lock, and the `updates` and
-      // `orphans` checks take it too, so a plain `fuser` reported linux-doctor
-      // as "another process". Run as root on a healthy machine that produced a
-      // medium "locked by another process" naming linux-doctor itself (#24).
-      // The probe reports groups and `foreignLockHolders` decides, so the rule
-      // is unit-testable instead of living in the shell's comparison semantics.
-      ctx.run(
+      // The lock is a live, seconds-long fact and costs ~40 ms, so it is
+      // probed before the cache lookup: a Re-run while apt is busy must say
+      // so even when the (cached) depsolve is still fresh.
+      const lockRes = await ctx.run(
+        // Holders in our own process group are skipped: `apt-get check` below
+        // takes the same frontend lock, and the `updates` and `orphans` checks
+        // take it too, so a plain `fuser` reported linux-doctor as "another
+        // process". Run as root on a healthy machine that produced a medium
+        // "locked by another process" naming linux-doctor itself (#24). The
+        // probe reports groups and `foreignLockHolders` decides, so the rule
+        // is unit-testable instead of living in the shell's comparison.
         "printf 'self %s\\n' \"$(ps -o pgid= -p $$ 2>/dev/null | tr -d ' ')\"; " +
           "for pid in $(fuser /var/lib/dpkg/lock /var/lib/dpkg/lock-frontend /var/lib/apt/lists/lock 2>/dev/null); do " +
           'printf \'%s %s\\n\' "$pid" "$(ps -o pgid= -p "$pid" 2>/dev/null | tr -d \' \')"; done'
-      ),
+      );
+      const holders = foreignLockHolders(lockRes.stdout);
+      if (lockRes.ok && holders.length > 0) {
+        findings.push(finding({
+          severity: "medium",
+          code: "packages/locked",
+          title: "Package manager is locked by another process",
+          detail: "Another apt/dpkg process is holding the package lock. Updates cannot run until it finishes.",
+          evidence: `lock held by PID ${holders.join(" ")}`,
+          fix: "Wait for the other apt process to finish, or if it is stuck, check `ps aux | grep -E 'apt|dpkg'` and close it.",
+          confidence: "medium",
+        }));
+        return findings;
+      }
+
+      if (cached) return cached;
+
+      const [dpkgAudit, aptCheck] = await Promise.all([
+        ctx.run("dpkg --audit 2>&1 | head -20"),
+        // A depsolve of every installed package: the default 8 s cap is the
+        // package-manager budget, not the generic one (see TIMEOUT_MS).
+        ctx.run("apt-get check 2>&1 | head -20", { timeoutMs: TIMEOUT_MS.PKGMGR }),
       ]);
 
       const auditOut = (dpkgAudit.stdout || "").trim();
@@ -111,23 +195,6 @@ export const packages = defineCheck({
         return findings;
       }
 
-      // A lock held by a process outside our own tree = apt is busy. Only the
-      // PIDs reach the evidence: `foreignLockHolders` returns PIDs, so nothing
-      // else can be printed as "held by".
-      const holders = foreignLockHolders(lockRes.stdout);
-      if (lockRes.ok && holders.length > 0) {
-        findings.push(finding({
-          severity: "medium",
-          code: "packages/locked",
-          title: "Package manager is locked by another process",
-          detail: "Another apt/dpkg process is holding the package lock. Updates cannot run until it finishes.",
-          evidence: `lock held by PID ${holders.join(" ")}`,
-          fix: "Wait for the other apt process to finish, or if it is stuck, check `ps aux | grep -E 'apt|dpkg'` and close it.",
-          confidence: "medium",
-        }));
-        return findings;
-      }
-
       // Check for dpkg interrupted flag
       const interrupted = await ctx.run("test -f /var/lib/dpkg/updates/tmp.i 2>/dev/null && echo interrupted; dpkg --audit 2>&1 | grep -q 'half-installed\\|unpacked' && echo half");
       if (interrupted.ok && interrupted.stdout.trim() !== "") {
@@ -154,16 +221,17 @@ export const packages = defineCheck({
         fix: null,
         confidence: "high",
       }));
-      return findings;
+      return remember(findings, ttlMs);
     }
 
     // Fedora/RHEL family — check dnf. (`rpm -Va` was run here too and its
     // result never used; two full rpmdb verifications were pure dead work
     // that almost always exceeded the timeout.)
     if (pkg === "dnf" || family === "fedora") {
+      if (cached) return cached;
       // No `| head`: the exit status would belong to head, so the guard below
       // could never fire and a failed dnf looked successful. Slice in JS.
-      const dnfCheck = await ctx.run("dnf check 2>&1");
+      const dnfCheck = await ctx.run("dnf check 2>&1", { timeoutMs: TIMEOUT_MS.PKGMGR });
       const out = String(dnfCheck.stdout || "");
       // An unprivileged dnf cannot create its cache. Its refusal was read as a
       // broken package database (high) on a healthy machine — the same false
@@ -196,7 +264,7 @@ export const packages = defineCheck({
         fix: null,
         confidence: "high",
       }));
-      return findings;
+      return remember(findings, ttlMs);
     }
 
     // Arch — check pacman DB
