@@ -6,6 +6,10 @@
 [![Sponsor](https://img.shields.io/github/sponsors/7sh1d0w7x)](https://github.com/sponsors/7sh1d0w7x)
 [![Write-up](https://img.shields.io/badge/dev.to-20%20ways%20it%20was%20wrong-0A0A0A?logo=devdotto&logoColor=white)](https://dev.to/7sh1d0w7x/linux-doctor-heal-thyself-20-ways-my-linux-health-checker-was-wrong-1b2a)
 
+<p align="center">
+  <img src="docs/banner.png" alt="Linux Doctor — plain-English health checks for your Linux system. Read-only, free and open source, by 7sh1d0w7x" width="100%">
+</p>
+
 **Linux diagnostics that explain the problem and remember what changed.**
 
 Linux Doctor runs safe, read-only checks and surfaces only the issues that
