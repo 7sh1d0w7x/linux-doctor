@@ -70,9 +70,14 @@ test("scoreChart: omits the threshold line when the range stays above 50", () =>
 test("severityChart: renders one stacked bar per run with high/medium/info segments", () => {
   const out = severityChart(sample);
   assert.ok(out.includes("<svg"), "produces an svg");
-  // Three runs => three info + three medium + three high rects = 9 rects.
-  const rects = out.match(/<rect /g) || [];
-  assert.equal(rects.length, 9);
+  // Three runs => three info + three medium + three high segments.
+  const segs = out.match(/class="sev-seg"/g) || [];
+  assert.equal(segs.length, 9, "three segments per run");
+  // Plus one full-height hover target per run, so a short bar is still
+  // pointable and every run is dated on hover.
+  const hits = out.match(/class="sev-hit"/g) || [];
+  assert.equal(hits.length, sample.length, "one hover target per run");
+  assert.ok(out.includes("<title>"), "the hover target carries the run's date and counts");
   assert.ok(out.includes("var(--red)"), "high segments use red");
   assert.ok(out.includes("var(--yellow)"), "medium segments use yellow");
   assert.ok(out.includes("var(--blue)"), "info segments use blue");

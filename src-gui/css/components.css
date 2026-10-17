@@ -317,33 +317,60 @@
 .trend-hero ~ .trendtitle { display: none; }
 /* The score sparkline lives inside the score's own instrument, right under
    the number and the direction chip — the shape comes from the data, the
-   same trace language as the rail's vitals pulse. */
-.hist-trace { padding: 0 0 12px; border-bottom: 1px solid var(--border); }
-.hist-trace svg { display: block; overflow: visible; }
+   same trace language as the rail's vitals pulse. No hairline under it: the
+   trace is part of the reading, not a chart parked at the bottom of a column.
+   It takes the column's width so it lines up with the number above it. */
+.hist-trace { padding: 2px 0 0; }
+.hist-trace svg { display: block; width: 100%; height: auto; overflow: visible; }
 .sev-axis { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; color: var(--muted2); margin-top: -1px; }
 @media (max-width: 900px) { .trend-wrap { grid-template-columns: 1fr; gap: 20px; } }
 
 /* === Schedule view — is the machine watching itself, and when ===
    Focus (3s): will this machine check itself tomorrow? The instrument row
-   answers last run / next run / timer state; the commands are printed as
-   recipes (the accent-ruled mono slip the findings already use) instead of
-   being hidden behind buttons. */
-#schedview { max-width: 780px; }
+   answers last run / next run / timer state — times in mono so they read as
+   readings, not prose — with the "nothing to do" outcome as its footer band.
+   The commands are printed as recipes (the accent-ruled mono slip the
+   findings already use) instead of being hidden behind buttons. */
+#schedview { max-width: 1080px; }
 .sched-instr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin: 12px 0 10px; }
 .si { background: var(--card); padding: 12px 14px; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .si-k { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted2); }
 .si-v { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text); }
+.si-vnum { font-family: var(--mono); font-size: 12.5px; font-weight: 600; letter-spacing: -.01em; }
 .si-v .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 18%, transparent); }
 .si-v .dot.stale { background: var(--yellow); box-shadow: 0 0 0 3px color-mix(in srgb, var(--yellow) 18%, transparent); }
-.sched-cap { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 11.5px; color: var(--muted2); }
+/* The outcome band: the instrument's own last row, full width. */
+.sched-idle { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 9px; background: var(--card); padding: 10px 14px; font-size: 12.5px; line-height: 1.55; color: var(--muted); }
+.sched-idle-mark { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: var(--green); transform: translateY(-1px); }
+.sched-cap { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 11.5px; color: var(--muted2); margin-top: 9px; }
 .sched-cap .sched-note { white-space: nowrap; }
 .sched-cap .sched-sep { color: var(--muted2); }
-.sched-idle { font-size: 12.5px; color: var(--muted); line-height: 1.6; margin: 14px 0 0; }
 .sched-none { font-size: 12.5px; color: var(--muted); margin-top: 10px; }
+/* The two command sets sit side by side on desktop — the view is short, and
+   stacking them left half the surface empty. */
+.sched-cmds { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 32px; align-items: start; }
+/* The primary setup slip is a call to action, not a table row: it keeps the
+   command and its Copy together instead of stretching across the view. */
+.sched-setup .recipe { max-width: 560px; }
+/* A grid item is :first-of-type inside its own column, so the shared
+   "first section sits at 4px" rule would glue MANAGE to the caption. */
+.sched-cmds > .vsec { margin-top: 22px; }
 .recipe { display: flex; align-items: stretch; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
-.recipe-cmd { flex: 1 1 300px; min-width: 0; display: flex; align-items: center; background: var(--evidence-bg); color: var(--text); border: 1px solid var(--border); border-left: 2px solid var(--accent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 8px 11px; font-family: var(--mono); font-size: 12px; white-space: nowrap; overflow-x: auto; scrollbar-width: thin; }
+.recipe-cmd { flex: 1 1 260px; min-width: 0; display: flex; align-items: center; background: var(--evidence-bg); color: var(--text); border: 1px solid var(--border); border-left: 2px solid var(--accent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 8px 11px; font-family: var(--mono); font-size: 12px; white-space: nowrap; overflow-x: auto; scrollbar-width: thin; }
 .recipe-copy { flex-shrink: 0; padding: 0 12px; font-size: 11.5px; font-weight: 600; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); }
 .recipe-copy:hover { background: var(--card2); border-color: var(--border); }
 .recipe-copy.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 .recipe-copy.primary:hover { background: var(--accent2); border-color: var(--accent2); }
-@media (max-width: 560px) { .sched-instr { grid-template-columns: 1fr; } .recipe-cmd { white-space: normal; overflow-wrap: anywhere; } }
+@media (max-width: 900px) { .sched-cmds { grid-template-columns: 1fr; gap: 0; } }
+/* On a phone the three readings become one spec sheet: label left, value
+   right. Stacked full-width blocks cost ~250px of a 900px screen for three
+   words. */
+@media (max-width: 560px) {
+  .sched-instr { grid-template-columns: 1fr; }
+  .si { flex-direction: row; align-items: baseline; justify-content: space-between; gap: 12px; padding: 10px 14px; }
+  .si-v .dot { width: 7px; height: 7px; }
+  /* A separator that starts a wrapped line reads as a stray bullet. */
+  .sched-cap .sched-sep { display: none; }
+  .sched-cap .sched-note { width: 100%; }
+  .recipe-cmd { white-space: normal; overflow-wrap: anywhere; }
+}

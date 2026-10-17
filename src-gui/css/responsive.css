@@ -16,6 +16,9 @@
   }
   #sidebar .viewtab { width: auto; flex-shrink: 0; padding: 6px 10px; }
   #sidebar .viewtab.active { background: var(--card); color: var(--text); }
+  /* Below the rail breakpoint the status bar is content, not chrome: give it
+     a gutter so it does not sit flush against the last row of the view. */
+  footer { padding: 14px 14px 18px; }
 }
 
 /* === Mobile === */

@@ -974,36 +974,63 @@ body.compact #report { gap: 8px; }
 .trend-hero ~ .trendtitle { display: none; }
 /* The score sparkline lives inside the score's own instrument, right under
    the number and the direction chip — the shape comes from the data, the
-   same trace language as the rail's vitals pulse. */
-.hist-trace { padding: 0 0 12px; border-bottom: 1px solid var(--border); }
-.hist-trace svg { display: block; overflow: visible; }
+   same trace language as the rail's vitals pulse. No hairline under it: the
+   trace is part of the reading, not a chart parked at the bottom of a column.
+   It takes the column's width so it lines up with the number above it. */
+.hist-trace { padding: 2px 0 0; }
+.hist-trace svg { display: block; width: 100%; height: auto; overflow: visible; }
 .sev-axis { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; color: var(--muted2); margin-top: -1px; }
 @media (max-width: 900px) { .trend-wrap { grid-template-columns: 1fr; gap: 20px; } }
 
 /* === Schedule view — is the machine watching itself, and when ===
    Focus (3s): will this machine check itself tomorrow? The instrument row
-   answers last run / next run / timer state; the commands are printed as
-   recipes (the accent-ruled mono slip the findings already use) instead of
-   being hidden behind buttons. */
-#schedview { max-width: 780px; }
+   answers last run / next run / timer state — times in mono so they read as
+   readings, not prose — with the "nothing to do" outcome as its footer band.
+   The commands are printed as recipes (the accent-ruled mono slip the
+   findings already use) instead of being hidden behind buttons. */
+#schedview { max-width: 1080px; }
 .sched-instr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin: 12px 0 10px; }
 .si { background: var(--card); padding: 12px 14px; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .si-k { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted2); }
 .si-v { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text); }
+.si-vnum { font-family: var(--mono); font-size: 12.5px; font-weight: 600; letter-spacing: -.01em; }
 .si-v .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 18%, transparent); }
 .si-v .dot.stale { background: var(--yellow); box-shadow: 0 0 0 3px color-mix(in srgb, var(--yellow) 18%, transparent); }
-.sched-cap { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 11.5px; color: var(--muted2); }
+/* The outcome band: the instrument's own last row, full width. */
+.sched-idle { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 9px; background: var(--card); padding: 10px 14px; font-size: 12.5px; line-height: 1.55; color: var(--muted); }
+.sched-idle-mark { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: var(--green); transform: translateY(-1px); }
+.sched-cap { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 11.5px; color: var(--muted2); margin-top: 9px; }
 .sched-cap .sched-note { white-space: nowrap; }
 .sched-cap .sched-sep { color: var(--muted2); }
-.sched-idle { font-size: 12.5px; color: var(--muted); line-height: 1.6; margin: 14px 0 0; }
 .sched-none { font-size: 12.5px; color: var(--muted); margin-top: 10px; }
+/* The two command sets sit side by side on desktop — the view is short, and
+   stacking them left half the surface empty. */
+.sched-cmds { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 32px; align-items: start; }
+/* The primary setup slip is a call to action, not a table row: it keeps the
+   command and its Copy together instead of stretching across the view. */
+.sched-setup .recipe { max-width: 560px; }
+/* A grid item is :first-of-type inside its own column, so the shared
+   "first section sits at 4px" rule would glue MANAGE to the caption. */
+.sched-cmds > .vsec { margin-top: 22px; }
 .recipe { display: flex; align-items: stretch; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
-.recipe-cmd { flex: 1 1 300px; min-width: 0; display: flex; align-items: center; background: var(--evidence-bg); color: var(--text); border: 1px solid var(--border); border-left: 2px solid var(--accent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 8px 11px; font-family: var(--mono); font-size: 12px; white-space: nowrap; overflow-x: auto; scrollbar-width: thin; }
+.recipe-cmd { flex: 1 1 260px; min-width: 0; display: flex; align-items: center; background: var(--evidence-bg); color: var(--text); border: 1px solid var(--border); border-left: 2px solid var(--accent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 8px 11px; font-family: var(--mono); font-size: 12px; white-space: nowrap; overflow-x: auto; scrollbar-width: thin; }
 .recipe-copy { flex-shrink: 0; padding: 0 12px; font-size: 11.5px; font-weight: 600; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); }
 .recipe-copy:hover { background: var(--card2); border-color: var(--border); }
 .recipe-copy.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 .recipe-copy.primary:hover { background: var(--accent2); border-color: var(--accent2); }
-@media (max-width: 560px) { .sched-instr { grid-template-columns: 1fr; } .recipe-cmd { white-space: normal; overflow-wrap: anywhere; } }
+@media (max-width: 900px) { .sched-cmds { grid-template-columns: 1fr; gap: 0; } }
+/* On a phone the three readings become one spec sheet: label left, value
+   right. Stacked full-width blocks cost ~250px of a 900px screen for three
+   words. */
+@media (max-width: 560px) {
+  .sched-instr { grid-template-columns: 1fr; }
+  .si { flex-direction: row; align-items: baseline; justify-content: space-between; gap: 12px; padding: 10px 14px; }
+  .si-v .dot { width: 7px; height: 7px; }
+  /* A separator that starts a wrapped line reads as a stray bullet. */
+  .sched-cap .sched-sep { display: none; }
+  .sched-cap .sched-note { width: 100%; }
+  .recipe-cmd { white-space: normal; overflow-wrap: anywhere; }
+}
 
 
 /* ── responsive.css ── */
@@ -1025,6 +1052,9 @@ body.compact #report { gap: 8px; }
   }
   #sidebar .viewtab { width: auto; flex-shrink: 0; padding: 6px 10px; }
   #sidebar .viewtab.active { background: var(--card); color: var(--text); }
+  /* Below the rail breakpoint the status bar is content, not chrome: give it
+     a gutter so it does not sit flush against the last row of the view. */
+  footer { padding: 14px 14px 18px; }
 }
 
 /* === Mobile === */
@@ -2279,6 +2309,16 @@ function schedAgo(iso) {
   return Math.floor(s / 86400) + "d ago";
 }
 
+/* The next run is read as a distance first ("in 24h") and a date second —
+   the same reading order as "just now" for the last one. */
+function schedAhead(ms) {
+  if (!Number.isFinite(ms)) return "\u2014";
+  const h = Math.round((ms - Date.now()) / 3600000);
+  if (h <= 0) return "any moment";
+  if (h < 48) return "in " + h + "h";
+  return "in " + Math.round(h / 24) + "d";
+}
+
 /* The command IS the information, so it is printed, not hidden behind a
    button: an accent-ruled mono slip — the same recipe language as the
    findings' Recommended next step — with a quiet copy next to it. */
@@ -2299,28 +2339,37 @@ function scheduleViewHtml(s, notify, generatedAt) {
   const state = on ? "on" : needs ? "needs attention" : "off";
   const lastMs = Date.parse(generatedAt || "");
   const nextTxt = on && Number.isFinite(lastMs)
-    ? "by " + fmtWhen(new Date(lastMs + 86400000).toISOString())
+    ? schedAhead(lastMs + 86400000) + " \u00b7 " + fmtWhen(new Date(lastMs + 86400000).toISOString())
     : "\u2014";
   const nextTitle = "The installed timer runs 24h after its last activation; Persistent catches up runs missed while the machine was off.";
+  /* The state band is the instrument: times are mono and tabular so they
+     read as readings, not prose. "Nothing to do" is the instrument's own
+     footer — the outcome of the three readings above it, not a sentence
+     floating in the empty half of the view. */
+  const idle = on
+    ? '<div class="sched-idle"><span class="sched-idle-mark" aria-hidden="true"></span>' +
+      "<span>Nothing to do \u2014 the timer runs the checks by itself and speaks up only when something new breaks.</span></div>"
+    : "";
   const instr =
     '<div class="sched-instr">' +
-      '<div class="si"><span class="si-k">Last run</span><span class="si-v">' + esc(schedAgo(generatedAt)) + "</span></div>" +
-      '<div class="si"><span class="si-k">Next run</span><span class="si-v" title="' + esc(nextTitle) + '">' + esc(nextTxt) + "</span></div>" +
+      '<div class="si"><span class="si-k">Last run</span><span class="si-v si-vnum">' + esc(schedAgo(generatedAt)) + "</span></div>" +
+      '<div class="si"><span class="si-k">Next run</span><span class="si-v si-vnum" title="' + esc(nextTitle) + '">' + esc(nextTxt) + "</span></div>" +
       '<div class="si"><span class="si-k">Timer</span><span class="si-v"><span class="dot' + (on ? "" : " stale") + '" aria-hidden="true"></span>' + esc(state) + "</span></div>" +
+      idle +
     "</div>" +
-    '<div class="sched-cap">shortly after boot, then every 24h \u00b7 Persistent \u2014 catches up runs missed while the machine was off' + notifyBit + "</div>";
-  const idle = on
-    ? '<p class="sched-idle">Nothing to do \u2014 the timer runs the checks by itself and speaks up only when something new breaks.</p>'
-    : "";
+    '<div class="sched-cap">' +
+      (on ? "runs" : needs ? "once active, it runs" : "installing makes it run") + " shortly after boot, then every 24h \u00b7 Persistent \u2014 catches up runs missed while the machine was off" +
+      notifyBit + "</div>";
   const setup = on ? "" :
-    '<section class="vsec"><div class="vsec-head">Set it up</div>' + recipeHtml("linux-doctor --install-timer", true) + "</section>";
+    '<section class="vsec sched-setup"><div class="vsec-head">Set it up</div>' + recipeHtml("linux-doctor --install-timer", true) + "</section>";
   const manage = '<section class="vsec"><div class="vsec-head">Manage</div>' +
     recipeHtml("linux-doctor --install-timer") +
     recipeHtml("linux-doctor --uninstall-timer") + "</section>";
   const pro = '<section class="vsec"><div class="vsec-head">Remote delivery <span class="vsec-sub">[Pro]</span></div>' +
     recipeHtml("linux-doctor --alert https://ntfy.sh/your-topic") +
     recipeHtml("linux-doctor --heartbeat https://hc-ping.com/your-uuid") + "</section>";
-  return '<section class="vsec"><div class="vsec-head">Scheduled checks</div>' + instr + idle + "</section>" + setup + manage + pro;
+  return '<section class="vsec"><div class="vsec-head">Scheduled checks</div>' + instr + "</section>" +
+    setup + '<div class="sched-cmds">' + manage + pro + "</div>";
 }
 
 async function renderScheduleView() {
@@ -3400,15 +3449,19 @@ function miniSpark(data) {
 }
 
 function scoreChart(data) {
-  const W = 240, H = 44, pad = 4;
+  const W = 240, H = 34, pad = 4;
   const scores = data.map((r) => r.score);
   const min = Math.min(...scores), max = Math.max(...scores);
   const span = Math.max(1, max - min);
   /* A flat series has no shape to show; pin it to the middle of the trace
-     instead of drawing a hairline along the floor, which reads as a border. */
+     instead of drawing a hairline along the floor, which reads as a border.
+     "Middle" is the score's own height though: a flat 100 belongs at the top
+     of the plot, a flat 60 just above the floor. */
   const flat = max === min;
   const X = (i) => pad + (i * (W - 2 * pad)) / (scores.length - 1);
-  const Y = (s) => (flat ? H / 2 : H - pad - ((s - min) / span) * (H - 2 * pad));
+  const Y = (s) => (flat
+    ? H - pad - (Math.max(0, Math.min(100, s)) / 100) * (H - 2 * pad)
+    : H - pad - ((s - min) / span) * (H - 2 * pad));
   const pts = scores.map((s, i) => [X(i).toFixed(1), Y(s).toFixed(1)]);
   const last = scores[scores.length - 1];
   const first = scores[0];
@@ -3419,19 +3472,31 @@ function scoreChart(data) {
   const line = pts.map((p) => p.join(",")).join(" ");
   const area = "M" + line.replace(/ /g, " L") + " L" + (W - pad) + "," + (H - pad) + " L" + pad + "," + (H - pad) + " Z";
   const dots = pts.map((p, i) =>
+    // A flat series has no shape, so each run gets a visible mark: twelve
+    // readings in a row read as twelve readings, not as a stray line. The
+    // mark is decorative; the transparent circle on top is the control.
+    (flat ? '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="2.2" fill="' + dir.col + '" opacity="0.75" class="hist-dotmark" pointer-events="none"/>' : "") +
     '<circle data-idx="' + i + '" cx="' + p[0] + '" cy="' + p[1] + '" r="5" fill="transparent" class="hist-dot" tabindex="0" role="button" aria-label="Run ' + (i + 1) + " of " + scores.length + ": " + scores[i] + "/100, " + fmtWhen(data[i].at) + ' — open the diff">' +
     '<title>' + scores[i] + "/100 · " + fmtWhen(data[i].at) + ' — click to show diff</title></circle>').join("");
   const end = pts[pts.length - 1];
   const thresh = (min < 50 && max > 50)
     ? '<line x1="' + pad + '" y1="' + Y(50).toFixed(1) + '" x2="' + (W - pad) + '" y2="' + Y(50).toFixed(1) + '" stroke="var(--muted2)" stroke-width="1" stroke-dasharray="3 3" opacity="0.5"/>'
     : "";
-  // Hero for history: large score + direction
+  // A floor under the trace: without it a flat series (same score every run)
+  // draws a line in mid-air and reads as a divider rather than a reading.
+  const floor = '<line x1="' + pad + '" y1="' + (H - pad) + '" x2="' + (W - pad) + '" y2="' + (H - pad) + '" stroke="var(--border)" stroke-width="1"/>';
+  // Hero for history: large score + direction, and the trace directly under
+  // it — one instrument, the same shape-from-data language as the rail's
+  // vitals pulse. The run window is printed under the severity chart beside
+  // it, so the trace does not repeat it.
   const hero = '<div class="trend-hero"><div class="trend-hero-score"><span class="trend-hero-num ' + dir.cls + '">' + last + '</span><span class="trend-hero-out">/100</span></div>' +
     '<div class="trend-hero-meta"><span class="trend-direction ' + dir.cls + '">' + dir.icon + ' ' + dir.txt + '</span><span class="trend-hero-range">' + range + '</span></div></div>';
+  const from = data[0] && fmtWhen(data[0].at);
+  const to = data[data.length - 1] && fmtWhen(data[data.length - 1].at);
   return '<div class="trendchart">' +
     hero +
-    '<div class="hist-trace"><svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Health score trend">' +
-    thresh + '<path d="' + area + '" fill="' + dir.col + '" opacity="0.10"/>' +
+    '<div class="hist-trace"><svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Health score trend, ' + from + ' to ' + to + '">' +
+    (flat ? "" : floor + thresh + '<path d="' + area + '" fill="' + dir.col + '" opacity="0.10"/>') +
     '<polyline points="' + line + '" fill="none" stroke="' + dir.col + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
     dots + '<circle cx="' + end[0] + '" cy="' + end[1] + '" r="2.5" fill="' + dir.col + '" stroke="var(--card)" stroke-width="1.5"/></svg></div>' +
     '<div class="trendtitle" style="margin-top:6px"><b>' + last + '/100</b> <span class="' + dir.cls + '">' + dir.txt + '</span> <span class="trendrange">' + range + '</span></div>' +
@@ -3458,11 +3523,20 @@ function severityChart(data) {
     const yInfo = (H - spad - iH).toFixed(1);
     const yMed = (H - spad - iH - mH).toFixed(1);
     const yHigh = (H - spad - iH - mH - hH).toFixed(1);
-    const tip = "high: " + c.high + " · medium: " + c.medium + " · info: " + c.info + (fmtWhen(c.at) ? " · " + fmtWhen(c.at) : "");
-    return '<g data-idx="' + i + '" class="hist-bar" tabindex="0" role="button" aria-label="Run ' + (i + 1) + ": " + tip + ' — open the diff">' +
-      '<rect x="' + x + '" y="' + yInfo + '" width="' + bw.toFixed(1) + '" height="' + iH.toFixed(1) + '" rx="2" fill="var(--blue)" opacity="0.7"><title>' + tip + ' — click</title></rect>' +
-      '<rect x="' + x + '" y="' + yMed + '" width="' + bw.toFixed(1) + '" height="' + mH.toFixed(1) + '" rx="2" fill="var(--yellow)" opacity="0.85"><title>' + tip + '</title></rect>' +
-      '<rect x="' + x + '" y="' + yHigh + '" width="' + bw.toFixed(1) + '" height="' + hH.toFixed(1) + '" rx="2" fill="var(--red)" opacity="0.9"><title>' + tip + '</title></rect></g>';
+    const tip = "high: " + c.high + " · medium: " + c.medium + " · info: " + c.info;
+    const when = fmtWhen(c.at);
+    // Every run is one bar and every bar is dated: the segments carry the
+    // counts, and a full-height transparent target on top of them makes the
+    // whole column hoverable — a run with one observation is a 6-pixel bar,
+    // which is not a target anyone can point at. The date leads the tooltip
+    // because "which run is this?" is the question the chart cannot answer
+    // by itself.
+    return '<g data-idx="' + i + '" class="hist-bar" tabindex="0" role="button" aria-label="Run ' + (i + 1) + ": " + tip + (when ? " · " + when : "") + ' — open the diff">' +
+      '<rect class="sev-seg" x="' + x + '" y="' + yInfo + '" width="' + bw.toFixed(1) + '" height="' + iH.toFixed(1) + '" rx="2" fill="var(--blue)" opacity="0.7"/>' +
+      '<rect class="sev-seg" x="' + x + '" y="' + yMed + '" width="' + bw.toFixed(1) + '" height="' + mH.toFixed(1) + '" rx="2" fill="var(--yellow)" opacity="0.85"/>' +
+      '<rect class="sev-seg" x="' + x + '" y="' + yHigh + '" width="' + bw.toFixed(1) + '" height="' + hH.toFixed(1) + '" rx="2" fill="var(--red)" opacity="0.9"/>' +
+      '<rect class="sev-hit" x="' + x + '" y="' + spad + '" width="' + bw.toFixed(1) + '" height="' + totalH.toFixed(1) + '" fill="transparent" pointer-events="all">' +
+      "<title>" + (when ? when + " \u00b7 " : "") + tip + " \u2014 click to show the diff</title></rect></g>";
   }).join("");
   const oldest = counts.length ? fmtWhen(counts[0].at) : "";
   const newest = counts.length ? fmtWhen(counts[counts.length - 1].at) : "";

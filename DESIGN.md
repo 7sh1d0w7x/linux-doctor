@@ -140,32 +140,47 @@ carry one idea in the first three seconds:
 - **History** — *has the machine held or slipped?* The score, its direction
   chip and its sparkline are **one instrument**: the trace sits directly under
   the score (the same shape-from-data language as the rail's vitals pulse, not
-  a hairline floating at the bottom of a column). Each severity bar is one
-  run, dated on hover, with the run window printed under the chart. The run
-  ledger is a table with a header row (`when · score · Δ · findings`), mono
-  timestamps and tabular numbers.
+  a hairline floating at the bottom of a column) and takes the column's full
+  width. A flat series is drawn as **one mark per run**, pinned at the score's
+  own height — twelve readings read as twelve readings, not as a stray rule,
+  and the trace carries no second date axis because the run window is printed
+  under the bar chart beside it. Each severity bar is one run; every bar has a
+  full-height transparent hit target, so a six-pixel bar and a tall one are
+  equally pointable, and the run's date leads its tooltip. The run ledger is a
+  table with a header row (`when · score · Δ · findings`), mono timestamps and
+  tabular numbers.
 - **Checks** — *what did it look at, and what is not clean?* The whole
   registry as a table: a count per category, a sticky `check · result` column
-  rule on desktop, a **fixed result vocabulary** (`clean`, `observation`,
-  `warning`, `needs attention`, `not applicable`, `skipped`, `failed to run`)
-  carrying the severity ink, and a *Problems only* filter that drops the clean
-  rows. A row with findings still deep-links to its card.
+  rule on desktop (it parks under the headerbar while the registry scrolls),
+  a **fixed result vocabulary** (`clean`, `observation`, `warning`, `needs
+  attention`, `not applicable`, `skipped`, `failed to run`) carrying the
+  severity ink, and a *Problems only* filter that drops the clean rows. A row
+  with findings still deep-links to its card. The column rule is built once,
+  by the view — never by the shared body builder, or a second copy appears
+  wherever else that body is rendered.
 - **System** — *what is this machine?* One list of sections under section
   rules, grouped by how they are read — *Read once* (identity) vs *Read when
   something's wrong* (live state) — never four separate cards. Identifiers
   (version, kernel, hostname, profile, desktop) are mono and copyable in place.
 - **Schedule** — *will it check itself tomorrow?* An instrument row answers
-  **last run · next run · timer state** with a green/amber state dot; the
-  cadence is the caption under it; the commands are printed as recipes — the
-  same accent-ruled mono slip as *Recommended next step* — so the command is
-  the information, with a copy button beside it rather than a button that
-  hides it.
+  **last run · next run · timer state**, with the two times in mono: a reading,
+  not a sentence. "Nothing to do" is the instrument's **own footer band**, the
+  outcome of the three readings above it, rather than a sentence floating in
+  the empty half of the view. The cadence is the caption under the row. The
+  commands are printed as recipes — the same accent-ruled mono slip as
+  *Recommended next step* — so the command is the information, with a copy
+  button beside it rather than a button that hides it; the two command sets sit
+  side by side on desktop so the width is used. Below 560px the three readings
+  become a label/value spec sheet and the outcome band closes it.
+
 
 **Detail pane** (`≥1200px`): the selected row's body pins to the right; below
 1200 the row expands inline. Same content, two presentations.
 
 **Status bar**: current view, freshness, the read-only promise, the keyboard
-map.
+map. It is persistent chrome only from 1100px up; below that it is content,
+sitting in the flow with its own gutter rather than flush against the last row
+of a view.
 
 **Command palette** (`Ctrl`/`Cmd`+`K`): views, actions and the findings already
 in memory, grouped and filtered as you type; ↑↓ move, ↵ runs, `Esc` closes.

@@ -81,6 +81,16 @@ function schedAgo(iso) {
   return Math.floor(s / 86400) + "d ago";
 }
 
+/* The next run is read as a distance first ("in 24h") and a date second —
+   the same reading order as "just now" for the last one. */
+function schedAhead(ms) {
+  if (!Number.isFinite(ms)) return "\u2014";
+  const h = Math.round((ms - Date.now()) / 3600000);
+  if (h <= 0) return "any moment";
+  if (h < 48) return "in " + h + "h";
+  return "in " + Math.round(h / 24) + "d";
+}
+
 /* The command IS the information, so it is printed, not hidden behind a
    button: an accent-ruled mono slip — the same recipe language as the
    findings' Recommended next step — with a quiet copy next to it. */
@@ -101,28 +111,37 @@ function scheduleViewHtml(s, notify, generatedAt) {
   const state = on ? "on" : needs ? "needs attention" : "off";
   const lastMs = Date.parse(generatedAt || "");
   const nextTxt = on && Number.isFinite(lastMs)
-    ? "by " + fmtWhen(new Date(lastMs + 86400000).toISOString())
+    ? schedAhead(lastMs + 86400000) + " \u00b7 " + fmtWhen(new Date(lastMs + 86400000).toISOString())
     : "\u2014";
   const nextTitle = "The installed timer runs 24h after its last activation; Persistent catches up runs missed while the machine was off.";
+  /* The state band is the instrument: times are mono and tabular so they
+     read as readings, not prose. "Nothing to do" is the instrument's own
+     footer — the outcome of the three readings above it, not a sentence
+     floating in the empty half of the view. */
+  const idle = on
+    ? '<div class="sched-idle"><span class="sched-idle-mark" aria-hidden="true"></span>' +
+      "<span>Nothing to do \u2014 the timer runs the checks by itself and speaks up only when something new breaks.</span></div>"
+    : "";
   const instr =
     '<div class="sched-instr">' +
-      '<div class="si"><span class="si-k">Last run</span><span class="si-v">' + esc(schedAgo(generatedAt)) + "</span></div>" +
-      '<div class="si"><span class="si-k">Next run</span><span class="si-v" title="' + esc(nextTitle) + '">' + esc(nextTxt) + "</span></div>" +
+      '<div class="si"><span class="si-k">Last run</span><span class="si-v si-vnum">' + esc(schedAgo(generatedAt)) + "</span></div>" +
+      '<div class="si"><span class="si-k">Next run</span><span class="si-v si-vnum" title="' + esc(nextTitle) + '">' + esc(nextTxt) + "</span></div>" +
       '<div class="si"><span class="si-k">Timer</span><span class="si-v"><span class="dot' + (on ? "" : " stale") + '" aria-hidden="true"></span>' + esc(state) + "</span></div>" +
+      idle +
     "</div>" +
-    '<div class="sched-cap">shortly after boot, then every 24h \u00b7 Persistent \u2014 catches up runs missed while the machine was off' + notifyBit + "</div>";
-  const idle = on
-    ? '<p class="sched-idle">Nothing to do \u2014 the timer runs the checks by itself and speaks up only when something new breaks.</p>'
-    : "";
+    '<div class="sched-cap">' +
+      (on ? "runs" : needs ? "once active, it runs" : "installing makes it run") + " shortly after boot, then every 24h \u00b7 Persistent \u2014 catches up runs missed while the machine was off" +
+      notifyBit + "</div>";
   const setup = on ? "" :
-    '<section class="vsec"><div class="vsec-head">Set it up</div>' + recipeHtml("linux-doctor --install-timer", true) + "</section>";
+    '<section class="vsec sched-setup"><div class="vsec-head">Set it up</div>' + recipeHtml("linux-doctor --install-timer", true) + "</section>";
   const manage = '<section class="vsec"><div class="vsec-head">Manage</div>' +
     recipeHtml("linux-doctor --install-timer") +
     recipeHtml("linux-doctor --uninstall-timer") + "</section>";
   const pro = '<section class="vsec"><div class="vsec-head">Remote delivery <span class="vsec-sub">[Pro]</span></div>' +
     recipeHtml("linux-doctor --alert https://ntfy.sh/your-topic") +
     recipeHtml("linux-doctor --heartbeat https://hc-ping.com/your-uuid") + "</section>";
-  return '<section class="vsec"><div class="vsec-head">Scheduled checks</div>' + instr + idle + "</section>" + setup + manage + pro;
+  return '<section class="vsec"><div class="vsec-head">Scheduled checks</div>' + instr + "</section>" +
+    setup + '<div class="sched-cmds">' + manage + pro + "</div>";
 }
 
 async function renderScheduleView() {
