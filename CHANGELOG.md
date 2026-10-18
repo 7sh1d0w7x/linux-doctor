@@ -140,6 +140,28 @@ All notable changes to Linux Doctor are documented here. The format follows
   nothing keeping them in sync, so a test now asserts they match and that the
   committed `index.html` carries both.
 
+### Changed
+
+- **A new interface.** Edge-to-edge shell with a rail that carries the health
+  instrument, findings as rows instead of cards, one accent with exactly three
+  jobs (primary action, selected row, focus), small radii. `Ctrl+K` opens a
+  command palette over views, actions and the findings already in memory.
+- Severity inks were re-derived (the info ink no longer equals the accent) and
+  every ink/surface pair is verified for contrast in all three themes.
+
+### Fixed
+
+- **The "recommended next step" was wrong on some systems.** Fedora Atomic
+  (Bazzite, Silverblue) was told to use `dnf` — the NVIDIA driver ships with the
+  image, there is no package cache to clear, the kernel is not a removable
+  package, and boot entries are not made by `grub2-mkconfig`. OpenRC (Alpine,
+  Gentoo) and runit (Void) users were told to run `systemctl`. openSUSE
+  Tumbleweed now gets `zypper dup`. The cache fix's `du` command expanded a glob
+  that could fail and skipped hidden entries.
+- **Read-only is enforced, not just documented**: a test reads every command the
+  checks hand to the runner and fails on `sudo`, a mutating verb, a service
+  action, or a package manager in a non-query mode.
+
 ## [0.7.3] - 2026-10-10
 
 ### Fixed
