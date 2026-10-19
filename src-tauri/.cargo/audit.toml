@@ -17,13 +17,23 @@ ignore = [
   # cannot be fixed in this repo, and a [patch] to zip 9 would not compile
   # against the plugin's API.
   #
-  # Why it is acceptable for now: the advisories are about extracting
-  # attacker-controlled archives. The updater extracts only the signed bundle
-  # it just downloaded from this project's own releases, so the input is ours,
-  # not a third party's. The exposure is the update channel, not user data.
+  # Reachability, verified in tauri-plugin-updater 2.11.0 source (not assumed):
   #
-  # Remove this the moment tauri-plugin-updater allows zip >= 9. Until then the
-  # risk is tracked here, in the repo, not forgotten.
+  #   1. ZipArchive::extract is only reached from `impl Update` -> install_inner
+  #      -> extract -> extract_zip, and that whole impl is `#[cfg(windows)]`.
+  #      On Linux — the only target this project builds and ships — the crate
+  #      sits in Cargo.lock but the code is never compiled.
+  #   2. Even on Windows the bytes are not untrusted: updater.rs verifies the
+  #      downloaded buffer with minisign (`verify_signature` against the pubkey
+  #      embedded in tauri.conf.json) BEFORE returning it, and install/extract
+  #      only ever sees that verified buffer.
+  #
+  # Residual risk: a Windows build, fed a malicious archive that also carries a
+  # valid minisign signature for the embedded key. Not reachable by a third
+  # party, and not present in any artifact published today.
+  #
+  # Remove this the moment tauri-plugin-updater allows zip >= 9 — and re-check
+  # before ever shipping a Windows bundle.
   "RUSTSEC-2026-0367",
   "RUSTSEC-2026-0368",
   "RUSTSEC-2026-0369",
