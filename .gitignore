@@ -14,3 +14,6 @@ src-tauri/target/
 src-tauri/gen/
 src-tauri/runtime/
 .demo-app-frames/
+
+# Obsidian vault config (this repo is opened as a vault sometimes)
+.obsidian/
