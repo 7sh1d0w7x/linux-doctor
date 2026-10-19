@@ -1,18 +1,20 @@
-# cargo-audit configuration. CI runs it as `cd src-tauri && cargo audit`, so
-# the file lives here.
-#
-# Every entry below is an "unmaintained" advisory in a transitive dependency we
-# do not control (gtk-rs 0.18 -> glib; idna/url -> unic-*; a build-time
-# proc-macro helper). Real vulnerabilities are fixed, not ignored — rustls was
-# bumped to 0.23.45 for RUSTSEC-2026-0285. Reviewed 2026-09-15; drop an entry
-# once upstream moves off the crate.
+# cargo-audit reads this when run from src-tauri (CI runs `cd src-tauri && cargo audit`).
+
 [advisories]
-ignore = [
-  "RUSTSEC-2024-0370", # proc-macro-error unmaintained (build-time helper)
-  "RUSTSEC-2024-0429", # glib VariantStrIter unsoundness (gtk-rs 0.18)
-  "RUSTSEC-2025-0075", # unic-char-range unmaintained (idna/url)
-  "RUSTSEC-2025-0080", # unic-common unmaintained (idna/url)
-  "RUSTSEC-2025-0081", # unic-char-property unmaintained (idna/url)
-  "RUSTSEC-2025-0098", # unic-ucd-version unmaintained (idna/url)
-  "RUSTSEC-2025-0100", # unic-ucd-ident unmaintained (idna/url)
-]
+# RUSTSEC-2026-0372 (2026-10-16): `zvariant_derive` is unmaintained.
+#
+# This is a `warning`, not a vulnerability: no CVE, no exploitable defect. It is
+# ignored knowingly, with the reasoning written down, rather than by weakening
+# the audit:
+#
+# - it arrives transitively: zvariant <- zbus <- tauri-plugin-single-instance,
+#   so it is part of the desktop shell only. The CLI does not link it at all;
+# - no version of zvariant avoids it: 5.15.1 still requires zvariant_derive
+#   ^5.15.0, and the advisory is crate-level, so pinning or updating does not
+#   clear it;
+# - zvariant_derive is a proc-macro: it runs at build time and is not part of
+#   the shipped binary, so it cannot be reached at runtime.
+#
+# Drop this line when zbus moves off the crate, or when the desktop shell stops
+# using tauri-plugin-single-instance. Re-check with `cargo audit` after either.
+ignore = ["RUSTSEC-2026-0372"]
