@@ -21,7 +21,7 @@ and what stayed the same.
 npx linux-doctor        # one run, nothing to install
 ```
 
-> Its own diagnostics never modify your system: the checks read, they do not write. What it does write is its own data (run history, a small cache) under your config directory. Changes to the system happen only through `--fix --yes`, which runs the `[apply]` commands from the built-in catalog that you explicitly opted into. Drop-in checks
+> Its own diagnostics never modify your system: the checks read, they do not write. What it does write is its own data (run history, a small cache) under the standard XDG directories (config, data, cache). Changes to the system happen only through `--fix --yes`, which runs the `[apply]` commands from the built-in catalog that you explicitly opted into. Drop-in checks
 > (`~/.config/linux-doctor/checks/`) and the Pro add-on are code that **you**
 > install and run with your own privileges. See
 > [docs/configuration.md](docs/configuration.md#plugins-custom-checks).
