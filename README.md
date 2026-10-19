@@ -274,7 +274,7 @@ Contributions are welcome, see [CONTRIBUTING.md](CONTRIBUTING.md).
 Development is AI-assisted, and every decision is the author's. Don't take the
 README's word for it; the artifacts are public:
 
-- [656 automated tests](tests/): golden snapshots for every output format,
+- [763 automated tests](tests/): golden snapshots for every output format,
   shell-safety tests for the fix catalog, and output-parity tests that keep the
   CLI and the dashboard in agreement.
 - [CI](https://github.com/7sh1d0w7x/linux-doctor/actions/workflows/ci.yml) runs
