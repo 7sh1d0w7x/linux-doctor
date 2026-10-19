@@ -162,7 +162,7 @@ Download `linux-doctor-0.3.0-x86_64.AppImage`, then:
   chmod +x linux-doctor-*-x86_64.AppImage && ./linux-doctor-*-x86_64.AppImage
 
 CLI users: npx github:7sh1d0w7x/linux-doctor  (Node ≥ 20)
-Read-only diagnostics — it never modifies your system.
+Read-only diagnostics by default — nothing changes unless you opt in with `--fix --yes`.
 ```
 
 ## Auto-update (desktop app)

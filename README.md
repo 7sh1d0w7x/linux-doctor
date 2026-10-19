@@ -7,7 +7,7 @@
 [![Write-up](https://img.shields.io/badge/dev.to-20%20ways%20it%20was%20wrong-0A0A0A?logo=devdotto&logoColor=white)](https://dev.to/7sh1d0w7x/linux-doctor-heal-thyself-20-ways-my-linux-health-checker-was-wrong-1b2a)
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/7sh1d0w7x/linux-doctor/main/docs/banner.png?v=3" alt="Linux Doctor — read-only health checks for your Linux system. Nothing is ever modified. Free and open source, by 7sh1d0w7x" width="100%">
+  <img src="https://raw.githubusercontent.com/7sh1d0w7x/linux-doctor/main/docs/banner.png?v=3" alt="Linux Doctor — read-only health checks for your Linux system. Nothing changes unless you opt in. Free and open source, by 7sh1d0w7x" width="100%">
 </p>
 
 **Linux diagnostics that explain the problem and remember what changed.**
@@ -21,7 +21,7 @@ and what stayed the same.
 npx linux-doctor        # one run, nothing to install
 ```
 
-> Its own code never modifies your system. Drop-in checks
+> Its own diagnostics never modify your system: the checks read, they do not write. What it does write is its own data (run history, a small cache) under your config directory. Changes to the system happen only through `--fix --yes`, which runs the `[apply]` commands from the built-in catalog that you explicitly opted into. Drop-in checks
 > (`~/.config/linux-doctor/checks/`) and the Pro add-on are code that **you**
 > install and run with your own privileges. See
 > [docs/configuration.md](docs/configuration.md#plugins-custom-checks).
@@ -30,9 +30,10 @@ npx linux-doctor        # one run, nothing to install
   action, not a wall of graphs.
 - Memory built in. A health score (0-100), a trend sparkline, and a plain
   NEW/FIXED diff on every run.
-- Read-only by construction. It never changes your system; fixes are suggestions
-  you run yourself. The optional `--fix` shows a dry run first, and running it
-  takes a second opt-in.
+- Read-only by default: the checks never modify your system — the only thing they
+  write is their own history and cache. `--fix` prints a dry-run plan; `--fix --yes`
+  runs only the `[apply]` commands from the pinned safe-fix catalog, and `[manual]`
+  items are never executed for you.
 - CLI, web dashboard and desktop app (Tauri) run the exact same checks.
 - Runs from `npx`, npm, an RPM, a `.deb` or the AppImage, and works on immutable
   distros (Silverblue, Bazzite).
@@ -274,7 +275,7 @@ Contributions are welcome, see [CONTRIBUTING.md](CONTRIBUTING.md).
 Development is AI-assisted, and every decision is the author's. Don't take the
 README's word for it; the artifacts are public:
 
-- [763 automated tests](tests/): golden snapshots for every output format,
+- [the test suite](tests/): golden snapshots for every output format,
   shell-safety tests for the fix catalog, and output-parity tests that keep the
   CLI and the dashboard in agreement.
 - [CI](https://github.com/7sh1d0w7x/linux-doctor/actions/workflows/ci.yml) runs
@@ -284,7 +285,7 @@ README's word for it; the artifacts are public:
   Arch containers and fails when a high or medium finding appears that the baseline
   does not justify. Recorded machine fixtures (real command outputs, scrubbed)
   replay the same way, and every finding they produce needs a written reason.
-- Read-only by construction, with a pinned safe-fix catalog. The egress paths
+- Read-only diagnostics by construction, with a pinned safe-fix catalog. The egress paths
   scrub findings and refuse private endpoints by default, and
   [docs/doctrine.md](docs/doctrine.md) lists what the tool refuses to do, each
   claim tied to the test that enforces it.
