@@ -1,18 +1,29 @@
-# cargo-audit configuration. CI runs it as `cd src-tauri && cargo audit`, so
-# the file lives here.
+# Read by `cargo audit` when it runs from src-tauri (CI: `cd src-tauri && cargo audit`).
 #
-# Every entry below is an "unmaintained" advisory in a transitive dependency we
-# do not control (gtk-rs 0.18 -> glib; idna/url -> unic-*; a build-time
-# proc-macro helper). Real vulnerabilities are fixed, not ignored — rustls was
-# bumped to 0.23.45 for RUSTSEC-2026-0285. Reviewed 2026-09-15; drop an entry
-# once upstream moves off the crate.
+# These three are accepted knowingly, each with the reason written down. None is
+# a vulnerability: two are "unmaintained" warnings and one is an unsoundness in
+# a dependency we cannot move. Everything else still fails the audit.
+
 [advisories]
 ignore = [
-  "RUSTSEC-2024-0370", # proc-macro-error unmaintained (build-time helper)
-  "RUSTSEC-2024-0429", # glib VariantStrIter unsoundness (gtk-rs 0.18)
-  "RUSTSEC-2025-0075", # unic-char-range unmaintained (idna/url)
-  "RUSTSEC-2025-0080", # unic-common unmaintained (idna/url)
-  "RUSTSEC-2025-0081", # unic-char-property unmaintained (idna/url)
-  "RUSTSEC-2025-0098", # unic-ucd-version unmaintained (idna/url)
-  "RUSTSEC-2025-0100", # unic-ucd-ident unmaintained (idna/url)
+  # RUSTSEC-2026-0372 — `zvariant_derive` is unmaintained (warning).
+  # Arrives transitively: zvariant <- zbus <- tauri-plugin-single-instance, so
+  # only the desktop shell, never the CLI. No version of zvariant avoids it
+  # (5.15.1 still requires zvariant_derive ^5.15.0). It is a proc-macro: it
+  # runs at build time and is not part of the shipped binary.
+  "RUSTSEC-2026-0372",
+
+  # RUSTSEC-2026-0370 — `zvariant` is unmaintained (warning).
+  # Same chain, same reason. zbus is pulled in by tauri-plugin-single-instance.
+  "RUSTSEC-2026-0370",
+
+  # RUSTSEC-2024-0429 — `glib 0.18.5` unsoundness in its Iterator impls.
+  # Not fixable here: glib is pinned to 0.18 by gtk 0.18, which comes from
+  # libappindicator <- tray-icon <- tauri. gtk-rs is at 0.22 upstream, but
+  # moving requires tray-icon/libappindicator to adopt it. Forcing the bump
+  # breaks the GTK stack used for the tray icon.
+  #
+  # This one should disappear on its own when tauri ships a tray-icon built on
+  # a newer gtk-rs. Remove the line then and re-run the audit.
+  "RUSTSEC-2024-0429",
 ]
