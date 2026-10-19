@@ -110,6 +110,11 @@ Plugins show up in `--list`, are gated by `appliesTo` like built-ins, and are
 runnable with `--check example`. A broken or id-colliding plugin is skipped
 with a warning — it never takes down a run.
 
+`--plugins` is the provenance view: one line per active plugin,
+`id — /absolute/path/to/file.js — (user plugin)`, sorted by id, or `none`
+when the directory is empty. Broken and id-colliding files are reported on
+stderr and are not listed, because they are not running.
+
 > **Trust model:** a plugin is code you chose to install, and it runs with
 > your full user privileges — it can read and write anything you can. Linux
 > Doctor's own code is read-only by construction, but it cannot sandbox a

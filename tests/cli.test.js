@@ -123,6 +123,85 @@ test("plugins appear in --list and unknown-check validation", () => {
   }
 });
 
+test("--plugins lists each active plugin with its absolute source file", () => {
+  const dir = mkdtempSync(join(tmpdir(), "ld-cli-plugins-"));
+  try {
+    writeFileSync(join(dir, "zeta.js"), "export default { id: 'zeta', title: 'Zeta', async run() { return []; } };\n");
+    writeFileSync(join(dir, "alpha.js"), "export default { id: 'alpha', title: 'Alpha', async run() { return []; } };\n");
+    const res = spawnSync(process.execPath, [bin, "--plugins"], {
+      encoding: "utf8",
+      timeout: 60000,
+      env: { ...process.env, LINUX_DOCTOR_PLUGINS: dir },
+    });
+    assert.equal(res.status, 0, res.stderr);
+    // Stable shape and order (by id), absolute path, no colour.
+    assert.equal(
+      res.stdout,
+      `alpha — ${join(dir, "alpha.js")} — (user plugin)\nzeta — ${join(dir, "zeta.js")} — (user plugin)\n`
+    );
+    assert.doesNotMatch(res.stdout, /\x1b\[/, "no ANSI colour in non-TTY output");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("--plugins skips a broken plugin on stderr and still lists the valid one", () => {
+  const dir = mkdtempSync(join(tmpdir(), "ld-cli-plugins-"));
+  try {
+    writeFileSync(join(dir, "good.js"), "export default { id: 'good', title: 'Good', async run() { return []; } };\n");
+    writeFileSync(join(dir, "bad.js"), "throw new Error('boom');\n");
+    const res = spawnSync(process.execPath, [bin, "--plugins"], {
+      encoding: "utf8",
+      timeout: 60000,
+      env: { ...process.env, LINUX_DOCTOR_PLUGINS: dir },
+    });
+    assert.equal(res.status, 0, res.stderr);
+    assert.equal(res.stdout, `good — ${join(dir, "good.js")} — (user plugin)\n`);
+    assert.match(res.stderr, /could not load plugin bad\.js: boom/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("--plugins prints none when the plugin directory is empty or missing", () => {
+  const dir = mkdtempSync(join(tmpdir(), "ld-cli-plugins-"));
+  try {
+    const res = spawnSync(process.execPath, [bin, "--plugins"], {
+      encoding: "utf8",
+      timeout: 60000,
+      env: { ...process.env, LINUX_DOCTOR_PLUGINS: dir },
+    });
+    assert.equal(res.status, 0, res.stderr);
+    assert.equal(res.stdout, "none\n");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+  const missing = spawnSync(process.execPath, [bin, "--plugins"], {
+    encoding: "utf8",
+    timeout: 60000,
+    env: { ...process.env, LINUX_DOCTOR_PLUGINS: join(tmpdir(), `ld-no-such-dir-${process.pid}`) },
+  });
+  assert.equal(missing.status, 0, missing.stderr);
+  assert.equal(missing.stdout, "none\n");
+});
+
+test("--plugins does not list a plugin that collides with a built-in id", () => {
+  const dir = mkdtempSync(join(tmpdir(), "ld-cli-plugins-"));
+  try {
+    writeFileSync(join(dir, "memory.js"), "export default { id: 'memory', title: 'Hijack', async run() { return []; } };\n");
+    const res = spawnSync(process.execPath, [bin, "--plugins"], {
+      encoding: "utf8",
+      timeout: 60000,
+      env: { ...process.env, LINUX_DOCTOR_PLUGINS: dir },
+    });
+    assert.equal(res.status, 0, res.stderr);
+    assert.equal(res.stdout, "none\n");
+    assert.match(res.stderr, /collides with a built-in check/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("--check accepts comma-separated ids", () => {
   const res = run("--check", "memory,load", "--plain");
   assert.ok(res.status === 0 || res.status === 1, `exit ${res.status}`);

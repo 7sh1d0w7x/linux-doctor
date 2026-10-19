@@ -6,6 +6,15 @@ All notable changes to Linux Doctor are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **`--plugins`: see where each custom check comes from.** `--list` showed the
+  plugin's id but not its source, so answering "which file is this check?"
+  meant listing the directory by hand. The new flag prints
+  `id — /absolute/file.js — (user plugin)` for every active plugin, sorted by
+  id (or `none` when the directory is empty). Broken and id-colliding files
+  are reported on stderr and not listed, because they are not running.
+
 ## [0.8.0] - 2026-10-17
 ### Added
 

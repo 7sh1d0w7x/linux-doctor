@@ -10,6 +10,7 @@ _linux_doctor() {
   _arguments \
     '--check=[run specific check(s), comma-separated]:check id:_linux_doctor_check_ids' \
     '--list[list available checks]' \
+    '--plugins[list loaded user plugins and their files]' \
     '--json[print findings as JSON]' \
     '--plain[print plain tab-separated text]' \
     '--web[open visual dashboard in browser]' \

@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { loadPlugins, pluginDir } from "../src/plugins.js";
+import { loadPlugins, loadPluginEntries, pluginDir } from "../src/plugins.js";
 
 function tempDir() {
   return mkdtempSync(join(tmpdir(), "ld-plugins-"));
@@ -63,6 +63,30 @@ test("loadPlugins: a file without { id, run } is skipped", async () => {
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test("loadPluginEntries: keeps the absolute source file for every plugin", async () => {
+  const dir = tempDir();
+  try {
+    writeFileSync(join(dir, "ups.js"), "export default { id: 'ups', title: 'UPS', async run() { return []; } };\n");
+    writeFileSync(join(dir, "bad.js"), "throw new Error('boom');\n");
+    const entries = await loadPluginEntries(dir);
+    const ok = entries.find((e) => e.kind === "ok");
+    assert.equal(ok.check.id, "ups");
+    assert.equal(ok.name, "ups.js");
+    assert.equal(ok.file, join(dir, "ups.js"));
+    assert.ok(ok.file.startsWith("/"), "the reported path is absolute");
+    const bad = entries.find((e) => e.name === "bad.js");
+    assert.equal(bad.kind, "error");
+    assert.equal(bad.file, join(dir, "bad.js"));
+    assert.match(bad.warning, /could not load plugin bad\.js/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("loadPluginEntries: missing directory returns no entries", async () => {
+  assert.deepEqual(await loadPluginEntries("/nonexistent/plugins"), []);
 });
 
 test("pluginDir: honors LINUX_DOCTOR_PLUGINS override", () => {

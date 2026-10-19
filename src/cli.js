@@ -25,7 +25,7 @@ import { detectProfile } from "./profile.js";
 import { dedupe } from "./dedupe.js";
 import { parseArgs } from "./args.js";
 import { reportSchema } from "./schema.js";
-import { loadPlugins } from "./plugins.js";
+import { loadPluginEntries } from "./plugins.js";
 import { configFile } from "./config.js";
 import { planFixes, formatPlan } from "./fix.js";
 import { runInteractive } from "./interactive.js";
@@ -347,6 +347,7 @@ USAGE
 OPTIONS
   --check <id>   run only the given check(s), comma-separated or repeated
   --list         list the checks without running them
+  --plugins      list loaded user plugins and the file each came from
   --check-list   list checks as JSON (id, title, category, appliesTo)
   --history-json print run history as JSON (used by the desktop app)
   --thresholds-json  print current thresholds + defaults as JSON
@@ -439,13 +440,20 @@ export async function main(argv) {
   const proState = await loadProModule();
   const pro = isPro();
   const builtinIds = new Set(CHECKS.map((c) => c.id));
-  const plugins = (await loadPlugins()).filter((p) => {
-    if (builtinIds.has(p.id)) {
-      console.error(`linux-doctor: plugin "${p.id}" collides with a built-in check — skipping`);
-      return false;
+  const pluginEntries = await loadPluginEntries();
+  const activePlugins = []; // { check, file } — what --plugins reports
+  for (const entry of pluginEntries) {
+    if (!entry.check) {
+      console.error(entry.warning);
+      continue;
     }
-    return true;
-  });
+    if (builtinIds.has(entry.check.id)) {
+      console.error(`linux-doctor: plugin "${entry.check.id}" collides with a built-in check — skipping`);
+      continue;
+    }
+    activePlugins.push({ check: entry.check, file: entry.file });
+  }
+  const plugins = activePlugins.map((p) => p.check);
   const checks = [...CHECKS, ...(pro ? proState.checks : []), ...plugins];
 
   // --license: report the Pro add-on status and exit.
@@ -661,6 +669,25 @@ function printIgnoreLists(titles, codes) {
       console.log(JSON.stringify({ ok: false, error: err.message }));
       return 2;
     }
+  }
+
+  // --plugins: the provenance view --list cannot give. One line per active
+  // user plugin, `id — /absolute/file.js — (user plugin)`, sorted by id (then
+  // path) so the output is stable for scripts and diffing. The comparator is
+  // code-unit order, not localeCompare: the sort must not change with the
+  // user's locale. Broken and colliding plugins never reach this list; they
+  // were reported on stderr while loading. No colour and no header: an empty
+  // directory is just "none".
+  if (args.plugins) {
+    const cmp = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+    const rows = [...activePlugins].sort((a, b) =>
+      cmp(a.check.id, b.check.id) || cmp(a.file, b.file));
+    if (rows.length === 0) {
+      console.log("none");
+      return 0;
+    }
+    for (const { check, file } of rows) console.log(`${check.id} — ${file} — (user plugin)`);
+    return 0;
   }
 
   if (args.list) {

@@ -28,6 +28,7 @@ STATUS (`SCORE 77/100 = 100 −15 disk/full …`), pinned by tests so
 ```
 --check <id>      run only the given check(s) — comma-separated or repeated
 --list            list the checks by category without running them
+--plugins         list loaded user plugins and the file each came from
 --check-list      list checks as JSON (id, title, category, appliesTo)
 --history-json    print run history as JSON (used by the desktop app)
 --thresholds-json print current thresholds + defaults as JSON
