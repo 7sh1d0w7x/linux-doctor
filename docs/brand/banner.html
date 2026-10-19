@@ -1,0 +1,40 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+  :root{ --bg:#101216; --bg2:#15181d; --line:#262b33; --ink:#e7eaef; --muted:#98a1ad; --muted2:#737d8a;
+         --accent:#4c8dff; --green:#3fb950; --yellow:#e0b341; --red:#f0616d; --mark:__MARK__; }
+  *{box-sizing:border-box;margin:0}
+  body{width:__W__px;height:__H__px;background:var(--bg);color:var(--ink);
+       font-family:Inter,"Cantarell",system-ui,sans-serif;overflow:hidden;position:relative}
+  .grid{position:absolute;inset:0;opacity:.6;background:repeating-linear-gradient(90deg, rgba(255,255,255,.018) 0 1px, transparent 1px 61px)}
+  .glow{position:absolute;right:-160px;top:-200px;width:720px;height:720px;border-radius:50%;
+        background:radial-gradient(circle, rgba(76,141,255,.14), transparent 65%)}
+  .in{position:relative;height:100%;display:flex;align-items:center;gap:__GAP__px;padding:0 __PAD__px}
+  .mark{height:__MK__px;width:auto;filter:drop-shadow(0 8px 28px rgba(0,0,0,.55))}
+  .txt{flex:1;min-width:0}
+  h1{font-size:__H1__px;font-weight:700;letter-spacing:-.04em;line-height:.95}
+  h1 span{color:var(--accent)}
+  .promise{margin-top:__M1__px;font-size:__P__px;line-height:1.35;letter-spacing:-.015em;max-width:960px}
+  .sub{margin-top:__M2__px;font-size:__S__px;color:var(--muted)}
+  .row{margin-top:__M3__px;display:flex;align-items:center;gap:12px;
+       font-family:ui-monospace,monospace;font-size:__R__px;color:var(--muted2)}
+  .pill{display:inline-flex;align-items:center;gap:8px;padding:__PP__;border:1px solid var(--line);border-radius:999px;background:var(--bg2)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+  .sev{display:inline-flex;gap:6px;align-items:center}
+  .sev i{width:8px;height:8px;border-radius:50%;display:block}
+  .by{margin-left:auto;font-size:__R__px;color:var(--muted2)}
+</style></head><body>
+  <div class="grid"></div><div class="glow"></div>
+  <div class="in">
+    <img class="mark" src="__MARKSRC__" alt="">
+    <div class="txt">
+      <h1>Linux <span>Doctor</span></h1>
+      <div class="promise">Read-only health checks for Linux &mdash; every finding explained, with the exact fix.</div>
+      <div class="sub">It remembers the previous run, so every report shows what is new, what is fixed, and what is unchanged.</div>
+      <div class="row">
+        <span class="pill"><span class="dot"></span> nothing is ever modified</span>
+        <span class="pill"><span class="sev"><i style="background:var(--red)"></i><i style="background:var(--yellow)"></i><i style="background:var(--accent)"></i></span> high &middot; medium &middot; info</span>
+        <span class="pill">free &amp; open source</span>
+        <span class="by">by 7sh1d0w7x</span>
+      </div>
+    </div>
+  </div>
+</body></html>
