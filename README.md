@@ -249,6 +249,7 @@ report still works.
 | [docs/doctrine.md](docs/doctrine.md) | what the tool refuses to do, and how a finding earns trust |
 | [docs/limitations.md](docs/limitations.md) | what it does not detect, and the false positives we have fixed |
 | [docs/compatibility.md](docs/compatibility.md) | the public surface, and how changes are announced |
+| [docs/case-studies/](docs/case-studies/inode-exhaustion.md) | reading a report in a concrete case — inode exhaustion (lab, not an incident) |
 | [docs/licensing.md](docs/licensing.md) | what the GPL grants and requires |
 | [docs/trademark.md](docs/trademark.md) | the name/logo vs. the code license |
 | [CHANGELOG.md](CHANGELOG.md) | every release, Keep-a-Changelog style |
