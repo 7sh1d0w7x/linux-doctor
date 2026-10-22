@@ -449,6 +449,25 @@ test("renderStatus: the rail Health block renders and keeps the live ids", () =>
   assert.ok(html.includes('id="statusdot"') && html.includes('id="statuspill-txt"'), "live checked-ago ids preserved");
 });
 
+test("renderStatus: the pulse dot sits where the score says it does", () => {
+  /* The dot marks the end of the trace, i.e. the current reading. It is an
+     HTML span placed by an inline `left`, so the only thing that can move it
+     is the score in this same call — nothing to animate later, nothing to
+     forget. A regression here shows as "85/100 with the dot on the left". */
+  const s = makeSandbox();
+  for (const score of [0, 42, 85, 100]) {
+    vm.runInContext(
+      `renderStatus({ findings: [], system: { distro: "D", kernel: "K", cores: "4", uptime: "1h" }, score: ${score}, scoreDelta: 0 })`,
+      s.ctx
+    );
+    const html = s.el("#status").innerHTML;
+    assert.ok(
+      html.includes('style="left:' + score + '%"'),
+      "the dot is drawn at " + score + "% (markup: " + (html.match(/style="left:[^"]*"/) || ["none"])[0] + ")"
+    );
+  }
+});
+
 
 test("switchView: sidebar report blocks show only on Overview", () => {
   const s = makeSandbox();
