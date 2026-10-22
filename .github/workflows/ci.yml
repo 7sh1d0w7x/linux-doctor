@@ -142,7 +142,12 @@ jobs:
   test-rust:
     name: Rust tests (Tauri)
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # 20, not 10. A cold Tauri build (the cache key includes Cargo.lock, so any
+    # dependency bump invalidates it) needs more than ten minutes on a slow
+    # runner: this job was cancelled at 10m17s on two consecutive runs of the
+    # same commit, then passed in 1m21s once the cache was warm. Ten minutes
+    # turned a slow runner into a red check that reads like a code failure.
+    timeout-minutes: 20
     needs: workflow-lint
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -165,7 +170,10 @@ jobs:
   rust-lint:
     name: Rust lint (fmt + clippy)
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # Same reasoning as test-rust: clippy on a cold Tauri tree ran to 10m17s and
+    # was cancelled. Clippy and the tests share the cached build, so they fail
+    # or pass together on a cold cache.
+    timeout-minutes: 20
     needs: workflow-lint
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
