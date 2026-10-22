@@ -20,15 +20,15 @@ function renderGauge(score, size) {
 function animateScore(target) {
   const num = $("#scorenum");
   const live = $("#scorering");
-  const dot = $("#pulsedot");
   if (!num) return;
   let reduce = false;
   try { reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch {}
-  /* The trace is drawn up to the score and ends in a dot — the machine's own
-     vital sign. pathLength="100" makes the dash arithmetic trivial. */
+  /* The trace is drawn up to the score — the machine's own vital sign.
+     pathLength="100" makes the dash arithmetic trivial. The dot that marks the
+     end of the trace is placed by renderStatus itself (an inline `left`), so
+     nothing here can leave it behind: it is HTML, not a circle with a `cx`. */
   const setPulse = (v) => {
     if (live) live.style.strokeDashoffset = String(100 - v);
-    if (dot) dot.setAttribute("cx", String((120 * v) / 100));
   };
   if (reduce) {
     num.textContent = target;
