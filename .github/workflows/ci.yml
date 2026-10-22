@@ -142,7 +142,10 @@ jobs:
   test-rust:
     name: Rust tests (Tauri)
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # 20, and it must stay above the apt step's 15: with the job at 10 the job
+    # bound fired first and the failure read as "Rust tests took 10m17s", which
+    # is how a slow mirror got mistaken for a slow build in the first place.
+    timeout-minutes: 20
     needs: workflow-lint
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -191,7 +194,8 @@ jobs:
   rust-lint:
     name: Rust lint (fmt + clippy)
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # Above the apt step's 15, for the reason given on test-rust.
+    timeout-minutes: 20
     needs: workflow-lint
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
