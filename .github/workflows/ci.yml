@@ -147,26 +147,35 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Install Tauri system dependencies
-        # Two separate problems, two separate answers.
+        # Three problems with apt on a shared runner, three answers.
         #
-        # Speed: a shared runner's mirror can be slow enough that ~85 packages
-        # take ten minutes instead of one (observed: 43 packages in five
-        # minutes, against a normal full install in under a minute). apt is
-        # making progress, so a connection timeout does not help; the answer is
-        # to need fewer packages. --no-install-recommends drops the runtime
-        # media plugins that libwebkit2gtk-4.1-dev recommends and a build never
-        # loads — these jobs compile and link, they never launch the app.
+        # Speed: the mirror is not uniformly fast. In one run this same step
+        # took 47s on one runner and over ten minutes on another. Fewer packages
+        # (--no-install-recommends drops the runtime media plugins that a build
+        # never loads) is the first lever.
         #
-        # Hangs: when a connection does die, apt should abandon it rather than
-        # wait forever. Acquire::Retries plus a 30s connection timeout does that.
-        # The step bound is the backstop: ten minutes, so a stalled mirror costs
-        # ten minutes and not the whole job.
-        timeout-minutes: 10
+        # Slowness that is not failure: a transfer that is merely crawling
+        # should not cost the job. Download first, retry the download, then
+        # install from the local cache — so an interrupted attempt keeps what it
+        # already fetched and the next one resumes.
+        #
+        # Hangs: when a connection dies outright, apt abandons it (Retries plus
+        # a 30s connection timeout) rather than waiting forever. The step bound
+        # is the backstop.
+        timeout-minutes: 15
         run: |
           APT_OPTS="-o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30"
+          PKGS="libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev"
           sudo apt-get update $APT_OPTS
-          sudo apt-get install -y --no-install-recommends $APT_OPTS \
-            libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+          # --download-only touches no package state, so capping an attempt
+          # cannot leave dpkg half-configured.
+          for attempt in 1 2 3; do
+            sudo timeout 240 apt-get install -y --no-install-recommends --download-only $APT_OPTS $PKGS && break
+            echo "download attempt $attempt did not finish; retrying (fetched packages are kept)"
+            sleep 15
+          done
+          sudo apt-get install -y --no-install-recommends $APT_OPTS $PKGS
+          dpkg -l libwebkit2gtk-4.1-dev | grep -q '^ii' || { echo "libwebkit2gtk-4.1-dev did not install"; exit 1; }
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
       - uses: swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
@@ -187,15 +196,21 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Install Tauri system dependencies
-        # Same as test-rust, and for the same two reasons: fewer packages
-        # (--no-install-recommends) so a slow mirror has less to fetch, and a
-        # ten-minute step bound as the backstop.
-        timeout-minutes: 10
+        # Same as test-rust, and for the same three reasons: fewer packages,
+        # a resumable download so a crawling mirror does not cost the job, and a
+        # step bound as the backstop.
+        timeout-minutes: 15
         run: |
           APT_OPTS="-o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30"
+          PKGS="libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev"
           sudo apt-get update $APT_OPTS
-          sudo apt-get install -y --no-install-recommends $APT_OPTS \
-            libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+          for attempt in 1 2 3; do
+            sudo timeout 240 apt-get install -y --no-install-recommends --download-only $APT_OPTS $PKGS && break
+            echo "download attempt $attempt did not finish; retrying (fetched packages are kept)"
+            sleep 15
+          done
+          sudo apt-get install -y --no-install-recommends $APT_OPTS $PKGS
+          dpkg -l libwebkit2gtk-4.1-dev | grep -q '^ii' || { echo "libwebkit2gtk-4.1-dev did not install"; exit 1; }
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
         with:
           components: rustfmt, clippy
