@@ -142,19 +142,22 @@ jobs:
   test-rust:
     name: Rust tests (Tauri)
     runs-on: ubuntu-latest
-    # 20, not 10. A cold Tauri build (the cache key includes Cargo.lock, so any
-    # dependency bump invalidates it) needs more than ten minutes on a slow
-    # runner: this job was cancelled at 10m17s on two consecutive runs of the
-    # same commit, then passed in 1m21s once the cache was warm. Ten minutes
-    # turned a slow runner into a red check that reads like a code failure.
-    timeout-minutes: 20
+    timeout-minutes: 10
     needs: workflow-lint
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Install Tauri system dependencies
+        # apt on a shared runner sometimes stalls mid-download. This step once
+        # sat on a single 25 MB package (libwebkit2gtk-4.1-0) for twenty minutes
+        # and took the whole job down with it, which read like a slow Rust build
+        # and was nothing of the sort. Bound the step, and let apt abandon a
+        # dead connection and retry instead of waiting on it forever.
+        timeout-minutes: 5
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+          APT_OPTS="-o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30"
+          sudo apt-get update $APT_OPTS
+          sudo apt-get install -y $APT_OPTS \
+            libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
       - uses: swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
@@ -170,17 +173,19 @@ jobs:
   rust-lint:
     name: Rust lint (fmt + clippy)
     runs-on: ubuntu-latest
-    # Same reasoning as test-rust: clippy on a cold Tauri tree ran to 10m17s and
-    # was cancelled. Clippy and the tests share the cached build, so they fail
-    # or pass together on a cold cache.
-    timeout-minutes: 20
+    timeout-minutes: 10
     needs: workflow-lint
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Install Tauri system dependencies
+        # Same bound and same reason as test-rust: the long runs were apt
+        # waiting on a mirror, not clippy waiting on a compiler.
+        timeout-minutes: 5
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+          APT_OPTS="-o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30"
+          sudo apt-get update $APT_OPTS
+          sudo apt-get install -y $APT_OPTS \
+            libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
         with:
           components: rustfmt, clippy
