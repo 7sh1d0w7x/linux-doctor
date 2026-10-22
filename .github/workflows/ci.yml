@@ -149,6 +149,21 @@ jobs:
     needs: workflow-lint
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Cache apt packages
+        # The runner's route to the Ubuntu mirror is the flaky part, and it is
+        # not uniformly slow: the same step took 48s on one runner and moved
+        # ~40 MB at roughly 55 KB/s on another, in the same run. Caching the
+        # .debs takes the mirror out of the picture for every run after the
+        # first, because apt fetches only what the cache is missing.
+        #
+        # The archive dir is root-owned, so make it writable before the cache
+        # action touches it. Bump the v1 in the key when the package list
+        # changes, or a stale set of .debs is restored forever.
+        run: sudo mkdir -p /var/cache/apt/archives && sudo chown -R "$(id -u):$(id -g)" /var/cache/apt/archives
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: /var/cache/apt/archives
+          key: apt-tauri-v1-${{ runner.os }}
       - name: Install Tauri system dependencies
         # Three problems with apt on a shared runner, three answers.
         #
@@ -199,6 +214,21 @@ jobs:
     needs: workflow-lint
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Cache apt packages
+        # The runner's route to the Ubuntu mirror is the flaky part, and it is
+        # not uniformly slow: the same step took 48s on one runner and moved
+        # ~40 MB at roughly 55 KB/s on another, in the same run. Caching the
+        # .debs takes the mirror out of the picture for every run after the
+        # first, because apt fetches only what the cache is missing.
+        #
+        # The archive dir is root-owned, so make it writable before the cache
+        # action touches it. Bump the v1 in the key when the package list
+        # changes, or a stale set of .debs is restored forever.
+        run: sudo mkdir -p /var/cache/apt/archives && sudo chown -R "$(id -u):$(id -g)" /var/cache/apt/archives
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: /var/cache/apt/archives
+          key: apt-tauri-v1-${{ runner.os }}
       - name: Install Tauri system dependencies
         # Same as test-rust, and for the same three reasons: fewer packages,
         # a resumable download so a crawling mirror does not cost the job, and a
