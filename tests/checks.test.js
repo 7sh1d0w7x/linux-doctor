@@ -201,6 +201,71 @@ test("services: only user-scope failures are medium, not high", async () => {
   assert.match(findings[0].title, /5 services failed to start/);
 });
 
+test("services: a failed system unit is not answered by --user", async () => {
+  // The old text offered `systemctl --user status` in parentheses for every
+  // systemd system, including when the failed unit was a system one — a command
+  // that cannot show that unit at all. The log is also the step that actually
+  // explains the failure, and it was missing.
+  const ctx = stubCtx({
+    "systemctl --failed --no-legend --plain": `fwupd-refresh.service loaded failed failed`,
+    "systemctl --user --failed --no-legend --plain": "",
+  });
+  const findings = await services.run(ctx);
+  assert.equal(findings.length, 1);
+  assert.match(findings[0].fix, /journalctl -u fwupd-refresh\.service -b/, "the log is the first step");
+  assert.match(findings[0].fix, /systemctl status fwupd-refresh\.service/);
+  assert.doesNotMatch(findings[0].fix, /--user/, "a system unit has no --user answer");
+  assert.match(findings[0].fix, /reset-failed/, "clearing the mark is offered once the cause is known");
+});
+
+test("services: a failed user unit gets the --user commands", async () => {
+  const ctx = stubCtx({
+    "systemctl --failed --no-legend --plain": "",
+    "systemctl --user --failed --no-legend --plain": `bitwarden.service loaded failed failed`,
+  });
+  const findings = await services.run(ctx);
+  assert.equal(findings.length, 1);
+  assert.match(findings[0].fix, /systemctl --user status bitwarden\.service/);
+  assert.match(findings[0].fix, /journalctl --user -u bitwarden\.service -b/);
+});
+
+test("services: the detail does not guess a cause from the state alone", async () => {
+  // "usually means a broken package, a bad configuration, or a hook that
+  // errored" was wrong for the common case — a timer that failed once on a
+  // network error — and it read as a verdict. The state is a fact; the log is
+  // where the cause is.
+  const ctx = stubCtx({
+    "systemctl --failed --no-legend --plain": `fwupd-refresh.service loaded failed failed`,
+    "systemctl --user --failed --no-legend --plain": "",
+  });
+  const findings = await services.run(ctx);
+  assert.doesNotMatch(findings[0].detail, /broken package|bad configuration/i);
+  assert.match(findings[0].detail, /fact, not a diagnosis/i);
+});
+
+test("services: one failed unit is described in the singular", async () => {
+  // "These 1 service are in a failed state" was the first sentence a user read.
+  const ctx = stubCtx({
+    "systemctl --failed --no-legend --plain": `fwupd-refresh.service loaded failed failed`,
+    "systemctl --user --failed --no-legend --plain": "",
+  });
+  const findings = await services.run(ctx);
+  assert.match(findings[0].detail, /^This service is in a failed state: fwupd-refresh\.service \(system\)\./);
+  assert.doesNotMatch(findings[0].detail, /These 1 service/);
+});
+
+test("services: clearing a user unit's mark does not ask for sudo", async () => {
+  // Same trap as the status command: the user manager owns user units, and
+  // `sudo systemctl reset-failed` would not reach one.
+  const ctx = stubCtx({
+    "systemctl --failed --no-legend --plain": "",
+    "systemctl --user --failed --no-legend --plain": `bitwarden.service loaded failed failed`,
+  });
+  const findings = await services.run(ctx);
+  assert.match(findings[0].fix, /`systemctl --user reset-failed bitwarden\.service`/);
+  assert.doesNotMatch(findings[0].fix, /sudo systemctl reset-failed/);
+});
+
 test("timers: a timer whose start condition is unmet is not a broken schedule", async () => {
   // Bazzite (immutable): dnf-makecache.timer is enabled, has never run and is
   // not scheduled, because its start condition is unmet by design on an atomic
