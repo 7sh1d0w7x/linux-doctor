@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-import { lines, plural, shq } from "../utils.js";
+import { lines, shq } from "../utils.js";
 
 import { defineCheck } from "./define.js";
 import { finding } from "../findings.js";
@@ -30,13 +30,37 @@ export const services = defineCheck({
       // display, a daemon) is a real fault; user autostart failures are the
       // user's own apps and rarely worth a scary "high".
       const hasSystemFailure = failed.some((f) => f.scope === "system");
+      const first = failed[0];
+      const init = ctx.dist?.init || "systemd";
+      // A unit's scope decides which systemctl answers for it. Printing the
+      // --user form for a system unit sends the reader to a command that cannot
+      // show the unit at all, and the other way round is just as useless.
+      const isUser = first.scope === "user" && init === "systemd";
+      const status = isUser
+        ? `systemctl --user status ${first.name}`
+        : svcCmd(ctx.dist, "status", first.name);
+      const logs = isUser ? `journalctl --user -u ${first.name} -b` : svcLogs(ctx.dist, first.name);
+      // `reset-failed` clears the mark without changing what the unit does, so
+      // it is the honest answer to "this failed once and I have read why".
+      // systemd only — the other inits have no equivalent — and a user unit is
+      // cleared by the user manager, without sudo.
+      const clear = init !== "systemd"
+        ? null
+        : isUser
+          ? `systemctl --user reset-failed ${first.name}`
+          : `sudo systemctl reset-failed ${first.name}`;
+      // "These 1 service are" is the kind of thing that makes a report read as
+      // machine-written, and it was the first sentence a user saw here.
+      const subject = failed.length === 1
+        ? `This service is in a failed state: ${failed[0].name} (${failed[0].scope}).`
+        : `These ${failed.length} services are in a failed state: ${failed.map((f) => `\`${f.name}\` (${f.scope})`).join(", ")}.`;
       findings.push(finding({
         severity: hasSystemFailure ? "high" : "medium",
         code: "services/failed",
         title: `${failed.length} service${failed.length > 1 ? "s" : ""} failed to start`,
-        detail: `These ${plural(failed.length, "service")} are in a failed state: ${failed.map((f) => `\`${f.name}\` (${f.scope})`).join(", ")}. A failed service usually means a broken package, a bad configuration, or a hook that errored.`,
+        detail: `${subject} The state is a fact, not a diagnosis — read the unit's log before concluding anything. Oneshot units and timer-driven ones often fail once on a transient problem (a network fetch, a resource someone else was holding) and keep the mark until it is cleared, while a unit that exits over and over is a real fault.`,
         evidence: failed.map((f) => `${f.name}\t${f.scope}`).join("\n"),
-        fix: `Inspect one with \`${svcCmd(ctx.dist, "status", failed[0].name)}\`${(ctx.dist?.init || "systemd") === "systemd" ? ` (user services: \`systemctl --user status ${failed[0].name}\`)` : ""}. If it is not something you need, stop it with \`${svcCmd(ctx.dist, "stop", failed[0].name)}\`.`,
+        fix: `Read why it failed: \`${logs}\`. Then \`${status}\`.${clear ? ` Once you understand it, \`${clear}\` clears the failed mark without changing what the unit does.` : ""} Do not disable a unit you have not read — a refresh timer that failed on a network error still does work you want.`,
         confidence: "high",
       }));
     } else if (sys.missing && user.missing) {
