@@ -6,6 +6,63 @@ All notable changes to Linux Doctor are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-10-24
+
+### Security
+
+- **Two TLS trust advisories closed.** `rustls-webpki` 0.103.15 → 0.103.16 and
+  `webpki-root-certs` 1.0.9 → 1.0.10 (RUSTSEC-2026-0382 and RUSTSEC-2026-0383:
+  certificate verification could accept distrusted intermediates, and the
+  bundled root store trusted distrusted emSign intermediates). Both sit in the
+  HTTPS client the updater uses. The updater still verifies the minisign
+  signature before installing anything, so this was never a route to a malicious
+  update — but a trust store should not be wrong.
+
+### Fixed
+
+- **A failed service is no longer reported as a likely broken package.** The
+  `services/failed` finding said a failed unit "usually means a broken package, a
+  bad configuration, or a hook that errored". That is wrong for the common case:
+  a oneshot or timer-driven unit — a firmware refresh, a package cache refresh, a
+  backup job — often fails once on a transient problem and keeps the failed mark
+  until something clears it. The finding now says the state is a fact, sends you
+  to the unit's log first, and explains the difference.
+- **The commands in that finding follow the unit's scope.** It offered
+  `systemctl --user status` in parentheses for every systemd system, including
+  when the failed unit was a system unit — a command that cannot show that unit.
+  A system unit now gets `systemctl status` / `journalctl -u … -b` /
+  `sudo systemctl reset-failed`; a user unit gets the `--user` forms, without
+  sudo.
+- **"These 1 service are in a failed state."** The singular case now reads in the
+  singular.
+- **The README said the tool's history lives under the config directory.** It
+  lives under `$XDG_DATA_HOME` — `~/.local/share/linux-doctor/history.json`. The
+  intro now says "the standard XDG directories (config, data, cache)", which is
+  true for all three; the exact paths stay in the sections that document them.
+- **The README claimed the tool never changes anything, and documented
+  `--fix --yes` on the same page.** The read-only boundary is now stated as the
+  four separate things it is: diagnostics read and write nothing, the tool writes
+  its own data, the system changes only through `--fix --yes` running the
+  `[apply]` commands you opted into, and plugin code is your own and runs with
+  your privileges.
+
+### Added
+
+- **A worked case study: `docs/case-studies/inode-exhaustion.md`.** One finding
+  read end to end — "no space left on device" with 56 MB free — on a throwaway
+  64 MB ext4 image with 320 inodes. It shows the finding as the terminal prints
+  it and as JSON, the commands that confirm it without trusting the tool, why
+  inodes are the cause, and the fix with three independent confirmations. It is
+  a lab, and says so at the top and again in what it does not prove.
+
+### Changed
+
+- **CI is far less exposed to a slow Ubuntu mirror.** The Rust jobs bounded the
+  `apt` step, cache the downloaded packages, and stop re-fetching them on every
+  run. A slow runner used to look like a slow Rust build; now it names the step
+  that stalled. The first run on a cold cache still needs a working mirror.
+
+## [0.8.0] - 2026-10-17
 ### Added
 
 - **`--plugins`: see where each custom check comes from.** `--list` showed the
@@ -14,9 +71,6 @@ All notable changes to Linux Doctor are documented here. The format follows
   `id — /absolute/file.js — (user plugin)` for every active plugin, sorted by
   id (or `none` when the directory is empty). Broken and id-colliding files
   are reported on stderr and not listed, because they are not running.
-
-## [0.8.0] - 2026-10-17
-### Added
 
 - **The dashboard can manage persistent state now.** The ignore list was
   write-only from the GUI (Dismiss), so a dismissed finding could not be seen
@@ -1151,7 +1205,11 @@ All notable changes to Linux Doctor are documented here. The format follows
 - `tests/web.test.js` flaked (server banner corrupted the TAP stream) —
   `startWeb` gained a `quiet` option used by tests.
 
-[Unreleased]: https://github.com/7sh1d0w7x/linux-doctor/compare/v0.7.1...HEAD
+[Unreleased]: https://github.com/7sh1d0w7x/linux-doctor/compare/v0.8.1...HEAD
+[0.8.1]: https://github.com/7sh1d0w7x/linux-doctor/compare/v0.8.0...v0.8.1
+[0.8.0]: https://github.com/7sh1d0w7x/linux-doctor/compare/v0.7.3...v0.8.0
+[0.7.3]: https://github.com/7sh1d0w7x/linux-doctor/compare/v0.7.2...v0.7.3
+[0.7.2]: https://github.com/7sh1d0w7x/linux-doctor/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/7sh1d0w7x/linux-doctor/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/7sh1d0w7x/linux-doctor/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/7sh1d0w7x/linux-doctor/compare/v0.6.0...v0.6.1
