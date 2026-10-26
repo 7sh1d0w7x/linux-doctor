@@ -116,15 +116,6 @@ jobs:
             echo "::error::TAURI_SIGNING_PRIVATE_KEY secret is not set — auto-update artifacts cannot be signed. See docs/RELEASING.md (Auto-update)."
             exit 1
           fi
-      - name: Upload the AppImage for testing
-        # A workflow_dispatch run has no tag, so the steps that rename, sign for
-        # the catalog and attach to a release are skipped or meaningless. Upload
-        # the raw bundle here so a branch build can be tested before it ships.
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: appimage-${{ github.ref_name }}
-          path: src-tauri/target/release/bundle/appimage/*.AppImage
-          if-no-files-found: error
       - name: Build Tauri bundles (appimage, deb, rpm)
         run: npx tauri build --bundles appimage,deb,rpm
         env:
@@ -135,10 +126,20 @@ jobs:
           # `npx tauri signer generate` and stored as a repo secret.
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+      - name: Upload the AppImage for testing
+        # A workflow_dispatch run has no tag, so the steps that rename, sign for
+        # the catalog and attach to a release are skipped or meaningless. Upload
+        # the raw bundle here so a branch build can be tested before it ships.
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: appimage-${{ github.ref_name }}
+          path: src-tauri/target/release/bundle/appimage/*.AppImage
+          if-no-files-found: error
       # AppImageHub (and other catalogs) expect <repo>-<version>-<arch>.AppImage,
       # so rename Tauri's "<Product>_<version>_<arch>.AppImage" before the
       # manifest is built — latest.json and the .sig follow the new name.
       - name: Rename the AppImage to the catalog convention
+        if: startsWith(github.ref, 'refs/tags/v')
         run: |
           set -euo pipefail
           VER=${GITHUB_REF#refs/tags/}; VER=${VER#v}
@@ -153,6 +154,7 @@ jobs:
       # that mount the AppImage as root and drop to a user (Firejail, used by
       # AppImageHub) hit "Permission denied". Repack with 0755 and re-sign.
       - name: Make AppRun.wrapped world-executable and re-sign
+        if: startsWith(github.ref, 'refs/tags/v')
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
@@ -173,6 +175,7 @@ jobs:
           npx tauri signer sign -k "$TAURI_SIGNING_PRIVATE_KEY" -p "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" "$app"
           ls -la
       - name: Build the updater manifest (latest.json)
+        if: startsWith(github.ref, 'refs/tags/v')
         run: |
           set -euo pipefail
           TAG=${GITHUB_REF#refs/tags/}
@@ -181,6 +184,7 @@ jobs:
             src-tauri/target/release/bundle \
             "$VER" "$TAG" "${{ github.repository }}"
       - name: Verify the updater signature matches the embedded public key
+        if: startsWith(github.ref, 'refs/tags/v')
         run: |
           set -euo pipefail
           PUBKEY=$(node -e "console.log(require('./src-tauri/tauri.conf.json').plugins.updater.pubkey)")
