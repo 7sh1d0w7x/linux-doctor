@@ -104,6 +104,7 @@ jobs:
             patchelf \
             file \
             curl wget \
+            binutils zlib-devel \
             gcc gcc-c++ make
       # In a container job $HOME is /github/home while the effective user is
       # root with /root, and rustup refuses that mismatch ("you may be using
@@ -129,7 +130,7 @@ jobs:
             exit 1
           fi
       - name: Build Tauri bundles (appimage, deb, rpm)
-        run: npx tauri build --bundles appimage,deb,rpm
+        run: npx tauri build -v --bundles appimage,deb,rpm
         env:
           # Run linuxdeploy without FUSE — removes runner-to-runner variance.
           APPIMAGE_EXTRACT_AND_RUN: "1"
