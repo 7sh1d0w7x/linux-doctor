@@ -70,7 +70,11 @@ jobs:
   # AppImage links against an older glibc and runs on most distributions.
   gui:
     name: GUI bundles ${{ github.ref_name }}
-    runs-on: ubuntu-22.04
+    # 24.04, not 22.04: the AppImage bundles the build host's WebKitGTK, and
+    # the 22.04 one (2.44) cannot create an EGL display on Mesa 26 — the
+    # window comes up blank and WebKit's CRASH() leaves SIGABRT cores. The
+    # host's 2.54.1 renders the same page fine.
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
       id-token: write
@@ -112,6 +116,15 @@ jobs:
             echo "::error::TAURI_SIGNING_PRIVATE_KEY secret is not set — auto-update artifacts cannot be signed. See docs/RELEASING.md (Auto-update)."
             exit 1
           fi
+      - name: Upload the AppImage for testing
+        # A workflow_dispatch run has no tag, so the steps that rename, sign for
+        # the catalog and attach to a release are skipped or meaningless. Upload
+        # the raw bundle here so a branch build can be tested before it ships.
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: appimage-${{ github.ref_name }}
+          path: src-tauri/target/release/bundle/appimage/*.AppImage
+          if-no-files-found: error
       - name: Build Tauri bundles (appimage, deb, rpm)
         run: npx tauri build --bundles appimage,deb,rpm
         env:
