@@ -103,7 +103,13 @@ jobs:
             fuse fuse-libs \
             patchelf \
             file \
+            curl wget \
             gcc gcc-c++ make
+      # In a container job $HOME is /github/home while the effective user is
+      # root with /root, and rustup refuses that mismatch ("you may be using
+      # sudo"). Point HOME at the real home before any rustup step.
+      - name: Point HOME at the container's root home
+        run: echo "HOME=/root" >> "$GITHUB_ENV"
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
       - uses: swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
