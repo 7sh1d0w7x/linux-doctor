@@ -70,34 +70,40 @@ jobs:
   # AppImage links against an older glibc and runs on most distributions.
   gui:
     name: GUI bundles ${{ github.ref_name }}
-    # 24.04, not 22.04: the AppImage bundles the build host's WebKitGTK, and
-    # the 22.04 one (2.44) cannot create an EGL display on Mesa 26 — the
-    # window comes up blank and WebKit's CRASH() leaves SIGABRT cores. The
-    # host's 2.54.1 renders the same page fine.
-    runs-on: ubuntu-24.04
+    # Fedora in a container, because the AppImage bundles the build host's
+    # WebKitGTK and only one of them works here. WebKit's PlatformDisplay calls
+    # CRASH() when it cannot get an EGL display: the Ubuntu builds (2.44 on
+    # 22.04, 2.52.6 on 24.04) crash on Mesa 26 — blank window, SIGABRT cores —
+    # while Fedora's 2.54.1 renders the same page on the same host, session and
+    # GPU. See internal/egl-investigation-2026-10-26.md.
+    runs-on: ubuntu-latest
+    container: fedora:44
     permissions:
       contents: write
       id-token: write
       attestations: write
     steps:
+      # The container has neither git (for checkout) nor Node, and setup-node
+      # does not work inside a container job — install both from dnf.
+      - name: Install git and Node
+        run: dnf install -y --setopt=install_weak_deps=False git nodejs npm
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: 22
-          cache: npm
       # Dev deps are needed here: @tauri-apps/cli drives the build.
       - run: npm ci
       - run: npm run build:gui
       - name: Install Tauri system dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libwebkit2gtk-4.1-dev \
-            libgtk-3-dev \
-            libayatana-appindicator3-dev \
-            librsvg2-dev \
+          dnf install -y --setopt=install_weak_deps=False \
+            webkit2gtk4.1-devel \
+            gtk3-devel \
+            libappindicator-gtk3-devel \
+            librsvg2-devel \
+            openssl-devel \
+            squashfs-tools \
+            fuse fuse-libs \
             patchelf \
-            file
+            file \
+            gcc gcc-c++ make
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
       - uses: swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
@@ -160,7 +166,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           set -euo pipefail
-          sudo apt-get install -y -q squashfs-tools >/dev/null
+          dnf install -y -q squashfs-tools >/dev/null 2>&1 || true
           cd src-tauri/target/release/bundle/appimage
           app=$(ls *.AppImage | head -n1)
           ./"$app" --appimage-extract >/dev/null
@@ -192,6 +198,7 @@ jobs:
           node scripts/verify-updater-signature.mjs \
             "$PUBKEY" "$APPIMAGE.sig" "$APPIMAGE" src-tauri/target/release/bundle/latest.json
       - name: Verify the bundled Node runtime is inside the packages
+        if: startsWith(github.ref, 'refs/tags/v')
         run: |
           set -euo pipefail
           # Extract the deb and locate the bundled interpreter instead of
