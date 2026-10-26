@@ -132,7 +132,7 @@ jobs:
         # the raw bundle here so a branch build can be tested before it ships.
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: appimage-${{ github.ref_name }}
+          name: appimage-${{ github.sha }}
           path: src-tauri/target/release/bundle/appimage/*.AppImage
           if-no-files-found: error
       # AppImageHub (and other catalogs) expect <repo>-<version>-<arch>.AppImage,
