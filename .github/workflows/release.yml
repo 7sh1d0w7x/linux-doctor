@@ -154,7 +154,10 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: appimage-${{ github.sha }}
-          path: src-tauri/target/release/bundle/appimage/*.AppImage
+          path: |
+            src-tauri/target/release/bundle/appimage/*.AppImage
+            src-tauri/target/release/bundle/deb/*.deb
+            src-tauri/target/release/bundle/rpm/*.rpm
           if-no-files-found: error
       # AppImageHub (and other catalogs) expect <repo>-<version>-<arch>.AppImage,
       # so rename Tauri's "<Product>_<version>_<arch>.AppImage" before the
