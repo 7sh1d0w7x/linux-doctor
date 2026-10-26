@@ -134,6 +134,14 @@ jobs:
         env:
           # Run linuxdeploy without FUSE — removes runner-to-runner variance.
           APPIMAGE_EXTRACT_AND_RUN: "1"
+          # linuxdeploy ships binutils 2.35, which cannot read the DT_RELR
+          # sections Fedora 44 builds into its libraries:
+          #   strip: unknown type [0x13] section '.relr.dyn'
+          #   strip: Unable to recognise the format of the input file
+          # and linuxdeploy treats that as fatal. Its own escape hatch is
+          # NO_STRIP; the AppImage ends up unstripped, which costs size and
+          # nothing else.
+          NO_STRIP: "1"
           # Signing the updater artifacts (.sig) — required because
           # bundle.createUpdaterArtifacts is on. The key is generated once with
           # `npx tauri signer generate` and stored as a repo secret.
