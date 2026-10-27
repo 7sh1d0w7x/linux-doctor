@@ -66,11 +66,177 @@ jobs:
           body_path: /tmp/notes.md
           generate_release_notes: false
 
-  # Desktop app: Tauri bundles (AppImage first). Built on ubuntu-22.04 so the
-  # AppImage links against an older glibc and runs on most distributions.
-  gui:
-    name: GUI bundles ${{ github.ref_name }}
+  # The AppImage bundles the build host's WebKitGTK, and only Fedora's build of
+  # it renders on a current Mesa. WebKit's PlatformDisplay calls CRASH() when it
+  # cannot get an EGL display: the Ubuntu builds tried (2.44 on 22.04, 2.52.6 on
+  # 24.04) both come up blank and leave SIGABRT cores, while Fedora's 2.54.1
+  # renders the same page on the same host, session and GPU. See
+  # internal/egl-investigation-2026-10-26.md.
+  gui-appimage:
+    name: AppImage ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    container: fedora:44
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      # The container has neither git (for checkout) nor Node, and setup-node
+      # does not work inside a container job — install both from dnf.
+      - name: Install git and Node
+        run: dnf install -y --setopt=install_weak_deps=False git nodejs npm
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      # Dev deps are needed here: @tauri-apps/cli drives the build.
+      - run: npm ci
+      - run: npm run build:gui
+      - name: Install Tauri system dependencies
+        run: |
+          dnf install -y --setopt=install_weak_deps=False \
+            webkit2gtk4.1-devel \
+            gtk3-devel \
+            libappindicator-gtk3-devel \
+            librsvg2-devel \
+            openssl-devel \
+            squashfs-tools \
+            fuse fuse-libs \
+            patchelf \
+            file \
+            curl wget \
+            binutils zlib-devel \
+            gcc gcc-c++ make
+      # In a container job $HOME is /github/home while the effective user is
+      # root with /root, and rustup refuses that mismatch ("you may be using
+      # sudo"). Point HOME at the real home before any rustup step.
+      - name: Point HOME at the container's root home
+        run: echo "HOME=/root" >> "$GITHUB_ENV"
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+      - uses: swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          workspaces: src-tauri
+      # Ship a Node runtime inside the package so end users need nothing on
+      # their PATH (lib.rs resolves <resources>/runtime/node first).
+      - name: Bundle the Node runtime into the package
+        run: node scripts/fetch-node-runtime.mjs
+      - name: Verify the updater signing key is configured
+        env:
+          KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          if [ -z "$KEY" ]; then
+            echo "::error::TAURI_SIGNING_PRIVATE_KEY secret is not set — auto-update artifacts cannot be signed. See docs/RELEASING.md (Auto-update)."
+            exit 1
+          fi
+      - name: Build the AppImage
+        run: npx tauri build -v --bundles appimage
+        env:
+          # Run linuxdeploy without FUSE — removes runner-to-runner variance.
+          APPIMAGE_EXTRACT_AND_RUN: "1"
+          # linuxdeploy ships binutils 2.35, which cannot read the DT_RELR
+          # sections Fedora 44 builds into its libraries ("unknown type [0x13]
+          # section '.relr.dyn'"), and treats that as fatal. NO_STRIP is its own
+          # escape hatch; an unstripped AppImage costs size, not correctness.
+          NO_STRIP: "1"
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+      - name: Upload the AppImage for testing
+        # A workflow_dispatch run has no tag, so the steps that rename, sign for
+        # the catalog and attach to a release are skipped. Upload the raw bundle
+        # so a branch build can be tested before it ships.
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: appimage-${{ github.sha }}
+          path: src-tauri/target/release/bundle/appimage/*.AppImage*
+          if-no-files-found: error
+      # AppImageHub (and other catalogs) expect <repo>-<version>-<arch>.AppImage,
+      # so rename Tauri's "<Product>_<version>_<arch>.AppImage" before the
+      # manifest is built — latest.json and the .sig follow the new name.
+      - name: Rename the AppImage to the catalog convention
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          set -euo pipefail
+          VER=${GITHUB_REF#refs/tags/}; VER=${VER#v}
+          ARCH=$(uname -m)
+          cd src-tauri/target/release/bundle/appimage
+          f=$(ls *.AppImage | head -n1)
+          test -f "$f.sig"
+          mv "$f" "linux-doctor-${VER}-${ARCH}.AppImage"
+          mv "$f.sig" "linux-doctor-${VER}-${ARCH}.AppImage.sig"
+          ls -la
+      # linuxdeploy's runtime lands as AppRun.wrapped with mode 0770, so tools
+      # that mount the AppImage as root and drop to a user (Firejail, used by
+      # AppImageHub) hit "Permission denied". Repack with 0755 and re-sign.
+      - name: Make AppRun.wrapped world-executable and re-sign
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          dnf install -y -q squashfs-tools >/dev/null 2>&1 || true
+          cd src-tauri/target/release/bundle/appimage
+          app=$(ls *.AppImage | head -n1)
+          ./"$app" --appimage-extract >/dev/null
+          chmod 755 squashfs-root/AppRun.wrapped
+          off=$("./$app" --appimage-offset)
+          head -c "$off" "$app" > runtime
+          mksquashfs squashfs-root new.squashfs -root-owned -noappend -quiet -comp zstd
+          cat runtime new.squashfs > fixed.AppImage
+          chmod 755 fixed.AppImage
+          rm -rf squashfs-root new.squashfs runtime
+          mv -f fixed.AppImage "$app"
+          npx tauri signer sign -k "$TAURI_SIGNING_PRIVATE_KEY" -p "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" "$app"
+          ls -la
+      - name: Build the updater manifest (latest.json)
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          set -euo pipefail
+          TAG=${GITHUB_REF#refs/tags/}
+          VER=${TAG#v}
+          node scripts/make-latest-json.mjs \
+            src-tauri/target/release/bundle \
+            "$VER" "$TAG" "${{ github.repository }}"
+      - name: Verify the updater signature matches the embedded public key
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          set -euo pipefail
+          PUBKEY=$(node -e "console.log(require('./src-tauri/tauri.conf.json').plugins.updater.pubkey)")
+          APPIMAGE=$(ls src-tauri/target/release/bundle/appimage/*.AppImage | head -n1)
+          node scripts/verify-updater-signature.mjs \
+            "$PUBKEY" "$APPIMAGE.sig" "$APPIMAGE" src-tauri/target/release/bundle/latest.json
+      - name: Collect the AppImage artifacts
+        run: |
+          mkdir -p dist-appimage
+          find src-tauri/target/release/bundle -type f \( \
+            -name "*.AppImage" -o -name "*.sig" -o -name "latest.json" \) \
+            -exec cp {} dist-appimage/ \;
+          cd dist-appimage
+          for f in *\ *; do [ -e "$f" ] && mv "$f" "${f// /.}"; done
+          ls -la
+      - name: Upload the AppImage artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: gui-appimage
+          path: dist-appimage/
+          if-no-files-found: error
+      - name: Attest AppImage provenance (SLSA L2)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
+        with:
+          subject-path: dist-appimage/*
+      - name: Attach the AppImage to the release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
+        with:
+          files: dist-appimage/*
+          generate_release_notes: false
+
+  # The .deb and .rpm stay on Ubuntu: built on Fedora they declare
+  # `libappindicator3-1` — the deprecated package — instead of the
+  # `libayatana-appindicator3-1` that Debian and Ubuntu actually ship, so the
+  # package would not install where it is meant to. Measured both ways.
+  gui-deb-rpm:
+    name: deb + rpm ${{ github.ref_name }}
     runs-on: ubuntu-22.04
+    needs: gui-appimage
     permissions:
       contents: write
       id-token: write
@@ -98,10 +264,6 @@ jobs:
       - uses: swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           workspaces: src-tauri
-      # Ship a Node runtime inside the packages so end users need nothing
-      # on their PATH (lib.rs resolves <resources>/runtime/node first).
-      # Pinned LTS 22.x, hash-checked by the shared script (same command a
-      # local `tauri build` uses — see docs/RELEASING.md).
       - name: Bundle the Node runtime into the packages
         run: node scripts/fetch-node-runtime.mjs
       - name: Verify the updater signing key is configured
@@ -112,68 +274,11 @@ jobs:
             echo "::error::TAURI_SIGNING_PRIVATE_KEY secret is not set — auto-update artifacts cannot be signed. See docs/RELEASING.md (Auto-update)."
             exit 1
           fi
-      - name: Build Tauri bundles (appimage, deb, rpm)
-        run: npx tauri build --bundles appimage,deb,rpm
-        env:
-          # Run linuxdeploy without FUSE — removes runner-to-runner variance.
-          APPIMAGE_EXTRACT_AND_RUN: "1"
-          # Signing the updater artifacts (.sig) — required because
-          # bundle.createUpdaterArtifacts is on. The key is generated once with
-          # `npx tauri signer generate` and stored as a repo secret.
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-      # AppImageHub (and other catalogs) expect <repo>-<version>-<arch>.AppImage,
-      # so rename Tauri's "<Product>_<version>_<arch>.AppImage" before the
-      # manifest is built — latest.json and the .sig follow the new name.
-      - name: Rename the AppImage to the catalog convention
-        run: |
-          set -euo pipefail
-          VER=${GITHUB_REF#refs/tags/}; VER=${VER#v}
-          ARCH=$(uname -m)   # x86_64 on the ubuntu-22.04 runner
-          cd src-tauri/target/release/bundle/appimage
-          f=$(ls *.AppImage | head -n1)
-          test -f "$f.sig"
-          mv "$f" "linux-doctor-${VER}-${ARCH}.AppImage"
-          mv "$f.sig" "linux-doctor-${VER}-${ARCH}.AppImage.sig"
-          ls -la
-      # linuxdeploy's runtime lands as AppRun.wrapped with mode 0770, so tools
-      # that mount the AppImage as root and drop to a user (Firejail, used by
-      # AppImageHub) hit "Permission denied". Repack with 0755 and re-sign.
-      - name: Make AppRun.wrapped world-executable and re-sign
+      - name: Build the deb and rpm
+        run: npx tauri build --bundles deb,rpm
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        run: |
-          set -euo pipefail
-          sudo apt-get install -y -q squashfs-tools >/dev/null
-          cd src-tauri/target/release/bundle/appimage
-          app=$(ls *.AppImage | head -n1)
-          ./"$app" --appimage-extract >/dev/null
-          chmod 755 squashfs-root/AppRun.wrapped
-          off=$("./$app" --appimage-offset)
-          head -c "$off" "$app" > runtime
-          mksquashfs squashfs-root new.squashfs -root-owned -noappend -quiet -comp zstd
-          cat runtime new.squashfs > fixed.AppImage
-          chmod 755 fixed.AppImage
-          rm -rf squashfs-root new.squashfs runtime
-          mv -f fixed.AppImage "$app"
-          npx tauri signer sign -k "$TAURI_SIGNING_PRIVATE_KEY" -p "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" "$app"
-          ls -la
-      - name: Build the updater manifest (latest.json)
-        run: |
-          set -euo pipefail
-          TAG=${GITHUB_REF#refs/tags/}
-          VER=${TAG#v}
-          node scripts/make-latest-json.mjs \
-            src-tauri/target/release/bundle \
-            "$VER" "$TAG" "${{ github.repository }}"
-      - name: Verify the updater signature matches the embedded public key
-        run: |
-          set -euo pipefail
-          PUBKEY=$(node -e "console.log(require('./src-tauri/tauri.conf.json').plugins.updater.pubkey)")
-          APPIMAGE=$(ls src-tauri/target/release/bundle/appimage/*.AppImage | head -n1)
-          node scripts/verify-updater-signature.mjs \
-            "$PUBKEY" "$APPIMAGE.sig" "$APPIMAGE" src-tauri/target/release/bundle/latest.json
       - name: Verify the bundled Node runtime is inside the packages
         run: |
           set -euo pipefail
@@ -190,29 +295,40 @@ jobs:
           RPM=$(ls src-tauri/target/release/bundle/rpm/*.rpm | head -n1)
           rpm -qlp "$RPM" | grep -q "runtime/node"
           echo "✓ runtime/node present and runnable in deb + rpm"
-      - name: Collect artifacts
+      - name: Collect the deb and rpm artifacts
         run: |
           mkdir -p dist
           find src-tauri/target/release/bundle -type f \( \
-            -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" \
-            -o -name "*.sig" -o -name "latest.json" \) -exec cp {} dist/ \;
-          # Tauri already names outputs with the version; only normalize
-          # spaces ("Linux Doctor_x.y.z_amd64") so upload keeps them sane.
+            -name "*.deb" -o -name "*.rpm" -o -name "*.sig" \) -exec cp {} dist/ \;
           cd dist
           for f in *\ *; do [ -e "$f" ] && mv "$f" "${f// /.}"; done
           ls -la
+      - name: Upload the deb and rpm for testing
+        # Same reason as the AppImage job's test upload: a dispatch run has no
+        # tag, so the release steps are skipped and the only way to inspect the
+        # packages is to fetch them as an artifact.
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: deb-rpm-${{ github.sha }}
+          path: dist/*
+          if-no-files-found: error
+      - name: Fetch the AppImage artifacts for the combined checksums
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: gui-appimage
+          path: dist
       - name: Generate SHA256SUMS for bundles
         run: |
           set -x
           ls -lh dist/
           sha256sum dist/* > dist/SHA256SUMS-bundles.txt && cat dist/SHA256SUMS-bundles.txt
           ls -lh dist/
-      - name: Attest bundle provenance (SLSA L2)
+      - name: Attest deb and rpm provenance (SLSA L2)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
         with:
-          subject-path: dist/*
-      - name: Attach bundles to the release
+          subject-path: dist/*.deb
+      - name: Attach the deb and rpm to the release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
