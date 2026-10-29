@@ -2425,6 +2425,80 @@ test("crash: many boots outside the window are not flagged", async () => {
   assert.ok(!findings.some((f) => /reboot/i.test(f.title)), "lifetime boot count must not be reported as recent reboots");
 });
 
+test("crash: crashes concentrated in one program do not blame the hardware", async () => {
+  // The real case: 26 of 33 cores from WebKitWebProcess after a bad AppImage
+  // build. "Usually points at a broken library or bad RAM" sent that user
+  // after the wrong thing entirely.
+  const ctx = stubCtx({});
+  ctx.run = async (cmd) => {
+    if (cmd.includes("--list-boots")) return { ok: true, code: 0, stdout: "  0  ...\n", stderr: "" };
+    if (cmd.includes("--json=short")) {
+      const rows = Array.from({ length: 26 }, () => ({ sig: 6, exe: "/tmp/.mount_x/usr/lib/webkit2gtk-4.1/WebKitWebProcess" }));
+      rows.push({ sig: 11, exe: "/usr/bin/xdg-desktop-portal-kde" });
+      rows.push({ sig: 6, exe: "/usr/bin/ksecretd" });
+      return { ok: true, code: 0, stdout: JSON.stringify(rows), stderr: "" };
+    }
+    return { ok: false, code: 1, stdout: "", stderr: "" };
+  };
+  const findings = await crash.run(ctx);
+  const f = findings.find((x) => x.code === "crash/coredumps");
+  assert.ok(f, "expected a coredump finding");
+  assert.match(f.detail, /26 of them from `WebKitWebProcess`/);
+  assert.doesNotMatch(f.detail, /bad RAM/);
+  assert.doesNotMatch(f.fix, /memtest/);
+  assert.match(f.fix, /different build/, "points at the app, not at the system");
+});
+
+test("crash: crashes across unrelated programs do point at the hardware", async () => {
+  const ctx = stubCtx({});
+  ctx.run = async (cmd) => {
+    if (cmd.includes("--list-boots")) return { ok: true, code: 0, stdout: "  0  ...\n", stderr: "" };
+    if (cmd.includes("--json=short")) {
+      const rows = ["alpha", "bravo", "charlie", "delta", "echo", "foxtrot"].map((n) => ({ sig: 11, exe: `/usr/bin/${n}` }));
+      return { ok: true, code: 0, stdout: JSON.stringify(rows), stderr: "" };
+    }
+    return { ok: false, code: 1, stdout: "", stderr: "" };
+  };
+  const findings = await crash.run(ctx);
+  const f = findings.find((x) => x.code === "crash/coredumps");
+  assert.match(f.detail, /bad RAM/);
+  assert.match(f.fix, /memtest/);
+});
+
+test("crash: SIGTRAP cores are filtered in the JSON path too", async () => {
+  const ctx = stubCtx({});
+  ctx.run = async (cmd) => {
+    if (cmd.includes("--list-boots")) return { ok: true, code: 0, stdout: "  0  ...\n", stderr: "" };
+    if (cmd.includes("--json=short")) {
+      return { ok: true, code: 0, stdout: JSON.stringify([{ sig: 5, exe: "/usr/bin/gdb" }, { sig: 5, exe: "/usr/bin/qemu-system-x86" }]), stderr: "" };
+    }
+    return { ok: false, code: 1, stdout: "", stderr: "" };
+  };
+  const findings = await crash.run(ctx);
+  assert.ok(!findings.some((f) => /crash/i.test(f.title)));
+});
+
+test("crash: the table fallback still groups by executable", async () => {
+  // systemd older than 252 has no --json; the table path must reach the same
+  // verdict, so a machine without it does not get the scarier message.
+  const ctx = stubCtx({});
+  ctx.run = async (cmd) => {
+    if (cmd.includes("--list-boots")) return { ok: true, code: 0, stdout: "  0  ...\n", stderr: "" };
+    if (cmd.includes("--json=short")) return { ok: false, code: 1, stdout: "", stderr: "" };
+    if (cmd.includes("coredumpctl")) {
+      const rows = ["TIME  PID UID GID SIG COREFILE EXE SIZE"];
+      for (let i = 0; i < 6; i++) rows.push(`Mon 2026-10-26 10:0${i}:00 1234 1000 1000 SIGABRT present  /usr/lib/webkit2gtk-4.1/WebKitWebProcess   2M`);
+      return { ok: true, code: 0, stdout: rows.join("\n") + "\n", stderr: "" };
+    }
+    return { ok: false, code: 1, stdout: "", stderr: "" };
+  };
+  const findings = await crash.run(ctx);
+  const f = findings.find((x) => x.code === "crash/coredumps");
+  assert.ok(f, "the fallback must still produce a finding");
+  assert.match(f.detail, /WebKitWebProcess/);
+  assert.doesNotMatch(f.detail, /bad RAM/);
+});
+
 test("network: missing getent is a skip, not a false DNS failure", async () => {
   const ctx = stubCtx({
     "ip route show default 2>/dev/null": "default via 192.168.1.1 dev wlan0\n",

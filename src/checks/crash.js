@@ -124,38 +124,83 @@ export const crash = defineCheck({
     }
 
     // --- Coredumps: crashes in the last 24 hours ---
+    // `--json=short` first: the text table ends with a SIZE column and its EXE
+    // path may contain spaces, so grouping by column is guesswork. Older
+    // systemd has no --json; the table stays as a fallback.
+    const coreJson = await ctx.run(
+      'coredumpctl list --json=short --since "24 hours ago" --no-pager 2>/dev/null'
+    );
     const core = await ctx.run(
       'coredumpctl list --since "24 hours ago" --no-pager 2>/dev/null | tail -n +2'
     );
 
-    if (core.ok && core.stdout.trim()) {
-      // SIGTRAP cores come from debuggers and ptrace-based tools (gdb, some
-      // emulators/JITs) — an intentional signal, not a crash. Everything else
-      // (SIGSEGV, SIGABRT, SIGBUS, SIGILL, …) is a genuine crash. The signal
-      // stays in the evidence so a user can see what actually happened.
-      const crashes = lines(core.stdout)
+    // SIGTRAP comes from debuggers and ptrace-based tools (gdb, some
+    // emulators/JITs) — an intentional signal, not a crash. Everything else
+    // (SIGSEGV, SIGABRT, SIGBUS, SIGILL, …) is a genuine crash.
+    const SIGTRAP = 5;
+    let exes = [];
+    let rawRows = [];
+    if (coreJson.ok && coreJson.stdout.trim().startsWith("[")) {
+      try {
+        exes = JSON.parse(coreJson.stdout)
+          .filter((r) => r && r.sig !== SIGTRAP)
+          .map((r) => String(r.exe || "unknown"));
+      } catch {
+        exes = [];
+      }
+    }
+    if (!exes.length && core.ok && core.stdout.trim()) {
+      rawRows = lines(core.stdout)
         .filter((l) => !/^TIME\s/.test(l))
         .filter((l) => !/\sSIGTRAP\s/.test(` ${l} `));
-      const crashCount = crashes.length;
-      const top = crashes.slice(0, 3).join("\n");
+      // In `coredumpctl list` the executable is the field after COREFILE
+      // (present/none/missing/error), followed by the size.
+      exes = rawRows.map((l) => {
+        const m = l.match(/\s(?:present|none|missing|error)\s+(.+?)(?:\s+[\d.]+[KMG]?)?$/);
+        return m ? m[1] : l;
+      });
+    }
 
-      if (crashCount > 5) {
+    if (exes.length) {
+      const byExe = new Map();
+      for (const e of exes) {
+        const name = e.split("/").pop() || e;
+        byExe.set(name, (byExe.get(name) || 0) + 1);
+      }
+      const ranked = [...byExe.entries()].sort((a, b) => b[1] - a[1]);
+      const [topName, topCount] = ranked[0];
+      // Crashes concentrated in one executable are that program's problem.
+      // Crashes spread across unrelated programs are the pattern that hints at
+      // a shared library, an update, or the hardware — which is the only case
+      // where telling someone to test their RAM is fair. 60% rather than 80%:
+      // a real machine also crashes a few unrelated things (a portal during
+      // logout, a keyring daemon), and 26 of 33 is plainly one program.
+      const concentrated = ranked.length === 1 || topCount >= Math.max(3, exes.length * 0.6);
+      const summary = ranked.slice(0, 5).map(([name, n]) => `${n}\t${name}`).join("\n");
+      const evidence = rawRows.length ? `${summary}\n\n${rawRows.slice(0, 2).join("\n")}` : summary;
+      const others = ranked.slice(1, 4).map(([name, n]) => `${name} (${n})`).join(", ");
+
+      if (exes.length > 5) {
         findings.push(finding({
           severity: "high",
           code: "crash/coredumps",
-          title: `${crashCount} application crashes in the last 24 hours`,
-          detail: `${crashCount} programs dumped core in the last 24 hours. A high crash rate usually points to a broken library, a faulty update, or a hardware issue (bad RAM).`,
-          evidence: top,
-          fix: "Inspect the most recent crash with `coredumpctl info <PID>`. If crashes are from the same program, check for updates or reinstall it. If from different programs, suspect hardware (run `memtest86+`).",
+          title: `${exes.length} application crashes in the last 24 hours`,
+          detail: concentrated
+            ? `${exes.length} programs dumped core in the last 24 hours, ${topCount} of them from \`${topName}\`${others ? ` — the rest: ${others}` : ""}. One program failing over and over points at that program or the way it was started (its packaging, its libraries, a missing device), not at the hardware.`
+            : `${exes.length} programs dumped core in the last 24 hours, spread across ${ranked.length} different executables (${others || topName}). Crashes spread across unrelated programs are the pattern that points at a shared library, a faulty update, or bad RAM.`,
+          evidence,
+          fix: concentrated
+            ? `Inspect one with \`coredumpctl info <PID>\` and read the signal and the backtrace. A program that fails the same way every time is a bug in that program or its packaging; if it is a bundled app (AppImage, Flatpak), try a different build before suspecting the system.`
+            : "Inspect the most recent crash with `coredumpctl info <PID>`, then test the memory with `memtest86+` — crashes across unrelated programs are the one pattern where bad RAM is worth ruling out.",
           confidence: "high",
         }));
-      } else if (crashCount > 0) {
+      } else {
         findings.push(finding({
           severity: "medium",
           code: "crash/coredumps",
-          title: `${crashCount} application crash(es) in the last 24 hours`,
-          detail: `${crashCount} program(s) dumped core recently. Occasional crashes are normal, but a pattern may indicate a problem.`,
-          evidence: top,
+          title: `${exes.length} application crash(es) in the last 24 hours`,
+          detail: `${exes.length} program(s) dumped core recently${concentrated ? `, all from \`${topName}\`` : ""}. Occasional crashes are normal, but a pattern may indicate a problem.`,
+          evidence,
           fix: "Check `coredumpctl info <PID>` for the most recent crash to see which program failed and why.",
           confidence: "high",
         }));
