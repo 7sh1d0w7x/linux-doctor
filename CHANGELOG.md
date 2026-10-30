@@ -6,6 +6,33 @@ All notable changes to Linux Doctor are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.8.2] - 2026-10-31
+
+### Fixed
+
+- **The AppImage came up as a blank window on a current Mesa.** The AppImage
+  bundles the build host's WebKitGTK, and WebKit's `PlatformDisplay` calls
+  `CRASH()` when it cannot create an EGL display: the Ubuntu builds (2.44 on
+  22.04, 2.52.6 on 24.04) both fail with `EGL_BAD_PARAMETER` on Mesa 26, so the
+  window stayed empty and every launch left a `WebKitWebProcess` core behind.
+  The AppImage is now built in a Fedora container, whose WebKit 2.54.1 renders
+  the same page on the same machine, same session and same GPU. The `.deb` and
+  `.rpm` stay on Ubuntu — built on Fedora they would declare
+  `libappindicator3-1`, the deprecated package, instead of the
+  `libayatana-appindicator3-1` that Debian and Ubuntu actually ship.
+- **A high crash count no longer blames the hardware by default.** The coredumps
+  finding said a high crash rate "usually points at a broken library, a faulty
+  update, or a hardware issue (bad RAM)". When 26 of 33 cores turned out to be
+  one broken AppImage build aborting in WebKit, that sentence sent the reader to
+  `memtest86+`. The finding now groups crashes by executable and names the
+  program responsible; the hardware hypothesis is offered only when the crashes
+  really are spread across unrelated programs.
+
+### Changed
+
+- Dependency updates: the cargo minor-patch group (7 crates), `@tauri-apps/cli`,
+  and the pinned GitHub Actions.
+
 ## [0.8.1] - 2026-10-24
 
 ### Security
@@ -1205,7 +1232,8 @@ All notable changes to Linux Doctor are documented here. The format follows
 - `tests/web.test.js` flaked (server banner corrupted the TAP stream) —
   `startWeb` gained a `quiet` option used by tests.
 
-[Unreleased]: https://github.com/7sh1d0w7x/linux-doctor/compare/v0.8.1...HEAD
+[Unreleased]: https://github.com/7sh1d0w7x/linux-doctor/compare/v0.8.2...HEAD
+[0.8.2]: https://github.com/7sh1d0w7x/linux-doctor/compare/v0.8.1...v0.8.2
 [0.8.1]: https://github.com/7sh1d0w7x/linux-doctor/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/7sh1d0w7x/linux-doctor/compare/v0.7.3...v0.8.0
 [0.7.3]: https://github.com/7sh1d0w7x/linux-doctor/compare/v0.7.2...v0.7.3
