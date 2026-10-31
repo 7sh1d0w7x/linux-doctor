@@ -32,7 +32,13 @@ git push origin vX.Y.Z                       # 6. triggers release.yml
 
 ```bash
 gh release view vX.Y.Z                      # assets
-node scripts/verify-updater-signature.mjs   # AppImage signature vs the pubkey
+
+# The signature check takes the pubkey, the .sig and the file it signs — the
+# script cannot guess them, and calling it with no arguments only prints usage.
+PUBKEY=$(node -e 'console.log(require("./src-tauri/tauri.conf.json").plugins.updater.pubkey)')
+node scripts/verify-updater-signature.mjs \
+  "$PUBKEY" <AppImage>.sig <AppImage>       # AppImage signature vs the pubkey
+
 npx linux-doctor@latest --version           # the registry serves X.Y.Z
 ```
 
