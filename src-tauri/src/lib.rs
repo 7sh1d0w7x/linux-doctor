@@ -160,7 +160,12 @@ fn collect_report(root: &PathBuf, node: &PathBuf, save: bool) -> Result<Vec<u8>,
         .env_remove("LD_LIBRARY_PATH")
         .env_remove("LD_PRELOAD")
         .env_remove("NODE_OPTIONS")
-        .env_remove("NODE_PATH");
+        .env_remove("NODE_PATH")
+        // The AppImage shell forces software GL for the webview, and the checks
+        // used to inherit it: `gpu` then saw llvmpipe and reported "GPU
+        // acceleration is not active" on a machine whose GPU was fine. The
+        // diagnostic must observe the system, not the shell's workaround.
+        .env_remove("LIBGL_ALWAYS_SOFTWARE");
     if !save {
         command.env("LINUX_DOCTOR_NO_SAVE", "1");
     }
@@ -197,6 +202,7 @@ fn collect_checks(root: &PathBuf, node: &PathBuf) -> Result<Vec<u8>, String> {
         .env_remove("LD_PRELOAD")
         .env_remove("NODE_OPTIONS")
         .env_remove("NODE_PATH")
+        .env_remove("LIBGL_ALWAYS_SOFTWARE")
         .output()
         .map_err(|e| {
             format!(
@@ -219,7 +225,7 @@ fn collect_checks(root: &PathBuf, node: &PathBuf) -> Result<Vec<u8>, String> {
 /// Runs the Node CLI with the given arguments and returns (exit_code, stdout, stderr).
 /// A spawn failure (no Node) is reported as exit code 127 with the OS error text.
 fn run_cli(root: &PathBuf, node: &PathBuf, args: &[&str]) -> (i32, String, String) {
-    match Command::new(node).args(args).current_dir(root).env_remove("LD_LIBRARY_PATH").env_remove("LD_PRELOAD").env_remove("NODE_OPTIONS").env_remove("NODE_PATH").output() {
+    match Command::new(node).args(args).current_dir(root).env_remove("LD_LIBRARY_PATH").env_remove("LD_PRELOAD").env_remove("NODE_OPTIONS").env_remove("NODE_PATH").env_remove("LIBGL_ALWAYS_SOFTWARE").output() {
         Ok(out) => (
             out.status.code().unwrap_or(-1),
             String::from_utf8_lossy(&out.stdout).trim().to_string(),
