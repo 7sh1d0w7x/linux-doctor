@@ -41,6 +41,14 @@ export const ENVIRONMENT = new Set([
   "crash/coredumps",
   "updates/pending",
   "network/no-route",
+  // The container inherits the runner's disks: /__t is the Actions workspace and
+  // sat at 83% on #68 while the image under test was nearly empty. The finding
+  // was true about the host and useless about the distro — and it passed on a
+  // re-run, which is the definition of host-dependent.
+  "disk/full",
+  // A latency threshold measured on shared hardware: 2.2s on one runner, well
+  // under the limit on another, same image, same code.
+  "network/dns-slow",
 ]);
 
 /** High/medium codes present in a finding list, first occurrence wins. */

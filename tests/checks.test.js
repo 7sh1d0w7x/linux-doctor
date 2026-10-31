@@ -471,6 +471,31 @@ test("journal: 'Authentication attempt too soon' outside the screen locker is st
   assert.ok(findings.some((f) => f.code === "journal/errors"), "keep the brute-force signal");
 });
 
+test("journal: pipewire losing an ALSA device is noise, not an error", async () => {
+  // Seen on a Bazzite desktop: the monitor sleeps, the HDMI/S-PDIF device goes
+  // away, and PipeWire logs err-level lines for a few seconds. Audio works.
+  const ctx = stubCtx({
+    "journalctl -p err --since \"-24 hours\" --no-pager -o short 2>/dev/null": [
+      "Oct 31 15:09:01 bazzite pipewire[2625]: spa.alsa: iec958:0p: snd_pcm_drop: No such device",
+      "Oct 31 15:09:01 bazzite pipewire[2625]: spa.alsa: iec958:0p: snd_pcm_status error: No such device",
+      "Oct 31 15:09:01 bazzite pipewire[2625]: spa.alsa: sw_params: No such device",
+    ].join("\n") + "\n",
+  });
+  const findings = await journal.run(ctx);
+  assert.ok(!findings.some((f) => f.code === "journal/errors"), "a sleeping monitor is not a fault");
+});
+
+test("journal: the NM dispatcher activation failure at boot is noise", async () => {
+  const ctx = stubCtx({
+    "journalctl -p err --since \"-24 hours\" --no-pager -o short 2>/dev/null": [
+      "Oct 31 13:35:40 bazzite dbus-broker-launch[1177]: Activation request for 'org.freedesktop.nm_dispatcher' failed.",
+      "Oct 31 13:35:41 bazzite dbus-broker-launch[1177]: Activation request for 'org.freedesktop.nm_dispatcher' failed.",
+    ].join("\n") + "\n",
+  });
+  const findings = await journal.run(ctx);
+  assert.ok(!findings.some((f) => f.code === "journal/errors"), "it retries and succeeds");
+});
+
 test("journal: system-sleep failures are deferred to the suspend check", async () => {
   const ctx = stubCtx({
     "journalctl -p err --since \"-24 hours\" --no-pager -o short 2>/dev/null": `Aug 15 15:49:09 bazzite (system-sleep)[11514]: /usr/lib/systemd/system-sleep/fw-fanctrl-suspend failed with exit status 1.`,
