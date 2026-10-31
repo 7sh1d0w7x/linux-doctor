@@ -33,6 +33,12 @@ const NOISE_PATTERNS = [
   /invalid 7-bit i2c address/i,
   /failed to query container image base metadata/i,
   /module libseccomp/i,
+  // PipeWire loses an ALSA device when the monitor sleeps (HDMI/S-PDIF):
+  // "iec958:0p: snd_pcm_drop: No such device" on a desktop whose audio works.
+  /spa\.alsa:.*No such device/i,
+  // dbus-broker cannot activate NetworkManager's dispatcher during early boot.
+  // It retries and succeeds; the line still reaches priority err.
+  /Activation request for 'org\.freedesktop\.nm_dispatcher' failed/i,
 ];
 
 /**
