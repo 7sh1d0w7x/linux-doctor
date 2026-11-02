@@ -21,17 +21,30 @@ and what stayed the same.
 npx linux-doctor        # one run, nothing to install
 ```
 
-> Its own diagnostics never modify your system: the checks read, they do not write. What it does write is its own data (run history, a small cache) under the standard XDG directories (config, data, cache). Changes to the system happen only through `--fix --yes`, which runs the `[apply]` commands from the built-in catalog that you explicitly opted into. Drop-in checks
-> (`~/.config/linux-doctor/checks/`) and the Pro add-on are code that **you**
-> install and run with your own privileges. See
+> **What it does, and what it writes.** Four things are worth keeping apart:
+>
+> - **Diagnostics read.** The checks inspect the system and change nothing.
+> - **It writes its own data**: run history and a small cache, under the standard
+>   XDG directories (config, data, cache).
+> - **Commands the checks invoke can leave their own caches.** `glxinfo` writes
+>   Mesa's shader cache, `podman` initialises container storage, `dnf`/`apt` keep
+>   their logs. Those are other tools' files, not changes to your configuration —
+>   but "the checks write nothing at all" would be too strong a claim.
+> - **Changes to the system** happen only through `--fix --yes`, which runs the
+>   `[apply]` commands from the built-in catalog that you explicitly opted into.
+>   `[manual]` items are never executed for you.
+>
+> Drop-in checks (`~/.config/linux-doctor/checks/`) and the Pro add-on are code
+> that **you** install and run with your own privileges. See
 > [docs/configuration.md](docs/configuration.md#plugins-custom-checks).
 
 - One clear next step. Every report leads with START HERE, the single most useful
   action, not a wall of graphs.
 - Memory built in. A health score (0-100), a trend sparkline, and a plain
   NEW/FIXED diff on every run.
-- Read-only by default: the checks never modify your system — the only thing they
-  write is their own history and cache. `--fix` prints a dry-run plan; `--fix --yes`
+- Read-only by default: the checks never modify your system. What they write is
+  their own history and cache, plus whatever caches the commands they call keep
+  (see above). `--fix` prints a dry-run plan; `--fix --yes`
   runs only the `[apply]` commands from the pinned safe-fix catalog, and `[manual]`
   items are never executed for you.
 - CLI, web dashboard and desktop app (Tauri) run the exact same checks.
@@ -92,34 +105,59 @@ no Node on `PATH`. `LINUX_DOCTOR_NODE=/path/to/node` still overrides it.
 
 > Installed size: the bundled runtime adds roughly 130 MB to the package.
 
-<details>
-<summary>Troubleshooting: blank/white window or EGL errors (AppImage, very new Mesa)</summary>
+### Verify your download
 
-The bundle's WebKitGTK comes from an older LTS base; its accelerated paths can
-abort against bleeding-edge host Mesa (`Could not create default EGL display`)
-or paint a blank/white webview. This is about the host's driver stack, not the
-GPU brand: **AMD and Intel** graphics (and nouveau) all run on Mesa and are
-equally exposed; NVIDIA's proprietary driver ships its own stack.
-
-**Current builds handle both automatically** before any GTK/WebKit code runs:
-
-- the AppImage defaults to software GL (a diagnostics dashboard does not need
-  GPU anyway), so set `LINUX_DOCTOR_HARDWARE_GL=1` to force hardware rendering;
-- WebKit's DMA-BUF renderer is disabled (the usual cause of a white window),
-  so set `WEBKIT_DISABLE_DMABUF_RENDERER=0` to opt back in.
-
-On older builds, launch with either (or both):
+The AppImage, the `.deb` and the `.rpm` each carry a minisign signature (`.sig`),
+and every release ships `SHA256SUMS-bundles.txt`. The signature is checked
+against the public key embedded in the app
+(`src-tauri/tauri.conf.json` → `plugins.updater.pubkey`), so a tampered file fails
+exactly the check the updater would run:
 
 ```bash
-WEBKIT_DISABLE_DMABUF_RENDERER=1 ./linux-doctor-*-x86_64.AppImage
-# still blank? also try:
-LIBGL_ALWAYS_SOFTWARE=1 WEBKIT_DISABLE_COMPOSITING_MODE=1 ./linux-doctor-*-x86_64.AppImage
+git clone --depth 1 https://github.com/7sh1d0w7x/linux-doctor && cd linux-doctor
+PUB=$(node -e 'console.log(require("./src-tauri/tauri.conf.json").plugins.updater.pubkey)')
+node scripts/verify-updater-signature.mjs "$PUB" \
+  ~/Downloads/linux-doctor-X.Y.Z-x86_64.AppImage.sig \
+  ~/Downloads/linux-doctor-X.Y.Z-x86_64.AppImage
+# signature OK: … (ED, sha256 …)
 ```
 
-If it is **still** blank, the AppImage's **bundled** WebKitGTK is incompatible
-with your host's driver stack (seen on very new Mesa and NVIDIA). Install the
-`.deb`/`.rpm`, or the [OBS package](#install--first-run-cli), instead: those
-use the WebKitGTK shipped by your distribution, which matches the host.
+For a plain integrity check without a checkout, `sha256sum` the file you
+downloaded and compare it with the matching line in `SHA256SUMS-bundles.txt`
+(the paths there are relative to the release build's `dist/`, so compare on the
+file name). A checksum catches a broken download; only the signature catches a
+swapped one.
+
+<details>
+<summary>Troubleshooting: blank window or EGL errors (AppImage)</summary>
+
+The AppImage bundles the WebKitGTK of the machine that built it, so the webview
+is tied to the driver stack it was compiled against. Two different situations:
+
+**v0.8.2 and later** — built on Fedora 44 (WebKitGTK 2.54.1), which renders on
+current Mesa. Nothing needs to be set. Two defaults are applied before any
+GTK/WebKit code runs, and each can be opted out of:
+
+- the AppImage defaults to software GL (a diagnostics dashboard does not need the
+  GPU), so `LINUX_DOCTOR_HARDWARE_GL=1` forces hardware rendering;
+- WebKit's DMA-BUF renderer is disabled (the usual cause of a white window), so
+  `WEBKIT_DISABLE_DMABUF_RENDERER=0` opts back in.
+
+**v0.8.0 and v0.8.1** — built on Ubuntu 22.04 (WebKitGTK 2.44). On a host with
+very new Mesa the web process aborts with
+`Could not create default EGL display: EGL_BAD_PARAMETER` and the window stays
+empty. On the machine where this was measured, `WEBKIT_DISABLE_DMABUF_RENDERER=1`,
+`LIBGL_ALWAYS_SOFTWARE=1`, `WEBKIT_DISABLE_COMPOSITING_MODE=1`, `EGL_PLATFORM=x11`
+/ `wayland` / `surfaceless`, `GDK_BACKEND=wayland`, `DRI_PRIME=0/1` and eleven
+combinations of them changed nothing. What does work:
+
+- upgrade to v0.8.2 or later, or
+- install the `.deb`/`.rpm`, or the [OBS package](#install--first-run-cli): those
+  use the WebKitGTK shipped by your distribution, which matches your host.
+
+This is about the host's driver stack, not the GPU brand: **AMD, Intel and
+nouveau** all run on Mesa and are equally exposed; NVIDIA's proprietary driver
+ships its own stack.
 </details>
 
 ## Install & first run (CLI)
@@ -161,6 +199,26 @@ previous one. Read-only by default: `--fix` prints a dry-run plan of
 commands sourced only from a small built-in safe-fix catalog, and running it
 needs a second opt-in (`--fix --yes`), and `[manual]` items always stay
 yours to run.
+
+## Which distributions?
+
+Two different claims, kept apart: the **checks** are tested in CI on clean
+images, and the **desktop app** is verified only where it has actually been
+launched.
+
+| Distribution | CLI checks | Desktop app | How it was verified |
+|---|---|---|---|
+| Fedora 42 / Bazzite | yes | AppImage, `.rpm`, OBS repo | CI container (checks); CLI and AppImage run by hand on Bazzite 44. The OBS repository publishes Fedora 42 only |
+| Debian / Ubuntu | yes | `.deb` | CI containers (Debian, Ubuntu); the `.deb` was built and its dependencies inspected |
+| Arch | yes | AppImage | CI container (checks only); the PKGBUILD is not published yet |
+| Alpine | yes | — | CI container (checks only) |
+
+"CI container" means the engine ran there and produced no unexpected high or
+medium finding on a clean image — a real test against false positives, and
+nothing more than that. It does **not** prove the desktop app renders on that
+distribution: the GUI is a Tauri/WebKit bundle and is only verified where it was
+actually started. If you run it somewhere not listed here, the report is still
+useful — that is what the [support bundle](#community) is for.
 
 ## What it checks
 
@@ -260,6 +318,20 @@ Questions, ideas and show-your-setup go to
 [GitHub Discussions](https://github.com/7sh1d0w7x/linux-doctor/discussions);
 bugs and check requests to [Issues](https://github.com/7sh1d0w7x/linux-doctor/issues).
 Contributions are welcome, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+**Think a finding is wrong?** That is the most useful report you can send. Run
+`linux-doctor --support`: it writes `linux-doctor-support-<timestamp>.json` in the
+current directory and prints the path. The bundle carries your distro, the
+findings, their evidence and a short history — with IP addresses and
+`/home/<user>` paths redacted, and the hostname and username left out entirely.
+What was removed is listed under `privacy.excluded`, and the full shape is in
+[docs/integrations.md](docs/integrations.md).
+
+Read it before you attach it, anyway. Open the JSON, look at
+`findings[].evidence` — that is where command output and paths live — and delete
+or edit anything you would rather not publish. Then attach it to the issue and
+say what you expected instead: "this says the disk is full, but `df -h` shows 40%
+free" is a report we can act on; "it's wrong" is not.
 
 ## Roadmap
 
