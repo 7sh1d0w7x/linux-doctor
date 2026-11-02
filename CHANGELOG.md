@@ -6,6 +6,36 @@ All notable changes to Linux Doctor are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.8.3] - 2026-11-03
+
+### Fixed
+
+- **The app reported software rendering on a working GPU.** The AppImage shell
+  sets `LIBGL_ALWAYS_SOFTWARE=1` for the webview, and the subprocess that runs
+  the checks inherited it: `gpu` asked Mesa which renderer was active, got
+  llvmpipe, and reported "GPU acceleration is not active (software rendering)"
+  as a medium finding on a machine whose GPU was fine. The shell's environment no
+  longer reaches the checks — a diagnostic should observe the system, not its own
+  workaround.
+- **Two routine journal lines were reported as unrecognized errors.** PipeWire
+  loses an ALSA device when the monitor sleeps (`iec958:0p: snd_pcm_drop: No such
+  device`) and dbus-broker cannot activate NetworkManager's dispatcher during
+  early boot; both reach priority err and both are routine. Thirty such lines on
+  a healthy desktop became an "unrecognized entries" finding.
+
+### Changed
+
+- **The baseline gate no longer judges the CI runner.** `disk/full` fired on the
+  runner's own `/__t` workspace at 83% and failed a pull request that had not
+  touched the disk check; `network/dns-slow` did the same with a latency
+  threshold. Both are host-dependent, like the other codes the gate already
+  tolerates.
+- **`docs/RELEASING.md` shows the real signature check.** Step 10 listed
+  `node scripts/verify-updater-signature.mjs` with no arguments; the script takes
+  the public key, the `.sig` and the signed file, so following the checklist only
+  printed usage.
+- Dependency updates: the cargo minor-patch group and `@tauri-apps/cli`.
+
 ## [0.8.2] - 2026-10-31
 
 ### Fixed
@@ -1232,7 +1262,8 @@ All notable changes to Linux Doctor are documented here. The format follows
 - `tests/web.test.js` flaked (server banner corrupted the TAP stream) —
   `startWeb` gained a `quiet` option used by tests.
 
-[Unreleased]: https://github.com/7sh1d0w7x/linux-doctor/compare/v0.8.2...HEAD
+[Unreleased]: https://github.com/7sh1d0w7x/linux-doctor/compare/v0.8.3...HEAD
+[0.8.3]: https://github.com/7sh1d0w7x/linux-doctor/compare/v0.8.2...v0.8.3
 [0.8.2]: https://github.com/7sh1d0w7x/linux-doctor/compare/v0.8.1...v0.8.2
 [0.8.1]: https://github.com/7sh1d0w7x/linux-doctor/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/7sh1d0w7x/linux-doctor/compare/v0.7.3...v0.8.0

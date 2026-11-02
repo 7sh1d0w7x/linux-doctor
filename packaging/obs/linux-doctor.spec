@@ -2,7 +2,7 @@
 # Source0 is the npm tarball attached to the GitHub release; it extracts to a
 # `package/` directory, hence -n package.
 Name:           linux-doctor
-Version:        0.8.2
+Version:        0.8.3
 Release:        1%{?dist}
 Summary:        Read-only health checks for your Linux system
 License:        GPL-3.0-or-later
@@ -32,6 +32,9 @@ chmod 0755 %{buildroot}%{_libdir}/linux-doctor/bin/doctor.js
 %{_bindir}/linux-doctor
 
 %changelog
+* Mon, Nov 02, 2026 7sh1d0w7x <zshadow7x@users.noreply.github.com> - 0.8.3-1
+- Sync to 0.8.3
+
 * Fri, Oct 30, 2026 7sh1d0w7x <zshadow7x@users.noreply.github.com> - 0.8.2-1
 - Sync to 0.8.2
 
