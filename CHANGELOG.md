@@ -22,6 +22,13 @@ All notable changes to Linux Doctor are documented here. The format follows
   device`) and dbus-broker cannot activate NetworkManager's dispatcher during
   early boot; both reach priority err and both are routine. Thirty such lines on
   a healthy desktop became an "unrecognized entries" finding.
+- **The first run claimed "34 unchanged" with no history at all.** The diff
+  between runs returned "everything unchanged" when there was no previous run to
+  compare against, so a brand-new install greeted the user with a statement that
+  could not be true. It now says `SINCE LAST RUN   first run — no baseline to
+  compare against` (and `# since: first run (no baseline)` under `--plain`), with
+  `diffSinceLast.firstRun` in the JSON. A second run still reports changes
+  normally.
 
 ### Changed
 
