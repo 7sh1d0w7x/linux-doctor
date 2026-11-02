@@ -79,6 +79,7 @@ export const reportSchema = {
         added: { type: "array", items: { $ref: "#/definitions/briefFinding" } },
         fixed: { type: "array", items: { $ref: "#/definitions/briefFinding" } },
         unchanged: { type: "integer", minimum: 0, description: "current findings whose key also appeared in the previous run" },
+        firstRun: { type: "boolean", description: "true when there was no previous run to compare against, so added/fixed/unchanged are all zero" },
       },
     },
     historyDisabled: {

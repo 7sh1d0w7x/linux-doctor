@@ -131,8 +131,11 @@ test("newFindings: matches by code when present, so volatile titles do not churn
   assert.deepEqual(fresh.map((f) => f.title), ["1 service failed to start"]);
 });
 
-test("diffSinceLast: no previous run means nothing changed", () => {
-  assert.deepEqual(diffSinceLast([{ title: "X" }], []), { added: [], fixed: [], unchanged: 1 });
+test("diffSinceLast: no previous run is a first run, not everything unchanged", () => {
+  // The first run used to report "34 unchanged" on a machine with no history at
+  // all. "unchanged" means "also present in the previous run" (schema.js says
+  // exactly that), so with no previous run the only honest count is zero.
+  assert.deepEqual(diffSinceLast([{ title: "X" }], []), { added: [], fixed: [], unchanged: 0, firstRun: true });
 });
 
 test("diffSinceLast: reports unchanged as the third count", () => {

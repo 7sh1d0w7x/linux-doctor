@@ -761,7 +761,7 @@ function printIgnoreLists(titles, codes) {
         newCount: 0,
         fixedCount: 0,
         unchanged: 0,
-        diffSinceLast: { added: [], fixed: [], unchanged: data.findings.length },
+        diffSinceLast: { added: [], fixed: [], unchanged: 0 },
         historyDisabled: historyOff,
         changeMessage: null,
         historyRuns: [],
@@ -1146,13 +1146,13 @@ function printIgnoreLists(titles, codes) {
   }
 
   if (args.plain) {
-    let out = renderPlain(displayFindings, { system, score: sc, scoreBreakdown: report.scoreBreakdown, scoreDelta: report.scoreDelta, newCount, fixedCount: report.fixedCount, unchanged: report.unchanged, ignoredCount: report.ignoredCount, checkErrors: report.checkErrors, checksRun: report.checksRun, checksSkipped: report.checksSkipped, checksAtomicSkipped: report.checksAtomicSkipped, skippedChecks: report.skippedChecks, historyDisabled: report.historyDisabled, history: report.historyRuns });
+    let out = renderPlain(displayFindings, { system, score: sc, scoreBreakdown: report.scoreBreakdown, scoreDelta: report.scoreDelta, newCount, fixedCount: report.fixedCount, unchanged: report.unchanged, ignoredCount: report.ignoredCount, checkErrors: report.checkErrors, checksRun: report.checksRun, checksSkipped: report.checksSkipped, checksAtomicSkipped: report.checksAtomicSkipped, skippedChecks: report.skippedChecks, historyDisabled: report.historyDisabled, firstRun: report.diffSinceLast?.firstRun === true, history: report.historyRuns });
     if (args.profile) out += "\n" + formatPlainDurations(report.checkDurations);
     console.log(out);
     return findings.some((f) => f.severity === "high" || f.severity === "medium") ? 1 : 0;
   }
 
-  let out = await renderReport(displayFindings, { aiSummary: summary, system, score: sc, scoreBreakdown: report.scoreBreakdown, scoreDelta: report.scoreDelta, newCount, fixedCount: report.fixedCount, unchanged: report.unchanged, ignoredCount: report.ignoredCount, checkErrors: report.checkErrors, checksRun: report.checksRun, checksSkipped: report.checksSkipped, checksAtomicSkipped: report.checksAtomicSkipped, skippedChecks: report.skippedChecks, historyDisabled: report.historyDisabled, changeMessage: report.changeMessage, history: report.historyRuns, categoryByCheck });
+  let out = await renderReport(displayFindings, { aiSummary: summary, system, score: sc, scoreBreakdown: report.scoreBreakdown, scoreDelta: report.scoreDelta, newCount, fixedCount: report.fixedCount, unchanged: report.unchanged, ignoredCount: report.ignoredCount, checkErrors: report.checkErrors, checksRun: report.checksRun, checksSkipped: report.checksSkipped, checksAtomicSkipped: report.checksAtomicSkipped, skippedChecks: report.skippedChecks, historyDisabled: report.historyDisabled, firstRun: report.diffSinceLast?.firstRun === true, changeMessage: report.changeMessage, history: report.historyRuns, categoryByCheck });
   if (args.profile) out += "\n" + formatDurations(report.checkDurations);
   console.log(out);
   return findings.some((f) => f.severity === "high" || f.severity === "medium") ? 1 : 0;
