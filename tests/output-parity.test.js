@@ -36,6 +36,14 @@ const OPTS = {
   diffSinceLast: DIFF,
 };
 
+test("parity: a first run says so instead of claiming everything is unchanged", async () => {
+  // First contact with the tool: no history, so nothing can be "unchanged".
+  const pretty = await renderReport(FINDINGS, { ...OPTS, firstRun: true });
+  const plain = renderPlain(FINDINGS, { ...OPTS, firstRun: true });
+  assert.match(pretty, /SINCE LAST RUN   first run — no baseline to compare against/);
+  assert.match(plain, /^# since: first run \(no baseline\)$/m);
+});
+
 test("parity: CLI, --plain and --json carry the same new/fixed/unchanged", async () => {
   const pretty = await renderReport(FINDINGS, { ...OPTS });
   const plain = renderPlain(FINDINGS, { ...OPTS });

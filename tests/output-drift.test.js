@@ -77,7 +77,10 @@ test("drift: nested object keys match their schema sections too", () => {
     assert.deepEqual(bad, [], `system keys not in schema: ${bad.join(", ")}`);
   }
   if (payload.diffSinceLast) {
-    const diffAllowed = new Set(["added", "fixed", "unchanged"]);
+    // Derived from the schema, not hardcoded: a hardcoded list silently drifts
+    // from the schema it is supposed to check (it rejected `firstRun` while
+    // schema.js already declared it).
+    const diffAllowed = new Set(Object.keys(reportSchema.properties.diffSinceLast.properties));
     const bad = Object.keys(payload.diffSinceLast).filter((k) => !diffAllowed.has(k));
     assert.deepEqual(bad, [], `diffSinceLast keys not in schema: ${bad.join(", ")}`);
   }

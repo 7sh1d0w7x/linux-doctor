@@ -69,7 +69,7 @@ function firstSentence(text) {
 }
 
 /** Render the full terminal report in American English. */
-export async function renderReport(findings, { aiSummary, system, score, scoreDelta, scoreBreakdown = [], newCount, fixedCount, unchanged = 0, ignoredCount = 0, checkErrors = [], checksRun, checksSkipped, checksAtomicSkipped = 0, skippedChecks = [], historyDisabled = false, changeMessage = null, history = [], categoryByCheck = null } = {}) {
+export async function renderReport(findings, { aiSummary, system, score, scoreDelta, scoreBreakdown = [], newCount, fixedCount, unchanged = 0, ignoredCount = 0, checkErrors = [], checksRun, checksSkipped, checksAtomicSkipped = 0, skippedChecks = [], historyDisabled = false, changeMessage = null, history = [], categoryByCheck = null, firstRun = false } = {}) {
   // system is required — the caller (cli.js) always has it; re-running
   // systemInfo() here would waste a handful of subprocess spawns.
   const info = system;
@@ -135,7 +135,9 @@ export async function renderReport(findings, { aiSummary, system, score, scoreDe
     out.push(`TREND    ${spark(scored.map((r) => r.score))}  last ${scored.length} run(s) · ${first} → ${last} ${dir}`);
   }
   // Lead with change — the product's differentiator: what's new, fixed, same.
-  if (!historyDisabled) {
+  if (firstRun && !historyDisabled) {
+    out.push("SINCE LAST RUN   first run — no baseline to compare against");
+  } else if (!historyDisabled) {
     const chg = [];
     if (newCount > 0) chg.push(`${newCount} new`);
     if (fixedCount > 0) chg.push(`${fixedCount} fixed`);
@@ -273,7 +275,7 @@ export function renderTodo(findings) {
  * Metadata goes to `#` comment lines; each finding is one row of
  * `severity<TAB>number<TAB>title`, with `detail`/`fix` rows right after it.
  */
-export function renderPlain(findings, { system, score, scoreBreakdown = [], scoreDelta, newCount, fixedCount, unchanged = 0, ignoredCount = 0, checkErrors = [], checksRun, checksSkipped, checksAtomicSkipped = 0, skippedChecks = [], historyDisabled = false, history = [] } = {}) {
+export function renderPlain(findings, { system, score, scoreBreakdown = [], scoreDelta, newCount, fixedCount, unchanged = 0, ignoredCount = 0, checkErrors = [], checksRun, checksSkipped, checksAtomicSkipped = 0, skippedChecks = [], historyDisabled = false, history = [], firstRun = false } = {}) {
   const flat = (s) => String(s ?? "").replace(/\t/g, " ").replace(/\s*\n\s*/g, " | ").trim();
   const out = [];
   out.push("# linux-doctor");
@@ -291,6 +293,7 @@ export function renderPlain(findings, { system, score, scoreBreakdown = [], scor
   if (newCount > 0) out.push(`# new: ${newCount}`);
   if (fixedCount > 0) out.push(`# fixed: ${fixedCount}`);
   if (historyDisabled) out.push("# history: disabled (--no-history)");
+  else if (firstRun) out.push("# since: first run (no baseline)");
   else if (newCount > 0 || fixedCount > 0 || unchanged > 0) out.push(`# since: ${newCount} new, ${fixedCount} fixed, ${unchanged} unchanged`);
   if (ignoredCount > 0) out.push(`# ignored: ${ignoredCount}`);
   if (typeof checksRun === "number") out.push(`# checks: ${checksRun}${checksSkipped > 0 ? ` (${checksSkipped} skipped)` : ""}${checksAtomicSkipped > 0 ? ` (${checksAtomicSkipped} not-applicable)` : ""}`);

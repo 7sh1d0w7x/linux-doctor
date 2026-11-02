@@ -184,7 +184,14 @@ export function newFindings(findings, runs) {
  */
 export function diffSinceLast(findings, runs) {
   const prev = runs[runs.length - 1];
-  if (!prev || !Array.isArray(prev.findings)) return { added: [], fixed: [], unchanged: findings.length };
+  // No previous run: nothing can be "unchanged", because unchanged means "also
+  // present in the previous run". Returning findings.length here made the very
+  // first run print "SINCE LAST RUN 34 unchanged" on a machine with no history —
+  // a false statement in the first output a new user ever sees. schema.js
+  // already defines the field that way.
+  if (!prev || !Array.isArray(prev.findings)) {
+    return { added: [], fixed: [], unchanged: 0, firstRun: true };
+  }
   const sets = matchSets(prev.findings);
   return {
     added: findings.filter((f) => !hadFinding(f, sets)).map((f) => ({ code: f.code ?? f.title, severity: f.severity, title: f.title })),
