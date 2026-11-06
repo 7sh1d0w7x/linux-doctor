@@ -1055,7 +1055,7 @@ test("processes: a single app over 20% of RAM is flagged medium", async () => {
   const ctx = stubCtx({
     // ps -o rss reports KiB: 4000000 KiB ≈ 3.8 GB of 15 GB (~25%).
     "command -v ps 2>/dev/null": "/usr/bin/ps\n",
-    "ps -eo rss,args 2>/dev/null": `4000000 brave\n800000 firefox\n500000 plasma\n`,
+    "ps -eo pid=,rss=,args= 2>/dev/null": `1 4000000 brave\n2 800000 firefox\n3 500000 plasma\n`,
     "free -b": `              total        used        free      shared  buff/cache   available\nMem:    16106127360 12000000000   500000000    500000000  4718592000   1500000000\nSwap:   8267812045         0 8267812045`,
   });
   const findings = await processes.run(ctx);
@@ -1068,7 +1068,7 @@ test("processes: a single app over 40% of RAM is flagged medium", async () => {
   const ctx = stubCtx({
     // 8000000 KiB ≈ 7.6 GB of 15 GB (~50%).
     "command -v ps 2>/dev/null": "/usr/bin/ps\n",
-    "ps -eo rss,args 2>/dev/null": `8000000 brave\n800000 firefox\n500000 plasma\n`,
+    "ps -eo pid=,rss=,args= 2>/dev/null": `1 8000000 brave\n2 800000 firefox\n3 500000 plasma\n`,
     "free -b": `              total        used        free      shared  buff/cache   available\nMem:    16106127360 14000000000   500000000    500000000  4718592000   1500000000\nSwap:   8267812045         0 8267812045`,
   });
   const findings = await processes.run(ctx);
@@ -1084,7 +1084,7 @@ test("processes: RSS is summed per app, so a multi-process app is not split", as
   // (19.1%) stayed under the warn threshold, so the split hid the footprint.
   const ctx = stubCtx({
     "command -v ps 2>/dev/null": "/usr/bin/ps\n",
-    "ps -eo rss,args 2>/dev/null": `3000000 brave --type=renderer\n1500000 brave\n800000 firefox\n`,
+    "ps -eo pid=,rss=,args= 2>/dev/null": `1 3000000 brave --type=renderer\n2 1500000 brave\n3 800000 firefox\n`,
     "free -b": `              total        used        free      shared  buff/cache   available\nMem:    16106127360 12000000000   500000000    500000000  4718592000   1500000000\nSwap:   8267812045         0 8267812045`,
   });
   const findings = await processes.run(ctx);
@@ -1094,13 +1094,46 @@ test("processes: RSS is summed per app, so a multi-process app is not split", as
 });
 
 
+test("processes: shared pages count once via PSS, not once per process", async () => {
+  // The false positive that started this: 64 Brave processes summed to 8.19 GB
+  // of RSS while their unique footprint (PSS) was 4.16 GB — 53% against the 40%
+  // threshold became 27%, below it. With PSS the check must not claim the app is
+  // "using 8 GB of 15.4 GB".
+  const ctx = stubCtx({
+    "command -v ps 2>/dev/null": "/usr/bin/ps\n",
+    "ps -eo pid=,rss=,args= 2>/dev/null": `1 8000000 brave --type=renderer\n2 4000000 brave --type=gpu\n3 1000000 firefox\n`,
+    "grep -m1 -H '^Pss:' /proc/[0-9]*/smaps_rollup 2>/dev/null":
+      "/proc/1/smaps_rollup:Pss:\t1800000 kB\n/proc/2/smaps_rollup:Pss:\t900000 kB\n/proc/3/smaps_rollup:Pss:\t400000 kB\n",
+    "free -b": `              total        used        free      shared  buff/cache   available\nMem:    16106127360 14000000000   500000000    500000000  4718592000   1500000000\nSwap:   8267812045         0 8267812045`,
+  });
+  const findings = await processes.run(ctx);
+  // brave: 2.7M KiB PSS ≈ 2.6 GB ≈ 17% of RAM, under the 20% warn threshold,
+  // though its summed RSS (12M KiB ≈ 11.4 GB ≈ 71%) would have been "huge".
+  assert.equal(findings[0].code, "processes/ok", `PSS must be used when present: ${JSON.stringify(findings.map((f) => f.code))}`);
+  const braveRows = findings[0].evidence.split("\n").filter((l) => /^brave\t/.test(l));
+  assert.equal(braveRows.length, 1);
+});
+
+
+test("processes: unreadable smaps_rollup falls back to RSS", async () => {
+  const ctx = stubCtx({
+    "command -v ps 2>/dev/null": "/usr/bin/ps\n",
+    "ps -eo pid=,rss=,args= 2>/dev/null": `1 8000000 brave\n2 800000 firefox\n`,
+    // grep prints nothing: another user's processes, or an old kernel
+    "free -b": `              total        used        free      shared  buff/cache   available\nMem:    16106127360 14000000000   500000000    500000000  4718592000   1500000000\nSwap:   8267812045         0 8267812045`,
+  });
+  const findings = await processes.run(ctx);
+  assert.equal(findings[0].code, "processes/high", "without PSS the RSS path must still work");
+});
+
+
 test("processes: a large app on a box with free RAM is informational, not a warning", async () => {
   // The false alarm a 15GB box got: Brave at ~19% while 9.4GB was free. Here
   // the top app is 5M KiB ≈ 32% of RAM, over the 20% warn threshold, but 58%
   // of RAM is available — so it is the top consumer, not a problem.
   const ctx = stubCtx({
     "command -v ps 2>/dev/null": "/usr/bin/ps\n",
-    "ps -eo rss,args 2>/dev/null": `5000000 brave\n800000 firefox\n`,
+    "ps -eo pid=,rss=,args= 2>/dev/null": `1 5000000 brave\n2 800000 firefox\n`,
     "free -b": `              total        used        free      shared  buff/cache   available\nMem:    16106127360  6000000000  5000000000    147000000  4900000000   9400000000\nSwap:   8267812045         0 8267812045`,
   });
   const findings = await processes.run(ctx);
@@ -1111,7 +1144,7 @@ test("processes: a large app on a box with free RAM is informational, not a warn
 test("processes: healthy memory usage produces an info finding", async () => {
   const ctx = stubCtx({
     "command -v ps 2>/dev/null": "/usr/bin/ps\n",
-    "ps -eo rss,args 2>/dev/null": `500000 plasma\n400000 firefox\n300000 brave\n`,
+    "ps -eo pid=,rss=,args= 2>/dev/null": `1 500000 plasma\n2 400000 firefox\n3 300000 brave\n`,
     "free -b": `              total        used        free      shared  buff/cache   available\nMem:    16106127360  5000000000 1000000000  300000000  7000000000  11000000000\nSwap:   8267812045         0 8267812045`,
   });
   const findings = await processes.run(ctx);

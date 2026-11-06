@@ -83,7 +83,18 @@ export const backup = defineCheck({
     // silent failure in self-hosting ("stopped in March, found in
     // September"). LastTriggerUSec is 0 for a timer that never triggered;
     // an unreadable value (non-systemd) means "unknown", never "stale".
+    //
+    // But 0 is also what every non-Persistent timer reports after a reboot,
+    // because systemd resets the property at boot and only fills it in when the
+    // timer first elapses. Read as "never ran" that produced a medium about
+    // backups on a healthy machine every time it rebooted before the timer's
+    // first elapse — observed on a desktop whose daily timer fired at noon,
+    // flagged from boot until then. The evidence for a broken timer is not
+    // "no trigger since boot"; it is "no trigger for longer than the stale
+    // window while the machine was up the whole time".
     const staleLimit = ctx.thresholds.backupStaleDays ?? 30;
+    const up = await ctx.run("cat /proc/uptime 2>/dev/null");
+    const uptimeDays = Number((up.stdout || "").trim().split(/\s+/)[0]) / 86400;
     const stale = [];
     for (const name of timerNames) {
       const show = await ctx.run(`systemctl show ${shq(name)} -p LastTriggerUSec --value 2>/dev/null`);
@@ -91,7 +102,11 @@ export const backup = defineCheck({
       const usec = Number(show.stdout.trim());
       if (!Number.isFinite(usec)) continue;
       if (usec === 0) {
-        stale.push(`${name} (scheduled but never ran)`);
+        // Uptime unknown means "unknown", for the same reason an unreadable
+        // trigger value does: never turn missing evidence into an alarm.
+        if (Number.isFinite(uptimeDays) && uptimeDays > staleLimit) {
+          stale.push(`${name} (scheduled but never ran in ${Math.floor(uptimeDays)} days up)`);
+        }
       } else {
         const days = (Date.now() - usec / 1000) / 86400000;
         if (days > staleLimit) stale.push(`${name} (last ran ${Math.floor(days)} days ago)`);

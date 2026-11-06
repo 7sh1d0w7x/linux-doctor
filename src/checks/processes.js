@@ -27,7 +27,14 @@ export const processes = defineCheck({
   async run(ctx) {
     const findings = [];
     const t = ctx.thresholds;
-    const [psRes, memRes] = await Promise.all([ctx.run(`ps -eo rss,args 2>/dev/null`), ctx.run(`free -b`),
+    const [psRes, memRes, pssRes] = await Promise.all([
+      ctx.run(`ps -eo pid=,rss=,args= 2>/dev/null`),
+      ctx.run(`free -b`),
+      // `Pss` is share-aware: a page mapped by twenty renderers is divided
+      // between them instead of counted twenty times. smaps_rollup is readable
+      // for the caller's own processes — exactly where a browser's footprint
+      // lives — and anything unreadable falls back to RSS below.
+      ctx.run(`grep -m1 -H '^Pss:' /proc/[0-9]*/smaps_rollup 2>/dev/null`),
     ]);
     if (psRes.missing) {
       findings.push(finding({
@@ -43,35 +50,42 @@ export const processes = defineCheck({
     }
     if (!psRes.ok) return findings;
 
-    // `ps -o rss` leaves a "RSS" header line even when args= suppresses its
-    // own header — without filtering the first parsed row was
-    // { name: "RSS", rss: 0 } and the real top process was shifted out.
-    // rss= would suppress it but breaks the existing test stubs, so filter.
-    // Sum RSS per app, not per process: a multi-process app (Brave, Chrome,
-    // Firefox) spreads its memory across processes that share one binary, so
-    // listing them separately both repeated the name ("brave" twice) and
-    // reported a single process as if it were the app's footprint. This is the
-    // browser case the check exists for.
+    // A multi-process app (Brave, Chrome, Firefox) spreads its memory across
+    // processes that share one binary, so the app's footprint is the sum over
+    // its processes — but summing RSS counted every shared page once per
+    // process. On a real machine 64 Brave processes summed to 8.19 GB of
+    // resident memory while their unique footprint (PSS) was 4.16 GB: almost
+    // exactly 2x, and enough to cross the 40% threshold on its own. PSS is
+    // used whenever the kernel exposes it; RSS is the per-process fallback for
+    // processes smaps_rollup will not open (another user's, or an old kernel).
+    const pssByPid = new Map();
+    for (const l of lines(pssRes.stdout || "")) {
+      const m = /^\/proc\/(\d+)\/smaps_rollup:Pss:\s*(\d+)\s*kB/.exec(l.trim());
+      if (m) pssByPid.set(m[1], Number(m[2]) * 1024);
+    }
     const byApp = new Map();
-    for (const l of lines(psRes.stdout).filter((l) => !/^\s*RSS\b/i.test(l))) {
+    for (const l of lines(psRes.stdout)) {
       const parts = l.trim().split(/\s+/);
-      // rss first, args last: `args` is the full command line and may contain
-      // spaces, and rss-first is the only order that works on both procps and
+      // pid first, args last: `args` is the full command line and may contain
+      // spaces, and args-last is the only order that works on both procps and
       // busybox. busybox ignores the column after `args=`, so `args=,rss`
       // dropped the number and Alpine read the command's last word as rss.
       // `ps` reports rss in KiB; convert to bytes so the ratio vs `free -b`
       // (bytes) is correct and fmtBytes displays real units.
-      const rss = num(parts[0]) * 1024;
-      if (rss <= 0) continue;
+      const pid = parts[0];
+      if (!/^\d+$/.test(pid || "")) continue;
+      const rss = num(parts[1]) * 1024;
+      const bytes = pssByPid.has(pid) ? pssByPid.get(pid) : rss;
+      if (bytes <= 0) continue;
       // The binary is the first token of args, not truncated the way `comm` is
       // ("QtWebEngineProcess" would arrive as "QtWebEngineProc").
-      const bin = parts[1] ? parts[1].split("/").pop() : "unknown";
+      const bin = parts[2] ? parts[2].split("/").pop() : "unknown";
       const name = bin || "unknown";
-      byApp.set(name, (byApp.get(name) || 0) + rss);
+      byApp.set(name, (byApp.get(name) || 0) + bytes);
     }
     const rows = [...byApp.entries()]
-      .map(([name, rss]) => ({ name, rss }))
-      .sort((a, b) => b.rss - a.rss)
+      .map(([name, bytes]) => ({ name, bytes }))
+      .sort((a, b) => b.bytes - a.bytes)
       .slice(0, 3);
     if (rows.length === 0) return findings;
 
@@ -90,25 +104,25 @@ export const processes = defineCheck({
     // was free.
     const tight = availRatio < t.memWarnRatio;
     const top = rows[0];
-    const ratio = total > 0 ? top.rss / total : 0;
+    const ratio = total > 0 ? top.bytes / total : 0;
 
-    if (tight && top.rss > 0 && ratio > t.procHighRatio) {
+    if (tight && top.bytes > 0 && ratio > t.procHighRatio) {
       findings.push(finding({
         severity: "medium",
         code: "processes/high",
         title: "A single app is using a huge amount of memory",
-        detail: `${FRIENDLY[top.name] || `The \`${top.name}\` process`} is using ${fmtBytes(top.rss)}, which is more than 40% of your total RAM. This is very likely why the system feels slow.`,
-        evidence: rows.map((r) => `${r.name}\t${fmtBytes(r.rss)}`).join("\n"),
+        detail: `${FRIENDLY[top.name] || `The \`${top.name}\` process`} is using ${fmtBytes(top.bytes)}, which is more than 40% of your total RAM. This is very likely why the system feels slow.`,
+        evidence: rows.map((r) => `${r.name}\t${fmtBytes(r.bytes)}`).join("\n"),
         fix: "Close unused tabs or quit that app now, then re-run this check.",
         confidence: "high",
       }));
-    } else if (tight && top.rss > 0 && ratio > t.procWarnRatio) {
+    } else if (tight && top.bytes > 0 && ratio > t.procWarnRatio) {
       findings.push(finding({
         severity: "medium",
         code: "processes/warn",
         title: "A single app is using a lot of memory",
-        detail: `${FRIENDLY[top.name] || `The \`${top.name}\` process`} is using ${fmtBytes(top.rss)}, which is more than 20% of your total RAM. This is the most likely reason the system feels slow.`,
-        evidence: rows.map((r) => `${r.name}\t${fmtBytes(r.rss)}`).join("\n"),
+        detail: `${FRIENDLY[top.name] || `The \`${top.name}\` process`} is using ${fmtBytes(top.bytes)}, which is more than 20% of your total RAM. This is the most likely reason the system feels slow.`,
+        evidence: rows.map((r) => `${r.name}\t${fmtBytes(r.bytes)}`).join("\n"),
         fix: "Close unused tabs or quit that app and re-run this check.",
         confidence: "high",
       }));
@@ -118,7 +132,7 @@ export const processes = defineCheck({
         code: "processes/ok",
         title: "Top memory consumers",
         detail: "The largest memory users right now are listed below. This is normal unless the system is under pressure.",
-        evidence: rows.map((r) => `${r.name}\t${fmtBytes(r.rss)}`).join("\n"),
+        evidence: rows.map((r) => `${r.name}\t${fmtBytes(r.bytes)}`).join("\n"),
         fix: null,
         confidence: "high",
       }));

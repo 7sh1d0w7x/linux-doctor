@@ -158,12 +158,42 @@ const BACKUP_BASE = {
 };
 
 test("backup/stale: a scheduled timer that never ran is medium", async () => {
-  const ctx = stubCtx({ ...BACKUP_BASE, "systemctl show borg-backup.timer -p LastTriggerUSec --value 2>/dev/null": "0\n" });
+  const ctx = stubCtx({
+    ...BACKUP_BASE,
+    "systemctl show borg-backup.timer -p LastTriggerUSec --value 2>/dev/null": "0\n",
+    // 46 days up: "no trigger since boot" really is "never ran" here.
+    "cat /proc/uptime 2>/dev/null": "4000000.00 12345.67\n",
+  });
   const findings = await backup.run(ctx);
   const stale = findings.find((f) => f.code === "backup/stale");
   assert.ok(stale, "expected a backup/stale finding");
   assert.equal(stale.severity, "medium");
   assert.match(stale.detail, /never ran/);
+});
+
+test("backup/stale: a timer that has not fired since boot is not stale", async () => {
+  // LastTriggerUSec is a runtime property: systemd resets it to 0 at boot for
+  // a timer that is not Persistent=true, and fills it in at the first elapse.
+  // Reading 0 as "never ran" flagged a healthy desktop every time it rebooted
+  // before its daily timer fired.
+  const ctx = stubCtx({
+    ...BACKUP_BASE,
+    "systemctl show borg-backup.timer -p LastTriggerUSec --value 2>/dev/null": "0\n",
+    "cat /proc/uptime 2>/dev/null": "7200.00 12345.67\n", // 2 hours up
+  });
+  const findings = await backup.run(ctx);
+  assert.ok(!findings.some((f) => f.code === "backup/stale"), "a fresh boot is not a broken backup");
+  assert.ok(findings.some((f) => f.code === "backup/ok"));
+});
+
+test("backup/stale: unknown uptime is unknown, not stale", async () => {
+  const ctx = stubCtx({
+    ...BACKUP_BASE,
+    "systemctl show borg-backup.timer -p LastTriggerUSec --value 2>/dev/null": "0\n",
+    // no /proc/uptime stub: the value cannot be read
+  });
+  const findings = await backup.run(ctx);
+  assert.ok(!findings.some((f) => f.code === "backup/stale"));
 });
 
 test("backup/stale: a timer that last ran 40 days ago is medium", async () => {
