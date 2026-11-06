@@ -6,6 +6,47 @@ All notable changes to Linux Doctor are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.8.4] - 2026-11-06
+
+### Fixed
+
+- **A freshly booted machine was told its backups were broken.** `systemctl`
+  resets `LastTriggerUSec` to 0 at boot for a timer that is not
+  `Persistent=true`, so the property reads "never ran" until the timer first
+  elapses — a daily timer produced a medium `backup/stale` from boot until
+  noon, then cleared itself when it ran. Zero is now only evidence when the
+  machine has been up longer than the stale window; an unreadable uptime stays
+  unknown, like an unreadable trigger value.
+
+- **A browser's memory was reported at roughly twice its real size.** The
+  check summed RSS across every process of an app, which counts each shared
+  page once per process: 64 Brave processes measured 8.19 GB of RSS against
+  4.16 GB of unique memory (PSS), turning 27% of RAM into 53% and crossing the
+  40% threshold on its own. PSS is used whenever the kernel exposes it, with
+  RSS as the per-process fallback, so a shared library is counted once. Anyone
+  who saw a `processes/high` or `processes/warn` finding before will now see
+  the smaller, real number.
+
+- **The support bundle leaked the hostname and account name.** It promised "no
+  hostnames, usernames" and redacted IP literals and `/home/<user>` paths, but
+  a hostname inside a unit name, or a username in a path outside `/home`, went
+  through untouched — nothing in the code knew what either one was. Both are
+  now redacted wherever they appear in the bundle, except when the hostname is
+  already part of the distro name (on stock Bazzite the hostname *is* the
+  distro name, and rewriting it would break the one field a maintainer needs).
+
+- **zram swap was described as disk swapping.** "6.6 GB is being pushed to
+  swap" appeared next to a `zram/ok` finding saying the compressed swap was
+  healthy. Swap backed by zram is compressed RAM, not I/O pressure; the
+  sentence now says that, and swap on a real block device keeps the old
+  wording.
+
+- **An unwritable state directory could hang the whole scan.** Node's
+  recursive `mkdir` never returns on procfs instead of failing, so
+  `XDG_CACHE_HOME` or `XDG_DATA_HOME` pointing into `/proc` froze the run
+  (>45 s, no progress). A write aimed at procfs or sysfs now fails
+  immediately, like any other unwritable directory.
+
 ## [0.8.3] - 2026-11-03
 
 ### Fixed
