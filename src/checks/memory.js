@@ -83,15 +83,25 @@ export const memory = defineCheck({
     const swap = await ctx.run("swapon --show --bytes");
     let swapUsed = 0;
     let swapTotal = 0;
+    const swapDevices = [];
     if (swap.ok) {
       for (const l of lines(swap.stdout).slice(1)) {
         const p = l.split(/\s+/);
+        if (p[0]) swapDevices.push(p[0]);
         swapTotal += num(p[2]);
         swapUsed += num(p[3]);
       }
     }
+    // zram is compressed RAM, not a disk. "Being pushed to swap" describes disk
+    // I/O pressure that is not happening, and the same report already says the
+    // zram is healthy — two sentences contradicting each other.
+    const zramOnly = swapDevices.length > 0 && swapDevices.every((d) => /zram/i.test(d));
 
-    const swapped = swapUsed > 0 ? ` and ${fmtBytes(swapUsed)} is being pushed to swap` : "";
+    const swapped = swapUsed > 0
+      ? zramOnly
+        ? ` and ${fmtBytes(swapUsed)} is held in compressed zram swap`
+        : ` and ${fmtBytes(swapUsed)} is being pushed to swap`
+      : "";
     if (severity) {
       findings.push(finding({
         severity,
@@ -107,7 +117,9 @@ export const memory = defineCheck({
         severity: "info",
         code: "memory/swap",
         title: "Swap is in use",
-        detail: `${fmtBytes(swapUsed)} of ${fmtBytes(swapTotal)} swap is in use. Some swap activity is normal, but sustained swapping means the system is tight on memory.`,
+        detail: zramOnly
+          ? `${fmtBytes(swapUsed)} of ${fmtBytes(swapTotal)} compressed zram swap is in use. zram lives in RAM, so this is compression, not disk I/O.`
+          : `${fmtBytes(swapUsed)} of ${fmtBytes(swapTotal)} swap is in use. Some swap activity is normal, but sustained swapping means the system is tight on memory.`,
         evidence: lines(swap.stdout).join("\n"),
         fix: "If apps feel slow, close memory-heavy apps and re-run this check.",
         confidence: "high",

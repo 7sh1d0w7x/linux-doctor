@@ -112,6 +112,26 @@ test("memory: configurable thresholds are honored", async () => {
   assert.equal(findings[0].severity, "medium");
 });
 
+test("memory: zram swap is described as compressed RAM, not as disk swap", async () => {
+  const ctx = stubCtx({
+    "free -b": `              total        used        free      shared  buff/cache   available\nMem:    16106127360 12884901888   500000000    500000000  4718592000   1500000000\nSwap:   8267812045 2362232012 5905580033`,
+    "swapon --show --bytes": `NAME      TYPE      SIZE      USED      PRIO\n/dev/zram0 partition 8267812045 2362232012  100`,
+  });
+  const f = (await memory.run(ctx)).find((x) => x.code === "memory/low");
+  assert.ok(f, "expected the memory/low finding");
+  assert.match(f.detail, /compressed zram swap/);
+  assert.doesNotMatch(f.detail, /pushed to swap/, "zram is not disk I/O");
+});
+
+test("memory: swap on a real block device is still described as swapping", async () => {
+  const ctx = stubCtx({
+    "free -b": `              total        used        free      shared  buff/cache   available\nMem:    16106127360 12884901888   500000000    500000000  4718592000   1500000000\nSwap:   8267812045 2362232012 5905580033`,
+    "swapon --show --bytes": `NAME      TYPE      SIZE      USED      PRIO\n/dev/sda2 partition 8267812045 2362232012  100`,
+  });
+  const f = (await memory.run(ctx)).find((x) => x.code === "memory/low");
+  assert.match(f.detail, /pushed to swap/);
+});
+
 test("load: overloaded CPU is flagged", async () => {
   const ctx = stubCtx({
     "cat /proc/loadavg": "8.50 6.00 4.00 2/300 1234",

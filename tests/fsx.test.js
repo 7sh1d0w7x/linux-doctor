@@ -59,3 +59,13 @@ test("loadConfig: a corrupt file warns instead of disappearing silently", (t) =>
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("atomicWrite: a procfs path fails fast instead of hanging", () => {
+  // Node's recursive mkdirSync spins forever on procfs instead of returning
+  // EACCES, so a bad XDG_CACHE_HOME under /proc hung the whole scan. The guard
+  // must return false immediately, like any other unwritable directory.
+  const started = Date.now();
+  assert.equal(atomicWrite("/proc/linux-doctor-test/x.json", "{}\n"), false);
+  assert.equal(atomicWrite("/sys/linux-doctor-test/x.json", "{}\n"), false);
+  assert.ok(Date.now() - started < 1000, "must not hang");
+});

@@ -12,6 +12,7 @@ import {
   scrub,
   scrubFinding,
   scrubDeep,
+  redactionTargets,
   PRIVACY_EXCLUDED,
   BUNDLE_HISTORY_LIMIT,
 } from "../src/support.js";
@@ -167,4 +168,59 @@ test("buildSupportBundle: never carries the hostname or a license key", () => {
   const s = JSON.stringify(b);
   assert.ok(!s.includes("secret-host"), "hostname must be excluded");
   assert.ok(!s.toLowerCase().includes("licensekey"), "the config (license key) is never included");
+});
+
+// The patterns above can only see shapes (an IP, a home path). The two names
+// the tool knows for certain — the hostname and the account name — leaked in
+// free text: a unit name, a mount path outside /home, a log line. The bundle
+// claims "no hostnames, usernames", so the claim has to be true.
+
+test("redactionTargets: keeps real identities, drops generic ones", () => {
+  assert.deepEqual(
+    redactionTargets({ hostname: "my-laptop-7x", username: "alice", avoid: "Bazzite 45 fedora" }),
+    { hosts: ["my-laptop-7x"], users: ["alice"] },
+  );
+  // Too short, or a word that would mangle ordinary prose.
+  assert.deepEqual(redactionTargets({ hostname: "pi", username: "user", avoid: "" }), { hosts: [], users: [] });
+});
+
+test("redactionTargets: a hostname that is the distro name is not a secret", () => {
+  // On stock Bazzite the hostname is literally "bazzite". Redacting it would
+  // rewrite `distro: "Bazzite 45"` into nonsense while leaking nothing.
+  assert.deepEqual(
+    redactionTargets({ hostname: "bazzite", username: "alice", avoid: "Bazzite 45 fedora bazzite" }),
+    { hosts: [], users: ["alice"] },
+  );
+});
+
+test("scrub: the hostname and username are redacted wherever they appear", () => {
+  const targets = redactionTargets({ hostname: "my-laptop-7x", username: "alice", avoid: "" });
+  assert.equal(
+    scrub("systemd[1]: my-laptop-7x.service failed", targets),
+    "systemd[1]: <host-redacted>.service failed",
+  );
+  assert.equal(scrub("permission denied for /srv/alice/data", targets), "permission denied for /srv/<user-redacted>/data");
+  // Case-insensitive, and absent targets leave text untouched (the GUI export
+  // shares this function and has no os.hostname()).
+  assert.equal(scrub("MY-LAPTOP-7X is up", targets), "<host-redacted> is up");
+  assert.equal(scrub("systemd[1]: my-laptop-7x.service failed"), "systemd[1]: my-laptop-7x.service failed");
+});
+
+test("buildSupportBundle: system.hostname is redacted in finding text", () => {
+  const b = buildSupportBundle({
+    system: { distro: "Fedora 40", family: "fedora", hostname: "alice-desktop" },
+    findings: [{ code: "services/failed", title: "alice-desktop unit failed", detail: "see alice-desktop", evidence: "alice-desktop", fix: null }],
+  });
+  assert.match(b.findings[0].title, /<host-redacted>/);
+  assert.match(b.findings[0].detail, /<host-redacted>/);
+  assert.match(b.findings[0].evidence, /<host-redacted>/);
+});
+
+test("buildSupportBundle: a hostname equal to the distro name leaves distro intact", () => {
+  const b = buildSupportBundle({
+    system: { distro: "Bazzite 45", family: "fedora", atomicVariant: "bazzite", hostname: "bazzite" },
+    findings: [],
+  });
+  assert.equal(b.system.distro, "Bazzite 45");
+  assert.equal(b.system.atomicVariant, "bazzite");
 });
