@@ -130,7 +130,11 @@ jobs:
             install: "apk add --no-cache nodejs"
           - id: arch
             image: archlinux:latest
-            install: "pacman -Sy --noconfirm --quiet nodejs"
+            # A partial upgrade (`-Sy` then install) is the classic Arch trap: the
+            # image's openssl is older than the one nodejs is linked against, and
+            # node refuses to start with "libcrypto.so.4: cannot open shared
+            # object". Upgrade the base first so the two agree.
+            install: "pacman -Syu --noconfirm --quiet && pacman -S --needed --noconfirm --quiet nodejs"
     container: ${{ matrix.image }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
