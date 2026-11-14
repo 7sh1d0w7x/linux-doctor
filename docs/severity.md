@@ -61,6 +61,12 @@ Two rules keep it honest:
    lists the whole `now` set: a machine can have a full disk and a degraded
    array at once, and one "start here" line used to hide the second.
 
+Urgency is part of the report a script reads, not only the terminal: every
+finding carries `urgency` in `--json` and the dashboard card shows a `NOW`
+marker. A correlated story (see `src/stories.js`) inherits the worst urgency of
+the findings inside it, so folding `disk/full` into `story/disk` cannot quietly
+demote a `now` item to `watch`.
+
 ## Documented exceptions
 
 - `security/no-firewall` stays **info**: most desktop installs sit behind a
