@@ -73,12 +73,14 @@ function worstOf(members) {
 
 function buildStory(story, members) {
   const worst = worstOf(members);
-  const titles = members.map((m) => m.title).join("; ");
   return {
     severity: worst.severity,
     code: `story/${story.id}`,
     title: story.title,
-    detail: `${story.lead} ${titles}.`,
+    // The lead names the shared problem; the parts are in `evidence` (and in
+    // `children`), so repeating their titles here only produced a run-on
+    // sentence that read like two headings glued together.
+    detail: story.lead,
     evidence: members
       .map((m) => `[${m.severity}] ${m.code}: ${firstLine(m.evidence || m.detail || m.title)}`)
       .join("\n"),
