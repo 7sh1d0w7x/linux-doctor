@@ -75,6 +75,9 @@ const NOW_CODES = new Set([
 export function urgencyOf(finding) {
   if (!finding || finding.severity === "info") return "fyi";
   if (NOW_CODES.has(finding.code) && finding.severity === "high") return "now";
+  // A correlated story is as urgent as the worst thing inside it: folding
+  // disk/full into story/disk must not quietly demote it from "now" to "watch".
+  if (Array.isArray(finding.children) && finding.children.some((c) => urgencyOf(c) === "now")) return "now";
   return "watch";
 }
 

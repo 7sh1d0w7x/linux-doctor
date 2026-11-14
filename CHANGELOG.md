@@ -6,6 +6,21 @@ All notable changes to Linux Doctor are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Related findings are reported as one story instead of several facts.** A
+  memory problem used to arrive as `memory/low` plus `processes/high`, leaving
+  the reader to join them. Findings from the same area (memory, storage,
+  services) now collapse into one finding with the combined evidence, and the
+  individual findings stay under `children` in the JSON. A story needs at least
+  two problems, so a single finding keeps its own code; informational findings
+  are never folded in; and a story is as urgent as the worst finding inside it,
+  so folding `disk/full` does not demote it from "now" to "watch".
+- **`--exclude-check <id>`**, the inverse of `--check`, comma-separated or
+  repeated. It composes: `--check fs,disk --exclude-check disk` runs `fs`.
+- **Urgency in `--json` and the dashboard** (`now` / `watch` / `fyi` per
+  finding), which the terminal report has always shown.
+
 ## [0.8.4] - 2026-11-06
 
 ### Fixed

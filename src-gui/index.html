@@ -3569,7 +3569,11 @@ function renderCard(f, sev) {
   const sevIcon = SEV_ICONS[sev] || "";
   // Only quiet code + NEW in header — durpill/checkid/lowconf moved to body to reduce chrome
   const codeBadge = f.code ? '<button class="codepill" data-copy="' + esc(f.code) + '" title="Copy ' + esc(f.code) + ' — type code:' + esc(f.code) + ' in search to filter">' + esc(f.code) + '</button>' : "";
-  const badges = codeBadge + (f.isNew ? '<span class="newbadge">NEW</span>' : "");
+  // Urgency, not severity: a disk that is full needs a human now, while a
+  // corrected ECC error does not, however alarming the wording. The terminal
+  // has always shown this; the card did not (issue #42).
+  const nowBadge = f.urgency === "now" ? '<span class="newbadge" title="needs a human now">NOW</span>' : "";
+  const badges = codeBadge + nowBadge + (f.isNew ? '<span class="newbadge">NEW</span>' : "");
   const dur = durFor(f.check);
   const SEV_COST = { high: "15 points", medium: "8 points", info: "info" };
   // Informational findings render as compact rows (Uptime Kuma / alert-list

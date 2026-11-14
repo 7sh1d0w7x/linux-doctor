@@ -10,6 +10,7 @@ import { loadProModule } from "./pro.js";
 import { shouldAlert, buildAlert, sendAlert } from "./alert.js";
 import { pingHeartbeat } from "./heartbeat.js";
 import { renderReport, renderJson, renderPlain, renderTodo, SEV_ORDER, countBySeverity, pickNextFinding, jsonForInlineScript } from "./report.js";
+import { urgencyOf } from "./severities.js";
 import { renderMarkdown } from "./markdown.js";
 import { aiSummary } from "./llm.js";
 import { pushReport, validatePushUrl, redactUrl } from "./fleet.js";
@@ -23,6 +24,7 @@ import { loadThresholds, DEFAULT_THRESHOLDS, coerceThreshold } from "./threshold
 import { detectDistro } from "./distro.js";
 import { detectProfile } from "./profile.js";
 import { dedupe } from "./dedupe.js";
+import { applyStories } from "./stories.js";
 import { parseArgs } from "./args.js";
 import { reportSchema } from "./schema.js";
 import { loadPluginEntries } from "./plugins.js";
@@ -179,11 +181,11 @@ function jsonOptions(r, extra = {}) {
  * skips, ignore rules, dedupe — instead of a reimplementation that would drift.
  * `run`, `system` and `profile` default to the real probes.
  */
-export async function collectReport({ checkIds, checks, ignorePatterns, ignoreCodes, thresholds, skipStaleIgnoreWarning = false, run: runFn = run, system: injectedSystem, profile: injectedProfile }) {
+export async function collectReport({ checkIds, excludeCheckIds = [], checks, ignorePatterns, ignoreCodes, thresholds, skipStaleIgnoreWarning = false, run: runFn = run, system: injectedSystem, profile: injectedProfile }) {
   const [system, profile] =
     injectedSystem && injectedProfile ? [injectedSystem, injectedProfile] : await Promise.all([systemInfo(), detectProfile()]);
   const cctx = { run: runFn, osRelease: system.osRelease, dist: detectDistro(system.osRelease), thresholds, profile };
-  const selected = applicableChecks(checkIds, profile.kind, checks);
+  const selected = applicableChecks(checkIds, profile.kind, checks, excludeCheckIds);
   // Atomic/immutable systems (Bazzite, Silverblue, rpm-ostree, bootc): some
   // checks draw conclusions that are false positives there (e.g. comparing the
   // booted kernel against /boot). They declare `skipOnAtomic`, and we drop them
@@ -223,7 +225,14 @@ export async function collectReport({ checkIds, checks, ignorePatterns, ignoreCo
   }
   const all = normalized.filter((_, i) => !malformed.some((m) => m.index === i));
   const kept = all.filter((f) => !isIgnored(f.title, ignorePatterns) && !isCodeIgnored(f.code, ignoreCodes));
-  const findings = dedupe(kept).map((f, i) => ({ id: i + 1, ...f }));
+  const identified = dedupe(kept).map((f, i) => ({ id: i + 1, ...f }));
+  // Correlation runs last and only on a full run: `--check <id>` asks for one
+  // check's facts, while a full run gets one story per problem. See stories.js.
+  const findings = (checkIds.length === 0 ? applyStories(identified) : identified)
+    // Urgency is derived, but it is part of the report a consumer reads: the
+    // terminal has always shown it, the JSON did not (issue #42). Attaching it
+    // here gives --json, --html and the dashboard the same answer.
+    .map((f) => ({ ...f, urgency: urgencyOf(f) }));
   // Tell the user when an ignore pattern is stale — a silent no-op means
   // the pattern will rot unnoticed as finding titles change. Skipped in web
   // mode: the dashboard re-runs checks constantly and would spam the log.
@@ -237,7 +246,7 @@ export async function collectReport({ checkIds, checks, ignorePatterns, ignoreCo
   // selectedChecks (computed above) replaces selected for the run count;
   // selected is kept only so appliesTo-based checksSkipped can be computed.
   const checksRun = selectedChecks.length;
-  const checksSkipped = checkIds.length ? 0 : checks.length - selected.length;
+  const checksSkipped = checkIds.length || excludeCheckIds.length ? 0 : checks.length - selected.length;
   const checksAtomicSkipped = skippedChecks.length;
   return {
     generatedAt: new Date().toISOString(),
@@ -300,8 +309,11 @@ async function runCompare(previous, checks, ignorePatterns, ignoreCodes, thresho
  * (e.g. the battery check on a desktop). `checks` defaults to the built-in
  * registry; callers with plugins pass the merged list.
  */
-export function applicableChecks(checkIds, kind, checks = CHECKS) {
-  const base = checkIds.length ? checks.filter((c) => checkIds.includes(c.id)) : checks;
+export function applicableChecks(checkIds, kind, checks = CHECKS, excludeIds = []) {
+  // --exclude-check narrows the pool before --check selects from it, so the two
+  // compose predictably: `--check fs,disk --exclude-check disk` runs fs.
+  const pool = excludeIds.length ? checks.filter((c) => !excludeIds.includes(c.id)) : checks;
+  const base = checkIds.length ? pool.filter((c) => checkIds.includes(c.id)) : pool;
   return checkIds.length ? base : base.filter((c) => c.appliesTo.includes(kind));
 }
 
@@ -346,6 +358,7 @@ USAGE
 
 OPTIONS
   --check <id>   run only the given check(s), comma-separated or repeated
+  --exclude-check <id>  skip the given check(s); composes with --check
   --list         list the checks without running them
   --plugins      list loaded user plugins and the file each came from
   --check-list   list checks as JSON (id, title, category, appliesTo)
@@ -701,7 +714,7 @@ function printIgnoreLists(titles, codes) {
     return 0;
   }
 
-  const unknown = args.checkIds.find((id) => !checks.some((c) => c.id === id));
+  const unknown = [...args.checkIds, ...(args.excludeCheckIds ?? [])].find((id) => !checks.some((c) => c.id === id));
   if (unknown) {
     console.error(`Unknown check "${unknown}". Run with --help to list checks.`);
     return 2;
@@ -715,6 +728,7 @@ function printIgnoreLists(titles, codes) {
   const collect = async () => {
     const report = await collectReport({
       checkIds: args.checkIds,
+      excludeCheckIds: args.excludeCheckIds,
       checks,
       ignorePatterns,
       ignoreCodes,

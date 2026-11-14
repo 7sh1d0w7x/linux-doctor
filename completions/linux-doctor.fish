@@ -2,6 +2,7 @@ complete -c linux-doctor -f
 
 # Flags
 complete -c linux-doctor -l check -r -d 'Run specific check(s), comma-separated'
+complete -c linux-doctor -l exclude-check -r -d 'Skip specific check(s), comma-separated'
 complete -c linux-doctor -l list -d 'List available checks'
 complete -c linux-doctor -l plugins -d 'List loaded user plugins and their files'
 complete -c linux-doctor -l json -d 'Print findings as JSON'
@@ -52,3 +53,4 @@ complete -c linux-doctor -l version -d 'Show version'
 
 # Dynamic check IDs for --check
 complete -c linux-doctor -l check -xa '(linux-doctor --list 2>/dev/null | string match -r "^\s+([a-z][a-z0-9-]+)" | string trim)'
+complete -c linux-doctor -l exclude-check -xa '(linux-doctor --list 2>/dev/null | string match -r "^\s+([a-z][a-z0-9-]+)" | string trim)'

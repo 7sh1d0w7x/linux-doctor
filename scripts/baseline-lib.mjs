@@ -54,10 +54,17 @@ export const ENVIRONMENT = new Set([
 /** High/medium codes present in a finding list, first occurrence wins. */
 export function highMediumCodes(findings) {
   const codes = new Map();
-  for (const f of findings ?? []) {
-    if (f.severity === "high" || f.severity === "medium") {
+  const add = (f) => {
+    if (f && (f.severity === "high" || f.severity === "medium")) {
       if (!codes.has(f.code)) codes.set(f.code, f);
     }
+  };
+  for (const f of findings ?? []) {
+    add(f);
+    // The correlation layer folds related findings into a story and keeps the
+    // originals in `children`. A baseline recorded before that layer still names
+    // the individual checks, so they count as observed when they are children.
+    for (const child of f.children ?? []) add(child);
   }
   return codes;
 }

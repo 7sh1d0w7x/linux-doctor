@@ -691,3 +691,23 @@ test("--json --profile emits durations as an object (matches the schema)", () =>
   assert.ok(!Array.isArray(data.durations), "durations must not be an array");
   assert.equal(typeof data.durations.load, "number", "should map check → ms");
 });
+
+test("--exclude-check drops one check and composes with --check", () => {
+  // 0 = clean, 1 = findings present; both are valid reports.
+  const only = run("--check", "fs,disk", "--exclude-check", "disk", "--json");
+  assert.ok([0, 1].includes(only.status), only.stderr);
+  const codes = JSON.parse(only.stdout).findings.map((f) => f.code);
+  assert.ok(codes.length > 0);
+  assert.ok(codes.every((c) => c.startsWith("fs/")), `only fs expected, got ${codes.join(", ")}`);
+
+  const excluded = run("--exclude-check", "fs", "--json");
+  assert.ok([0, 1].includes(excluded.status), excluded.stderr);
+  const none = JSON.parse(excluded.stdout).findings.filter((f) => f.code.startsWith("fs/"));
+  assert.deepEqual(none, [], "fs must be absent when excluded");
+});
+
+test("--exclude-check rejects an unknown id instead of running everything", () => {
+  const res = run("--exclude-check", "not-a-check", "--json");
+  assert.equal(res.status, 2);
+  assert.match(res.stderr, /Unknown check "not-a-check"/);
+});

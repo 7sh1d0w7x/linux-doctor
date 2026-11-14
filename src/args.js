@@ -4,7 +4,7 @@
  * arguments, and value flags without a value are errors (exit 2) — a silent
  * typo like `--jsonn` must never quietly run a full report.
  */
-export const VALUE_FLAGS = new Set(["--check", "--ignore", "--ignore-code", "--ignore-add", "--ignore-remove", "--push", "--html", "--md", "--severity", "--compare", "--alert", "--heartbeat", "--interval", "--thresholds-set"]);
+export const VALUE_FLAGS = new Set(["--check", "--exclude-check", "--ignore", "--ignore-code", "--ignore-add", "--ignore-remove", "--push", "--html", "--md", "--severity", "--compare", "--alert", "--heartbeat", "--interval", "--thresholds-set"]);
 export const BOOL_FLAGS = new Set(["--json", "--plain", "--web", "--ai", "--ai-local", "--list", "--plugins", "--schema", "--profile", "--ignore-list", "--ignore-list-json", "--summary", "--init", "--init-config", "--check-list", "--history-json", "--thresholds-json", "--todo", "--self-test", "--license", "--daemon", "--support", "--no-history", "--fix", "--yes", "--interactive", "--notify", "--history-clear", "--install-timer", "--uninstall-timer", "--allow-private-endpoint", "--debug"]);
 
 export function parseArgs(argv) {
@@ -22,6 +22,7 @@ export function parseArgs(argv) {
     ai: false,
     aiLocal: false,
     checkIds: [],
+    excludeCheckIds: [],
     ignore: [],
     ignoreCodes: [],
     severity: null,
@@ -67,6 +68,7 @@ export function parseArgs(argv) {
 
   const assign = (flag, val) => {
     if (flag === "--check") out.checkIds.push(...val.split(",").map((s) => s.trim()).filter(Boolean));
+    else if (flag === "--exclude-check") out.excludeCheckIds.push(...val.split(",").map((s) => s.trim()).filter(Boolean));
     else if (flag === "--ignore") out.ignore.push(val);
     else if (flag === "--ignore-add") out.ignoreAdd = val;
     else if (flag === "--ignore-remove") out.ignoreRemove = val;

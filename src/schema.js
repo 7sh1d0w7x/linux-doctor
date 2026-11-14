@@ -174,6 +174,15 @@ export const reportSchema = {
         fix: { type: ["string", "null"] },
         confidence: { enum: ["high", "medium", "low"] },
         isNew: { type: "boolean" },
+        urgency: {
+          enum: ["now", "watch", "fyi"],
+          description: "whether a human has to act now; derived from severity and code, never from wording",
+        },
+        children: {
+          type: "array",
+          description: "findings folded into a correlated story (story/* codes only)",
+          items: { $ref: "#/definitions/finding" },
+        },
       },
     },
     briefFinding: {
