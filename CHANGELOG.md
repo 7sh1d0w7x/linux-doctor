@@ -6,20 +6,34 @@ All notable changes to Linux Doctor are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-14
+
 ### Added
 
 - **Related findings are reported as one story instead of several facts.** A
-  memory problem used to arrive as `memory/low` plus `processes/high`, leaving
-  the reader to join them. Findings from the same area (memory, storage,
-  services) now collapse into one finding with the combined evidence, and the
-  individual findings stay under `children` in the JSON. A story needs at least
-  two problems, so a single finding keeps its own code; informational findings
-  are never folded in; and a story is as urgent as the worst finding inside it,
-  so folding `disk/full` does not demote it from "now" to "watch".
+  memory problem arrived as `memory/low` plus `processes/high`, leaving the
+  reader to join them. Findings from the same area now collapse into one
+  finding with the combined evidence, and the individual findings stay under
+  `children` in the JSON. A story needs at least two problems, so a single
+  finding keeps its own code; informational findings are never folded in; and a
+  story is as urgent as the worst finding inside it, so folding `disk/full`
+  does not demote it from "now" to "watch".
 - **`--exclude-check <id>`**, the inverse of `--check`, comma-separated or
   repeated. It composes: `--check fs,disk --exclude-check disk` runs `fs`.
 - **Urgency in `--json` and the dashboard** (`now` / `watch` / `fyi` per
   finding), which the terminal report has always shown.
+
+### Changed
+
+- **Two findings about the same problem now count once.** When a story forms,
+  the health score is computed from the story instead of from each member, so a
+  machine that used to score 84 with `memory/low` + `processes/high` scores 92
+  with one `story/memory`. That is the point of the layer, but the number moves
+  without the machine changing.
+- **The first run after upgrading shows a one-time shift in the history diff.**
+  The old codes (`memory/low`, `processes/high`) are replaced by `story/memory`,
+  so that run reports the members as fixed and the story as new. Subsequent
+  runs diff normally.
 
 ## [0.8.4] - 2026-11-06
 
