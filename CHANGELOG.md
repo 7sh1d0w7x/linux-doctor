@@ -25,6 +25,13 @@ All notable changes to Linux Doctor are documented here. The format follows
 
 ### Changed
 
+- **A crash in a helper process is now named after the app that owns it.** A
+  coredump from `WebKitWebProcess` used to be reported as a crash of
+  `WebKitWebProcess`, which is not a program anyone runs: it is the webview
+  helper of a browser, a mail client, or this tool's own desktop window. The
+  check reads the dump's cgroup and reports `Linux Doctor (WebKitWebProcess)` or
+  `org.mozilla.firefox (WebKitWebProcess)`, so the message names something the
+  user can close, update, or report.
 - **Two findings about the same problem now count once.** When a story forms,
   the health score is computed from the story instead of from each member, so a
   machine that used to score 84 with `memory/low` + `processes/high` scores 92

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-import { lines } from "../utils.js";
+import { lines, shq } from "../utils.js";
 import { defineCheck } from "./define.js";
 import { finding } from "../findings.js";
 import { classifyHardwareLine } from "./shared.js";
@@ -138,27 +138,59 @@ export const crash = defineCheck({
     // emulators/JITs) — an intentional signal, not a crash. Everything else
     // (SIGSEGV, SIGABRT, SIGBUS, SIGILL, …) is a genuine crash.
     const SIGTRAP = 5;
-    let exes = [];
+    let dumps = [];
     let rawRows = [];
     if (coreJson.ok && coreJson.stdout.trim().startsWith("[")) {
       try {
-        exes = JSON.parse(coreJson.stdout)
+        dumps = JSON.parse(coreJson.stdout)
           .filter((r) => r && r.sig !== SIGTRAP)
-          .map((r) => String(r.exe || "unknown"));
+          .map((r) => ({ pid: r.pid, exe: String(r.exe || "unknown") }));
       } catch {
-        exes = [];
+        dumps = [];
       }
     }
-    if (!exes.length && core.ok && core.stdout.trim()) {
+    if (!dumps.length && core.ok && core.stdout.trim()) {
       rawRows = lines(core.stdout)
         .filter((l) => !/^TIME\s/.test(l))
         .filter((l) => !/\sSIGTRAP\s/.test(` ${l} `));
       // In `coredumpctl list` the executable is the field after COREFILE
-      // (present/none/missing/error), followed by the size.
-      exes = rawRows.map((l) => {
+      // (present/none/missing/error), followed by the size; the PID is the
+      // fifth field (weekday, date, time, zone, pid, uid, gid, sig, corefile).
+      dumps = rawRows.map((l) => {
         const m = l.match(/\s(?:present|none|missing|error)\s+(.+?)(?:\s+[\d.]+[KMG]?)?$/);
-        return m ? m[1] : l;
+        const pid = l.trim().split(/\s+/)[4];
+        return { pid: /^\d+$/.test(pid) ? Number(pid) : null, exe: m ? m[1] : l };
       });
+    }
+    const exes = dumps.map((d) => d.exe);
+
+    // A helper process is not the program the user ran: WebKitWebProcess backs
+    // the webview of any GTK app (a browser, a mail client, the desktop app this
+    // tool ships), and the same is true of Chromium's renderers. The coredump
+    // records the cgroup of the thing that started it, so read that instead of
+    // handing the user a process name they cannot act on.
+    const HELPER = new Set([
+      "WebKitWebProcess",
+      "WebKitNetworkProcess",
+      "WebKitGPUProcess",
+      "Isolated Web Content",
+      "Isolated Service Worker",
+    ]);
+
+    function ownerFromCgroup(text) {
+      const line = String(text || "").split("\n").find((l) => /^\s*(Control Group|User Unit):/i.test(l));
+      if (!line) return "";
+      const raw = line.slice(line.indexOf(":") + 1).trim();
+      // Flatpak: app-flatpak-org.mozilla.firefox-12345.scope
+      const flatpak = /app-flatpak-([A-Za-z0-9_.-]+?)-\d+\.scope/.exec(raw);
+      if (flatpak) return flatpak[1];
+      // AppImage / native: app-Linux\x20Doctor@<uuid>.service, app-gnome-firefox-1234.scope
+      const app = /app-([^@/]+?)(?:@[0-9a-f-]+)?\.(?:service|scope)/.exec(raw);
+      if (!app) return "";
+      const name = app[1]
+        .replace(/\\x([0-9a-f]{2})/gi, (_, h) => String.fromCharCode(parseInt(h, 16)))
+        .replace(/^gnome-/, "");
+      return name;
     }
 
     if (exes.length) {
@@ -169,6 +201,17 @@ export const crash = defineCheck({
       }
       const ranked = [...byExe.entries()].sort((a, b) => b[1] - a[1]);
       const [topName, topCount] = ranked[0];
+      // Name the app, not its helper process. One extra command, only when the
+      // dominant crash is a helper and a PID is known.
+      let topLabel = topName;
+      if (HELPER.has(topName)) {
+        const dump = dumps.find((d) => d.pid && (d.exe.split("/").pop() || d.exe) === topName);
+        if (dump) {
+          const info = await ctx.run(`coredumpctl info ${shq(String(dump.pid))} --no-pager 2>/dev/null`);
+          const owner = info.ok ? ownerFromCgroup(info.stdout) : "";
+          if (owner) topLabel = `${owner} (${topName})`;
+        }
+      }
       // Crashes concentrated in one executable are that program's problem.
       // Crashes spread across unrelated programs are the pattern that hints at
       // a shared library, an update, or the hardware — which is the only case
@@ -186,7 +229,7 @@ export const crash = defineCheck({
           code: "crash/coredumps",
           title: `${exes.length} application crashes in the last 24 hours`,
           detail: concentrated
-            ? `${exes.length} programs dumped core in the last 24 hours, ${topCount} of them from \`${topName}\`${others ? ` — the rest: ${others}` : ""}. One program failing over and over points at that program or the way it was started (its packaging, its libraries, a missing device), not at the hardware.`
+            ? `${exes.length} programs dumped core in the last 24 hours, ${topCount} of them from \`${topLabel}\`${others ? ` — the rest: ${others}` : ""}. One program failing over and over points at that program or the way it was started (its packaging, its libraries, a missing device), not at the hardware.`
             : `${exes.length} programs dumped core in the last 24 hours, spread across ${ranked.length} different executables (${others || topName}). Crashes spread across unrelated programs are the pattern that points at a shared library, a faulty update, or bad RAM.`,
           evidence,
           fix: concentrated
@@ -199,7 +242,7 @@ export const crash = defineCheck({
           severity: "medium",
           code: "crash/coredumps",
           title: `${exes.length} application crash(es) in the last 24 hours`,
-          detail: `${exes.length} program(s) dumped core recently${concentrated ? `, all from \`${topName}\`` : ""}. Occasional crashes are normal, but a pattern may indicate a problem.`,
+          detail: `${exes.length} program(s) dumped core recently${concentrated ? `, all from \`${topLabel}\`` : ""}. Occasional crashes are normal, but a pattern may indicate a problem.`,
           evidence,
           fix: "Check `coredumpctl info <PID>` for the most recent crash to see which program failed and why.",
           confidence: "high",

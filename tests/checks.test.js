@@ -2511,21 +2511,61 @@ test("crash: crashes concentrated in one program do not blame the hardware", asy
   ctx.run = async (cmd) => {
     if (cmd.includes("--list-boots")) return { ok: true, code: 0, stdout: "  0  ...\n", stderr: "" };
     if (cmd.includes("--json=short")) {
-      const rows = Array.from({ length: 26 }, () => ({ sig: 6, exe: "/tmp/.mount_x/usr/lib/webkit2gtk-4.1/WebKitWebProcess" }));
-      rows.push({ sig: 11, exe: "/usr/bin/xdg-desktop-portal-kde" });
-      rows.push({ sig: 6, exe: "/usr/bin/ksecretd" });
+      const rows = Array.from({ length: 26 }, () => ({ pid: 4242, sig: 6, exe: "/tmp/.mount_x/usr/lib/webkit2gtk-4.1/WebKitWebProcess" }));
+      rows.push({ pid: 4243, sig: 11, exe: "/usr/bin/xdg-desktop-portal-kde" });
+      rows.push({ pid: 4244, sig: 6, exe: "/usr/bin/ksecretd" });
       return { ok: true, code: 0, stdout: JSON.stringify(rows), stderr: "" };
+    }
+    if (cmd.includes("coredumpctl info")) {
+      return {
+        ok: true,
+        code: 0,
+        stdout: "           Control Group: /user.slice/user-1000.slice/user@1000.service/app.slice/app-Linux\\x20Doctor@8c86d94c79bf4079b38c5d8eb6a4f8f6.service\n",
+        stderr: "",
+      };
     }
     return { ok: false, code: 1, stdout: "", stderr: "" };
   };
   const findings = await crash.run(ctx);
   const f = findings.find((x) => x.code === "crash/coredumps");
   assert.ok(f, "expected a coredump finding");
-  assert.match(f.detail, /26 of them from `WebKitWebProcess`/);
+  assert.match(f.detail, /26 of them from `Linux Doctor \(WebKitWebProcess\)`/, "the app, not the helper process");
   assert.doesNotMatch(f.detail, /bad RAM/);
   assert.doesNotMatch(f.fix, /memtest/);
   assert.match(f.fix, /different build/, "points at the app, not at the system");
 });
+
+test("crash: a single helper crash names the app that owns the webview", async () => {
+  // WebKitWebProcess is not a program the user ran. The cgroup of the dump says
+  // which app started it; the finding must say that, or the user has no idea
+  // what to close, update, or report.
+  const ctx = stubCtx({});
+  ctx.run = async (cmd) => {
+    if (cmd.includes("--list-boots")) return { ok: true, code: 0, stdout: "  0  ...\n", stderr: "" };
+    if (cmd.includes("--json=short")) {
+      return {
+        ok: true,
+        code: 0,
+        stdout: JSON.stringify([{ pid: 777, sig: 6, exe: "/tmp/.mount_linux-x/usr/lib/webkit2gtk-4.1/WebKitWebProcess" }]),
+        stderr: "",
+      };
+    }
+    if (cmd.includes("coredumpctl info")) {
+      return {
+        ok: true,
+        code: 0,
+        stdout: "           Control Group: /user.slice/user-1000.slice/user@1000.service/app.slice/app-flatpak-org.mozilla.firefox-1234.scope\n",
+        stderr: "",
+      };
+    }
+    return { ok: false, code: 1, stdout: "", stderr: "" };
+  };
+  const findings = await crash.run(ctx);
+  const f = findings.find((x) => x.code === "crash/coredumps");
+  assert.ok(f);
+  assert.match(f.detail, /all from `org\.mozilla\.firefox \(WebKitWebProcess\)`/);
+});
+
 
 test("crash: crashes across unrelated programs do point at the hardware", async () => {
   const ctx = stubCtx({});
