@@ -157,6 +157,8 @@ export const REGISTRY = {
   "load/skipped": { sev: ["info"], cat: "performance" },
   "locales/broken": { sev: ["medium"], cat: "system" },
   "kernel/tainted": { sev: ["info"], cat: "system" },
+  "inotify/watches-low": { sev: ["medium", "high"], cat: "system" },
+  "inotify/instances-low": { sev: ["medium", "high"], cat: "system" },
   "luks/encrypted": { sev: ["info"], cat: "security" },
   "luks/none": { sev: ["info"], cat: "security" },
   // memory
@@ -166,6 +168,7 @@ export const REGISTRY = {
   // network / ntp
   "network/dns": { sev: ["medium"], cat: "network" },
   "network/dns-slow": { sev: ["medium"], cat: "network" },
+  "network/conntrack": { sev: ["medium", "high"], cat: "network" },
   "network/no-route": { sev: ["medium"], cat: "network" },
   "network/ok": { sev: ["info"], cat: "network" },
   "network/skipped": { sev: ["info"], cat: "network" },

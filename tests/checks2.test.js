@@ -10,6 +10,8 @@ import { locales } from "../src/checks/locales.js";
 import { autologin } from "../src/checks/autologin.js";
 import { fstrim } from "../src/checks/fstrim.js";
 import { kernel } from "../src/checks/kernel.js";
+import { network } from "../src/checks/network.js";
+import { inotify } from "../src/checks/inotify.js";
 
 function stubCtx(map, osRelease = { id: "bazzite", id_like: "fedora" }) {
   return {
@@ -337,4 +339,87 @@ test("kernel: several flags are all named, out-of-tree included", async () => {
 test("kernel: a bit newer than the table is reported by number, not dropped", async () => {
   const f = (await kernel.run(stubCtx({ [KERNEL]: String(1 << 25) + "\n" })))[0];
   assert.match(f.evidence, /unknown taint bit 25/);
+});
+
+// ---------------------------------------------------------------- conntrack --
+
+const NET_BASE = {
+  "command -v ip 2>/dev/null": "/usr/sbin/ip\n",
+  "ip -brief addr show 2>/dev/null": "wlan0            UP             192.168.1.5/24\n",
+  "ip route show default 2>/dev/null": "default via 192.168.1.1 dev wlan0 proto dhcp metric 600\n",
+  "getent ahostsv4 kernel.org 2>&1 | head -1": "151.101.1.69     STREAM kernel.org\n",
+};
+
+test("network: no conntrack module is silence, not a finding", async () => {
+  const findings = await network.run(stubCtx(NET_BASE));
+  assert.deepEqual(findings.map((f) => f.code), ["network/ok"]);
+});
+
+test("network: a conntrack table at 85% is medium", async () => {
+  const findings = await network.run(stubCtx({
+    ...NET_BASE,
+    "cat /proc/sys/net/netfilter/nf_conntrack_count 2>/dev/null": "87040\n",
+    "cat /proc/sys/net/netfilter/nf_conntrack_max 2>/dev/null": "102400\n",
+  }));
+  assert.equal(findings.length, 1);
+  assert.equal(findings[0].code, "network/conntrack");
+  assert.equal(findings[0].severity, "medium");
+  assert.match(findings[0].title, /85% full/);
+  assert.match(findings[0].evidence, /count=87040 .*max=102400/);
+});
+
+test("network: a conntrack table at 96% is high", async () => {
+  const findings = await network.run(stubCtx({
+    ...NET_BASE,
+    "cat /proc/sys/net/netfilter/nf_conntrack_count 2>/dev/null": "98304\n",
+    "cat /proc/sys/net/netfilter/nf_conntrack_max 2>/dev/null": "102400\n",
+  }));
+  assert.equal(findings[0].code, "network/conntrack");
+  assert.equal(findings[0].severity, "high");
+});
+
+// ------------------------------------------------------------------ inotify --
+
+const LIM = "cat /proc/sys/fs/inotify/max_user_watches 2>/dev/null";
+const LIMI = "cat /proc/sys/fs/inotify/max_user_instances 2>/dev/null";
+const LIMQ = "cat /proc/sys/fs/inotify/max_queued_events 2>/dev/null";
+const USED = "grep -h '^inotify wd:' /proc/[0-9]*/fdinfo/* 2>/dev/null | wc -l";
+const USEDI = "grep -l '^inotify wd:' /proc/[0-9]*/fdinfo/* 2>/dev/null | wc -l";
+
+test("inotify: without the limit files there is nothing to say", async () => {
+  assert.deepEqual(await inotify.run(stubCtx({})), []);
+});
+
+test("inotify: a healthy machine stays silent", async () => {
+  const findings = await inotify.run(stubCtx({
+    [LIM]: "1000\n", [LIMI]: "100\n", [LIMQ]: "16384\n", [USED]: "100\n", [USEDI]: "10\n",
+  }));
+  assert.deepEqual(findings, []);
+});
+
+test("inotify: watches at 85% are medium, instances stay quiet", async () => {
+  const findings = await inotify.run(stubCtx({
+    [LIM]: "1000\n", [LIMI]: "100\n", [LIMQ]: "16384\n", [USED]: "850\n", [USEDI]: "10\n",
+  }));
+  assert.equal(findings.length, 1);
+  assert.equal(findings[0].code, "inotify/watches-low");
+  assert.equal(findings[0].severity, "medium");
+  assert.match(findings[0].evidence, /max_user_watches=1000 .* in use 850 \(85%\)/);
+});
+
+test("inotify: watches at 96% are high", async () => {
+  const findings = await inotify.run(stubCtx({
+    [LIM]: "1000\n", [LIMI]: "100\n", [LIMQ]: "16384\n", [USED]: "960\n", [USEDI]: "10\n",
+  }));
+  assert.equal(findings[0].code, "inotify/watches-low");
+  assert.equal(findings[0].severity, "high");
+});
+
+test("inotify: instances at 90% are reported separately", async () => {
+  const findings = await inotify.run(stubCtx({
+    [LIM]: "1000\n", [LIMI]: "100\n", [LIMQ]: "16384\n", [USED]: "100\n", [USEDI]: "90\n",
+  }));
+  assert.equal(findings.length, 1);
+  assert.equal(findings[0].code, "inotify/instances-low");
+  assert.equal(findings[0].severity, "medium");
 });

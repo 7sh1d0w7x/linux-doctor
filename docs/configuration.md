@@ -75,6 +75,10 @@ in the same config file:
     "containerWarnGB": 20,  // container storage above → medium
     "containerHighGB": 50,  // container storage above → high
     "dnsSlowMs": 500,       // DNS resolution above → medium (ms)
+    "conntrackWarnRatio": 0.8,   // conntrack table above → medium
+    "conntrackHighRatio": 0.95,  // conntrack table above → high
+    "inotifyWarnRatio": 0.8,     // inotify watches/instances above → medium
+    "inotifyHighRatio": 0.95,    // inotify watches/instances above → high
     "certWarnDays": 30,     // TLS cert lifetime below → medium (days)
     "certCritDays": 7,      // TLS cert lifetime below → high (days)
     "backupStaleDays": 30   // scheduled backup not run for → medium (days)

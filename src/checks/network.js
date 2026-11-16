@@ -111,6 +111,34 @@ export const network = defineCheck({
       }));
     }
 
+    // Netfilter conntrack: NAT/Docker/Kubernetes hosts drop new connections
+    // when the table fills, and the kernel only says so once packets are being
+    // dropped. The files do not exist unless the module is loaded, which is the
+    // normal desktop case — absence is silence, not health.
+    const [ctCount, ctMax] = await Promise.all([
+      ctx.run("cat /proc/sys/net/netfilter/nf_conntrack_count 2>/dev/null"),
+      ctx.run("cat /proc/sys/net/netfilter/nf_conntrack_max 2>/dev/null"),
+    ]);
+    const count = Number(String(ctCount.stdout || "").trim());
+    const max = Number(String(ctMax.stdout || "").trim());
+    if (ctCount.ok && ctMax.ok && Number.isFinite(count) && Number.isFinite(max) && max > 0) {
+      const ratio = count / max;
+      const pct = Math.round(ratio * 100);
+      const high = ratio >= (ctx.thresholds.conntrackHighRatio ?? 0.95);
+      if (high || ratio >= (ctx.thresholds.conntrackWarnRatio ?? 0.8)) {
+        findings.push(finding({
+          severity: high ? "high" : "medium",
+          code: "network/conntrack",
+          title: `Connection tracking is ${pct}% full`,
+          detail: `The netfilter conntrack table holds ${count.toLocaleString("en-US")} of ${max.toLocaleString("en-US")} entries. When it fills, the kernel drops new connections and logs "nf_conntrack: table full, dropping packet" — NAT, Docker and Kubernetes hosts reach it first because every forwarded connection takes a slot.`,
+          evidence: `nf_conntrack_count=${count} / nf_conntrack_max=${max} (${pct}%)`,
+          fix: `Raise the limit with \`sudo sysctl -w net.netfilter.nf_conntrack_max=${Math.max(max * 2, 262144)}\` and persist it in /etc/sysctl.d/. If the count keeps climbing, look for leaked connections: \`conntrack -S\` and \`ss -tan state established | wc -l\`.`,
+          confidence: "high",
+        }));
+        return findings;
+      }
+    }
+
     findings.push(finding({
       severity: "info",
       code: "network/ok",

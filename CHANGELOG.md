@@ -27,6 +27,17 @@ All notable changes to Linux Doctor are documented here. The format follows
   module, machine check, …) and stays **info**: every NVIDIA desktop carries the
   proprietary bit, so a permanent medium would be noise. A real fault behind a
   taint is already reported by the hardware and crash checks.
+- **The netfilter conntrack table is watched.** NAT, Docker and Kubernetes
+  hosts drop new connections when it fills, and the kernel only says so once
+  packets are already being dropped. The `network` check reads
+  `nf_conntrack_count`/`_max` when the module is loaded (silence when it is
+  not), flags 80% as medium and 95% as high, and names the sysctl to raise.
+- **inotify limits are reported.** `fs.inotify.max_user_watches` and
+  `max_user_instances` fail silently when reached: editors, sync clients and dev
+  servers stop noticing changes with no message. The new `inotify` check
+  compares this user's usage against both limits and flags 80%/95%. It reads
+  only your own processes, so the number is a floor — it can miss a problem,
+  never invent one.
 - **`--check` and `--exclude-check` accept category names.** `--check software`
   runs every check in that category; the flag has always accepted ids only,
   even though `--list` groups by category.
