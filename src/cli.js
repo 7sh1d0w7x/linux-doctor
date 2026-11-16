@@ -309,12 +309,48 @@ async function runCompare(previous, checks, ignorePatterns, ignoreCodes, thresho
  * (e.g. the battery check on a desktop). `checks` defaults to the built-in
  * registry; callers with plugins pass the merged list.
  */
+/**
+ * Expand `--check` / `--exclude-check` tokens: an exact check id wins, then a
+ * category name (`software`, `security`, …) expands to every check in it, case
+ * insensitively. Unknown tokens are left alone so the caller's validation can
+ * report them instead of silently running nothing.
+ */
+export function expandCheckTokens(tokens, checks = CHECKS) {
+  const ids = new Set(checks.map((c) => c.id));
+  const byCategory = new Map();
+  for (const c of checks) {
+    const key = String(c.category || "").toLowerCase();
+    if (!key) continue;
+    if (!byCategory.has(key)) byCategory.set(key, []);
+    byCategory.get(key).push(c.id);
+  }
+  const out = [];
+  for (const token of tokens) {
+    if (ids.has(token)) {
+      out.push(token);
+      continue;
+    }
+    const category = byCategory.get(String(token).toLowerCase());
+    if (category) out.push(...category);
+    else out.push(token);
+  }
+  return out;
+}
+
+/** True when a token names a check id or a category, for argument validation. */
+export function isKnownCheckToken(token, checks = CHECKS) {
+  const t = String(token);
+  return checks.some((c) => c.id === t) || checks.some((c) => String(c.category || "").toLowerCase() === t.toLowerCase());
+}
+
 export function applicableChecks(checkIds, kind, checks = CHECKS, excludeIds = []) {
   // --exclude-check narrows the pool before --check selects from it, so the two
   // compose predictably: `--check fs,disk --exclude-check disk` runs fs.
-  const pool = excludeIds.length ? checks.filter((c) => !excludeIds.includes(c.id)) : checks;
-  const base = checkIds.length ? pool.filter((c) => checkIds.includes(c.id)) : pool;
-  return checkIds.length ? base : base.filter((c) => c.appliesTo.includes(kind));
+  const wanted = expandCheckTokens(checkIds, checks);
+  const excluded = new Set(expandCheckTokens(excludeIds, checks));
+  const pool = excluded.size ? checks.filter((c) => !excluded.has(c.id)) : checks;
+  const base = wanted.length ? pool.filter((c) => wanted.includes(c.id)) : pool;
+  return wanted.length ? base : base.filter((c) => c.appliesTo.includes(kind));
 }
 
 /**
@@ -714,7 +750,7 @@ function printIgnoreLists(titles, codes) {
     return 0;
   }
 
-  const unknown = [...args.checkIds, ...(args.excludeCheckIds ?? [])].find((id) => !checks.some((c) => c.id === id));
+  const unknown = [...args.checkIds, ...(args.excludeCheckIds ?? [])].find((id) => !isKnownCheckToken(id, checks));
   if (unknown) {
     console.error(`Unknown check "${unknown}". Run with --help to list checks.`);
     return 2;

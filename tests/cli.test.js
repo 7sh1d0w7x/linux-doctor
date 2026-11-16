@@ -5,6 +5,7 @@ import { spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { applicableChecks } from "../src/cli.js";
+import { checks as CHECKS } from "../src/checks/index.js";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
@@ -63,6 +64,18 @@ test("applicableChecks: full run skips checks that do not apply to the machine k
 test("applicableChecks: an explicit --check list overrides appliesTo", () => {
   const ids = applicableChecks(["battery"], "desktop").map((c) => c.id);
   assert.deepEqual(ids, ["battery"], "user intent wins over gating");
+});
+
+test("applicableChecks: a category name expands to every check in it", () => {
+  const expected = CHECKS.filter((c) => c.category === "software").map((c) => c.id);
+  assert.ok(expected.length > 1);
+  assert.deepEqual(applicableChecks(["software"], "desktop").map((c) => c.id), expected);
+  // Case-insensitive, and mixed with an exact id.
+  const mixed = applicableChecks(["Software", "memory"], "desktop").map((c) => c.id);
+  assert.ok(mixed.includes("memory"));
+  for (const id of expected) assert.ok(mixed.includes(id), `${id} must come from the category`);
+  // An unknown token expands to nothing; validation reports it.
+  assert.deepEqual(applicableChecks(["not-a-check"], "desktop").map((c) => c.id), []);
 });
 
 test("applicableChecks: plugins participate in gating", () => {
@@ -710,4 +723,20 @@ test("--exclude-check rejects an unknown id instead of running everything", () =
   const res = run("--exclude-check", "not-a-check", "--json");
   assert.equal(res.status, 2);
   assert.match(res.stderr, /Unknown check "not-a-check"/);
+});
+
+test("--check accepts a category name on the command line", () => {
+  const software = CHECKS.filter((c) => c.category === "software").map((c) => c.id);
+  const res = run("--check", "software", "--json");
+  assert.ok([0, 1].includes(res.status), res.stderr);
+  const ran = new Set(JSON.parse(res.stdout).findings.map((f) => f.check));
+  assert.ok(ran.size > 0, "the category ran something");
+  for (const id of ran) assert.ok(software.includes(id), `${id} is not a software check`);
+});
+
+test("--exclude-check accepts a category name too", () => {
+  const res = run("--exclude-check", "security", "--json");
+  assert.ok([0, 1].includes(res.status), res.stderr);
+  const security = JSON.parse(res.stdout).findings.filter((f) => String(f.code).startsWith("security/"));
+  assert.deepEqual(security, [], "security checks must not run when the category is excluded");
 });

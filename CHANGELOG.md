@@ -20,6 +20,9 @@ All notable changes to Linux Doctor are documented here. The format follows
   does not demote it from "now" to "watch".
 - **`--exclude-check <id>`**, the inverse of `--check`, comma-separated or
   repeated. It composes: `--check fs,disk --exclude-check disk` runs `fs`.
+- **`--check` and `--exclude-check` accept category names.** `--check software`
+  runs every check in that category; the flag has always accepted ids only,
+  even though `--list` groups by category.
 - **Urgency in `--json` and the dashboard** (`now` / `watch` / `fyi` per
   finding), which the terminal report has always shown.
 
