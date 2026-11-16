@@ -156,6 +156,7 @@ export const REGISTRY = {
   "load/overloaded": { sev: ["medium", "high"], cat: "performance" },
   "load/skipped": { sev: ["info"], cat: "performance" },
   "locales/broken": { sev: ["medium"], cat: "system" },
+  "kernel/tainted": { sev: ["info"], cat: "system" },
   "luks/encrypted": { sev: ["info"], cat: "security" },
   "luks/none": { sev: ["info"], cat: "security" },
   // memory

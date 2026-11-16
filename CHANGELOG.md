@@ -20,6 +20,13 @@ All notable changes to Linux Doctor are documented here. The format follows
   does not demote it from "now" to "watch".
 - **`--exclude-check <id>`**, the inverse of `--check`, comma-separated or
   repeated. It composes: `--check fs,disk --exclude-check disk` runs `fs`.
+- **The kernel's taint flags are reported.** `/proc/sys/kernel/tainted` is the
+  first thing a kernel developer asks for and the usual reason a bug report
+  comes back "reproduce on a clean kernel". The new `kernel` check decodes the
+  bits into plain words (proprietary module, out-of-tree module, unsigned
+  module, machine check, …) and stays **info**: every NVIDIA desktop carries the
+  proprietary bit, so a permanent medium would be noise. A real fault behind a
+  taint is already reported by the hardware and crash checks.
 - **`--check` and `--exclude-check` accept category names.** `--check software`
   runs every check in that category; the flag has always accepted ids only,
   even though `--list` groups by category.

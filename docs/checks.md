@@ -2,7 +2,7 @@
 
 Every finding `code` is stable — use it for `--ignore-code`, history diffing, and scripting. Generated from `src/checks/index.js` + `tests/codes-registry.test.js`; do not edit by hand.
 
-Total: **50 checks** → **179 codes**.
+Total: **51 checks** → **180 codes**.
 
 | Check | Category | Codes | Severity |
 |---|---|---|---|
@@ -18,6 +18,7 @@ Total: **50 checks** → **179 codes**.
 | `journald` — Journal (systemd log) size | system | `journald/large` (medium)<br>`journald/ok` (info)<br>`journald/skipped` (info) | desktop/laptop/server |
 | `zram` — Swap and zram health | system | `zram/full` (medium)<br>`zram/ok` (info)<br>`zram/skipped` (info)<br>`zram/swappiness` (info) | desktop/laptop/server |
 | `locales` — Locale configuration | system | `locales/broken` (medium) | desktop/laptop/server |
+| `kernel` — Kernel taint flags | system | `kernel/tainted` (info) | desktop/laptop/server |
 | `fds` — File descriptor pressure | system | `fds/exhausted` (high/medium) | server |
 | `services` — Failed services | software | `services/failed` (medium/high)<br>`services/restart-loop` (high)<br>`services/skipped` (info) | desktop/laptop/server |
 | `timers` — Scheduled tasks (systemd timers) | software | `timers/broken` (medium)<br>`timers/ok` (info)<br>`timers/skipped` (info) | desktop/laptop/server |

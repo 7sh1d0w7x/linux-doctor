@@ -9,6 +9,7 @@ import { zram } from "../src/checks/zram.js";
 import { locales } from "../src/checks/locales.js";
 import { autologin } from "../src/checks/autologin.js";
 import { fstrim } from "../src/checks/fstrim.js";
+import { kernel } from "../src/checks/kernel.js";
 
 function stubCtx(map, osRelease = { id: "bazzite", id_like: "fedora" }) {
   return {
@@ -301,4 +302,39 @@ test("zram: substantial compressed swap in use is described honestly, not called
   assert.equal(findings[0].severity, "info", "60% is not a risk level; do not inflate it");
   assert.ok(!/healthy/i.test(findings[0].title), `do not call 60% occupancy healthy: ${findings[0].title}`);
   assert.match(findings[0].detail, /processes|cache|reclaimable|compressing/i, "point at what is actionable");
+});
+
+// ---------------------------------------------------------------- kernel taint --
+
+const KERNEL = "cat /proc/sys/kernel/tainted 2>/dev/null";
+
+test("kernel: a clean kernel produces no finding", async () => {
+  assert.deepEqual(await kernel.run(stubCtx({ [KERNEL]: "0\n" })), []);
+});
+
+test("kernel: an unreadable taint file stays silent", async () => {
+  assert.deepEqual(await kernel.run(stubCtx({})), [], "absence of the file is not a taint");
+  assert.deepEqual(await kernel.run(stubCtx({ [KERNEL]: "not-a-number\n" })), []);
+});
+
+test("kernel: the proprietary bit is decoded", async () => {
+  const f = (await kernel.run(stubCtx({ [KERNEL]: "1\n" })))[0];
+  assert.equal(f.code, "kernel/tainted");
+  assert.equal(f.severity, "info", "an NVIDIA desktop is not a fault");
+  assert.match(f.evidence, /proprietary module loaded/);
+  assert.equal(f.fix, null);
+});
+
+test("kernel: several flags are all named, out-of-tree included", async () => {
+  // 1 (proprietary) | 12 (out-of-tree, 4096) | 13 (unsigned, 8192)
+  const f = (await kernel.run(stubCtx({ [KERNEL]: String(1 + 4096 + 8192) + "\n" })))[0];
+  assert.match(f.evidence, /proprietary module loaded/);
+  assert.match(f.evidence, /out-of-tree module/);
+  assert.match(f.evidence, /unsigned module/);
+  assert.match(f.title, /3 flags/);
+});
+
+test("kernel: a bit newer than the table is reported by number, not dropped", async () => {
+  const f = (await kernel.run(stubCtx({ [KERNEL]: String(1 << 25) + "\n" })))[0];
+  assert.match(f.evidence, /unknown taint bit 25/);
 });

@@ -238,6 +238,7 @@ change silently.
 | `raid` | Software RAID health (mdadm/ZFS) — degraded arrays, resync in progress |
 | `oom` | Out-of-memory kills |
 | `zram` | Swap/zram health — compressed swap near full, swappiness |
+| `kernel` | Kernel taint flags — why a kernel bug report would be refused |
 | `locales` | System locale — missing/broken locale generation |
 | `services` | Failed systemd services (system + user); services stuck in a restart loop |
 | `certs` | TLS certificate expiry (certbot state + actually-deployed certs on local TLS ports) |
