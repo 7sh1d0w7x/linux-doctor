@@ -20,6 +20,11 @@ All notable changes to Linux Doctor are documented here. The format follows
   does not demote it from "now" to "watch".
 - **`--exclude-check <id>`**, the inverse of `--check`, comma-separated or
   repeated. It composes: `--check fs,disk --exclude-check disk` runs `fs`.
+- **An Alpine package.** `packaging/alpine/APKBUILD` builds the CLI with
+  `abuild` (installs to `/usr/lib/linux-doctor`, symlinks
+  `/usr/bin/linux-doctor`, depends on `nodejs`). It is not in a public Alpine
+  repository; building it from the tree is documented in `packaging/README.md`.
+  Verified in `alpine:3.22`: build, `apk add`, `--version`, `--check memory`.
 - **The kernel's taint flags are reported.** `/proc/sys/kernel/tainted` is the
   first thing a kernel developer asks for and the usual reason a bug report
   comes back "reproduce on a clean kernel". The new `kernel` check decodes the

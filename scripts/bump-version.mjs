@@ -101,6 +101,15 @@ bumpText("packaging/aur/.SRCINFO", (s) => {
   return out;
 });
 
+// 6c. packaging/alpine/APKBUILD -> pkgver + pkgrel. The sha512 cannot be
+// computed before the tag exists, so it is left alone here and must be
+// recomputed from the published tarball after the tag (see packaging/README).
+bumpText("packaging/alpine/APKBUILD", (s) => {
+  let out = s.replace(/^pkgver=.*$/m, `pkgver=${version}`);
+  out = out.replace(/^pkgrel=.*$/m, "pkgrel=0");
+  return out;
+});
+
 // 7. RPM specs (git + OBS) -> Version: X.Y.Z + add %changelog entry. The OBS
 // spec was missed entirely and shipped 0.7.1 with a 0.6.0 Version.
 const specBump = (s) => {

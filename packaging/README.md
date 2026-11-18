@@ -36,6 +36,28 @@ cd /tmp/aur && makepkg -f && makepkg --printsrcinfo > .SRCINFO
 git add . && git commit -m "linux-doctor 0.6.0" && git push
 ```
 
+## Alpine Linux
+
+`alpine/APKBUILD` builds the CLI with `abuild`, installs it to
+`/usr/lib/linux-doctor` and symlinks `/usr/bin/linux-doctor`. It is not in a
+public Alpine repository yet, so build it from this directory:
+
+```bash
+# on Alpine, or in a container: podman run -it --rm -v "$PWD":/src alpine
+apk add abuild build-base nodejs
+abuild-keygen -a -n
+abuild -r
+apk add --allow-untrusted ~/packages/*/*/linux-doctor-*.apk
+```
+
+`sha512sums` must be recomputed after each tag: the source URL embeds
+`$pkgver`, and the hash can only be computed once the tarball exists.
+`scripts/bump-version.mjs` updates `pkgver`/`pkgrel` and deliberately leaves
+the hash alone, so a stale hash fails loudly instead of passing quietly.
+
+Verified 2026-11-18 in `alpine:3.22`: build, `apk add`, `--version` and
+`--check memory --plain`.
+
 ## Fedora / RHEL (COPR)
 
 `linux-doctor.spec` is a working noarch spec. To build on COPR:
