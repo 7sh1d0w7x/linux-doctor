@@ -175,6 +175,7 @@ Want the current `main` instead of the latest release?
 Prefer a native package?
 
 - **CLI, Arch:** build the [PKGBUILD](packaging/aur/PKGBUILD) with `makepkg -si`. It is not in the AUR yet (registration there is closed at the moment), so the PKGBUILD in this repository is the only Arch path for now.
+- **CLI, Alpine:** build the [APKBUILD](packaging/alpine/APKBUILD) with `abuild`; it is not in an Alpine repository yet.
 - **CLI, Fedora:** the [OBS repository](https://build.opensuse.org/project/show/home:7sh1d0w7x:linux-doctor) currently publishes Fedora 42 (`sudo dnf install linux-doctor`), or build with the [linux-doctor.spec](packaging/linux-doctor.spec). RHEL and openSUSE targets are not published there yet.
 - **Desktop app:** the `.deb`, `.rpm` and AppImage attached to each [release](https://github.com/7sh1d0w7x/linux-doctor/releases/latest) are the GUI, not the CLI. On Debian/Ubuntu that `.deb` is what you want for the app; for the CLI there, `npx linux-doctor` (or the source tarball) is the path until an apt repository exists.
 - **Immutable systems** (Silverblue, Bazzite): use `npx` or the AppImage rather than layering a package.
