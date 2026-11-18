@@ -53,6 +53,11 @@ All notable changes to Linux Doctor are documented here. The format follows
   check reads the dump's cgroup and reports `Linux Doctor (WebKitWebProcess)` or
   `org.mozilla.firefox (WebKitWebProcess)`, so the message names something the
   user can close, update, or report.
+- **The Markdown export is pinned by golden snapshots.** `--md` was the only
+  text channel without one, so a wording change there was invisible to the
+  suite. Four states (first run, healthy streak, info-only, mixed) are compared
+  byte for byte; the version is placeholdered so a release bump does not rewrite
+  them.
 - **Two findings about the same problem now count once.** When a story forms,
   the health score is computed from the story instead of from each member, so a
   machine that used to score 84 with `memory/low` + `processes/high` scores 92

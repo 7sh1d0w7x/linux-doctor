@@ -32,7 +32,7 @@ function firstDiff(expected, actual) {
 }
 
 for (const state of Object.keys(SCENARIOS)) {
-  for (const channel of ["pretty", "plain", "json"]) {
+  for (const channel of ["pretty", "plain", "json", "md"]) {
     test(`golden[${state}/${channel}]: matches the committed snapshot`, async () => {
       const rendered = await renderChannels(state);
       const file = join(SNAPSHOTS, `${state}.${channel}.txt`);

@@ -11,6 +11,7 @@
  *     in CI, or through a pipe).
  */
 import { renderReport, renderPlain, renderJson } from "../../src/report.js";
+import { renderMarkdown } from "../../src/markdown.js";
 
 /** The four states from docs/output-parity.md's verification matrix. */
 export const SCENARIOS = {
@@ -169,5 +170,10 @@ export async function renderChannels(name) {
     system,
     { ...serialized, generatedAt: new Date().toISOString() }
   );
-  return { pretty: `${normalize(pretty)}\n`, plain: `${normalize(plain)}\n`, json: normalizeJson(json) };
+  // `--md` is a fourth channel: same findings, scrubbed, and pinned for the same
+  // reason as the others (a wording change must show up as a diff). The version
+  // is a placeholder like in the JSON snapshot, so a release bump does not
+  // rewrite every markdown golden.
+  const md = renderMarkdown(findings, { ...renderOpts, version: "<version>" });
+  return { pretty: `${normalize(pretty)}\n`, plain: `${normalize(plain)}\n`, json: normalizeJson(json), md: `${normalize(md)}\n` };
 }
