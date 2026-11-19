@@ -6,7 +6,7 @@ All notable changes to Linux Doctor are documented here. The format follows
 
 ## [Unreleased]
 
-## [0.9.0] - 2026-11-14
+## [0.9.0] - 2026-11-21
 
 ### Added
 

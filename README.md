@@ -276,6 +276,7 @@ change silently.
 | `backup` | Backup/snapshot tools installed, scheduled, and actually running (stale backups flagged) |
 | `fstrim` | SSD TRIM — weekly fstrim.timer enabled or continuous discard mounting |
 | `hardware` | Machine check exceptions and corrected ECC memory errors |
+| `bringup` | Driver/firmware/USB bring-up problems — a device with no driver, firmware that failed to load |
 | `smart` | Disk SMART health (needs root or smartmontools) |
 | `luks` | Full-disk encryption (LUKS) presence |
 | `boot` | Boot partition space and bootloader config (`/boot` full, missing `grub.cfg`) |

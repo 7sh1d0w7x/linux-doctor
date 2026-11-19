@@ -9,7 +9,7 @@
 # second commit with the new sha512 (compute it with: curl -sLO <source> &&
 # sha512sum linux-doctor-<ver>.tgz). Alpine does not accept SKIP here.
 pkgname=linux-doctor
-pkgver=0.8.4
+pkgver=0.9.0
 pkgrel=0
 pkgdesc="Read-only health checks for your Linux system"
 url="https://github.com/7sh1d0w7x/linux-doctor"
@@ -18,7 +18,7 @@ license="GPL-3.0-or-later"
 depends="nodejs"
 makedepends=""
 source="$pkgname-$pkgver.tgz::https://github.com/7sh1d0w7x/linux-doctor/releases/download/v$pkgver/$pkgname-$pkgver.tgz"
-sha512sums="4e653e5b2229155f855e91cb31a2f818be3e49e83ffd6acf089c9372aef0d0879ce33b59ba7ee1c9312f6ee1a01be23c10202a1d81d368737304db12100cad48  linux-doctor-0.8.4.tgz"
+sha512sums="TODO-compute-after-tag  linux-doctor-0.9.0.tgz"
 builddir="$srcdir/package"
 options="!check"  # the suite needs npm dev dependencies; CI already runs it on Alpine
 

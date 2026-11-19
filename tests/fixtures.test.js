@@ -60,6 +60,16 @@ for (const file of files) {
 
     assert.deepEqual(report.checkErrors, [], `${file}: a check threw while replaying`);
 
+    // The correlation layer must actually be wired into the pipeline. Without
+    // this, deleting the applyStories() call would keep every test green: the
+    // fixture only *permits* story/services, it never requires it.
+    if (file.startsWith("bazzite-44")) {
+      assert.ok(
+        report.findings.some((f) => f.code === "story/services"),
+        `${file}: services/failed + timers/broken must fold into story/services`,
+      );
+    }
+
     const { never, unexpected, unjustified, stale } = compareFindings(report.findings, fixture.expected);
     const line = (f) => `    ${f.code} [${f.severity}] ${f.title}\n      evidence: ${String(f.evidence ?? "").split("\n")[0]}`;
 
