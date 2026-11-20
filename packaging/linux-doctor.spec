@@ -32,7 +32,7 @@ chmod 0755 %{buildroot}%{_libdir}/linux-doctor/bin/doctor.js
 %{_bindir}/linux-doctor
 
 %changelog
-* Sun, Nov 22, 2026 7sh1d0w7x <zshadow7x@users.noreply.github.com> - 0.9.0-1
+* Mon, Nov 23, 2026 7sh1d0w7x <zshadow7x@users.noreply.github.com> - 0.9.0-1
 - Sync to 0.9.0
 
 * Fri, Nov 06, 2026 7sh1d0w7x <zshadow7x@users.noreply.github.com> - 0.8.4-1

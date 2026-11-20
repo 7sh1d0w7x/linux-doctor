@@ -19,6 +19,7 @@ import { zram } from "./zram.js";
 import { locales } from "./locales.js";
 import { kernel } from "./kernel.js";
 import { inotify } from "./inotify.js";
+import { maxMapCount } from "./max-map-count.js";
 import { services } from "./services.js";
 import { timers } from "./timers.js";
 import { journal } from "./journal.js";
@@ -61,7 +62,7 @@ import { packages } from "./packages.js";
 
 export const checks = [
   // system
-  memory, load, disk, inodes, fs, raid, oom, processes, thermal, journald, zram, locales, kernel, inotify, fds,
+  memory, load, disk, inodes, fs, raid, oom, processes, thermal, journald, zram, locales, kernel, inotify, maxMapCount, fds,
   // software
   services, timers, journal, suspend, containers, containerdisk, crash,
   // security

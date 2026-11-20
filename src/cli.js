@@ -25,6 +25,7 @@ import { detectDistro } from "./distro.js";
 import { detectProfile } from "./profile.js";
 import { dedupe } from "./dedupe.js";
 import { applyStories, storyOf } from "./stories.js";
+import { createLock } from "./lock.js";
 import { parseArgs } from "./args.js";
 import { reportSchema } from "./schema.js";
 import { loadPluginEntries } from "./plugins.js";
@@ -196,12 +197,19 @@ export async function collectReport({ checkIds, excludeCheckIds = [], checks, ig
   const { selected: selectedChecks, skipped: skippedChecks } = skippedOnAtomic(selected, atomic);
   const checkDurations = [];
   const checkErrors = [];
+  // Checks that ask the package manager share one lock: `updates`, `orphans`
+  // and `packages` all take the same apt/dnf/zypper lock, and running them in
+  // parallel made the loser see "locked" and report nothing (openSUSE, first
+  // run). The deadline starts when the check actually runs, not while queued.
+  const PKG_CHECKS = new Set(["packages", "updates", "orphans"]);
+  const pkgLock = createLock();
   const results = await runPool(selectedChecks, RUN_CONCURRENCY, async (c) => {
     const t0 = Date.now();
     // A check that throws must never take down the whole report: it is
     // recorded in checkErrors and the run continues without it.
     try {
-      const out = (await withDeadline(() => c.run(cctx), CHECK_DEADLINE_MS, `check ${c.id}`)).map((f) => ({ ...f, check: c.id }));
+      const execute = () => withDeadline(() => c.run(cctx), CHECK_DEADLINE_MS, `check ${c.id}`);
+      const out = (await (PKG_CHECKS.has(c.id) ? pkgLock.run(execute) : execute())).map((f) => ({ ...f, check: c.id }));
       checkDurations.push({ check: c.id, ms: Date.now() - t0 });
       return out;
     } catch (err) {

@@ -166,6 +166,7 @@ export const REGISTRY = {
   "kernel/tainted": { sev: ["info"], cat: "system" },
   "inotify/watches-low": { sev: ["medium", "high"], cat: "system" },
   "inotify/instances-low": { sev: ["medium", "high"], cat: "system" },
+  "max-map-count/low": { sev: ["medium"], cat: "performance" },
   "luks/encrypted": { sev: ["info"], cat: "security" },
   "luks/none": { sev: ["info"], cat: "security" },
   // memory
@@ -238,6 +239,7 @@ export const REGISTRY = {
   "wayland/healthy": { sev: ["info"], cat: "desktop" },
   // wifi
   "wifi/blocked": { sev: ["medium"], cat: "network" },
+  "wifi/deauth": { sev: ["medium"], cat: "network" },
   "wifi/disabled": { sev: ["medium"], cat: "network" },
   "wifi/no-adapter": { sev: ["info"], cat: "network" },
   "wifi/ok": { sev: ["info"], cat: "network" },

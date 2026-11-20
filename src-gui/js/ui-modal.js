@@ -62,5 +62,9 @@ function openHelp() {
     "<div><kbd>Esc</kbd></div><div>Close this dialog \u00b7 clear search &amp; filters \u00b7 close thresholds</div>" +
     '<div><kbd>F11</kbd></div><div>Fullscreen (desktop app; the browser has its own)</div>' +
     '<div><kbd>?</kbd></div><div>Show this help</div>' +
+    "</div>" +
+    '<div class="mx-sub" style="margin-top:14px">Full documentation: ' +
+    '<a class="reportbtn" href="https://github.com/7sh1d0w7x/linux-doctor/tree/main/docs" target="_blank" rel="noopener">docs</a>' +
+    ' · <a class="reportbtn" href="https://github.com/7sh1d0w7x/linux-doctor/blob/main/docs/checks.md" target="_blank" rel="noopener">checks</a>' +
     "</div>", "Keyboard shortcuts");
 }

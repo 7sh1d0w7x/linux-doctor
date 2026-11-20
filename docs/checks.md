@@ -2,7 +2,7 @@
 
 Every finding `code` is stable — use it for `--ignore-code`, history diffing, and scripting. Generated from `src/checks/index.js` + `tests/codes-registry.test.js`; do not edit by hand.
 
-Total: **53 checks** → **190 codes**.
+Total: **54 checks** → **192 codes**.
 
 | Check | Category | Codes | Severity |
 |---|---|---|---|
@@ -20,6 +20,7 @@ Total: **53 checks** → **190 codes**.
 | `locales` — Locale configuration | system | `locales/broken` (medium) | desktop/laptop/server |
 | `kernel` — Kernel taint flags | system | `kernel/tainted` (info) | desktop/laptop/server |
 | `inotify` — File watcher limits (inotify) | system | `inotify/watches-low` (medium/high)<br>`inotify/instances-low` (medium/high) | desktop/laptop/server |
+| `max-map-count` — Memory-map limit (vm.max_map_count) | performance | `max-map-count/low` (medium) | desktop/laptop |
 | `fds` — File descriptor pressure | system | `fds/exhausted` (high/medium) | server |
 | `services` — Failed services | software | `services/failed` (medium/high)<br>`services/restart-loop` (high)<br>`services/skipped` (info) | desktop/laptop/server |
 | `timers` — Scheduled tasks (systemd timers) | software | `timers/broken` (medium)<br>`timers/ok` (info)<br>`timers/skipped` (info) | desktop/laptop/server |
@@ -37,7 +38,7 @@ Total: **53 checks** → **190 codes**.
 | `ports` — Exposed network services | security | `ports/exposed-risky` (medium)<br>`ports/ok` (info)<br>`ports/skipped` (info) | server |
 | `network` — Network connectivity and DNS | network | `network/dns` (medium)<br>`network/dns-slow` (medium)<br>`network/conntrack` (medium/high)<br>`network/no-route` (medium)<br>`network/ok` (info)<br>`network/skipped` (info) | desktop/laptop/server |
 | `ntp` — Time synchronization | network | `ntp/ok` (info)<br>`ntp/pending` (medium)<br>`ntp/skipped` (info)<br>`ntp/unsynced` (medium) | desktop/laptop/server |
-| `wifi` — WiFi | network | `wifi/blocked` (medium)<br>`wifi/disabled` (medium)<br>`wifi/no-adapter` (info)<br>`wifi/ok` (info) | desktop/laptop |
+| `wifi` — WiFi | network | `wifi/blocked` (medium)<br>`wifi/deauth` (medium)<br>`wifi/disabled` (medium)<br>`wifi/no-adapter` (info)<br>`wifi/ok` (info) | desktop/laptop |
 | `updates` — Pending updates | updates | `updates/none` (info)<br>`updates/pending` (info/medium)<br>`updates/stale` (info)<br>`updates/skipped` (info) | desktop/laptop/server |
 | `snap` — Snap updates and refresh timer | updates | `snap/no-timer` (medium)<br>`snap/ok` (info)<br>`snap/pending` (info/medium) | desktop/laptop/server |
 | `firmware` — Firmware updates (fwupd) | updates | `firmware/none` (info)<br>`firmware/not-checked` (info)<br>`firmware/pending` (medium) | desktop/laptop/server |

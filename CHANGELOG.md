@@ -6,7 +6,7 @@ All notable changes to Linux Doctor are documented here. The format follows
 
 ## [Unreleased]
 
-## [0.9.0] - 2026-11-22
+## [0.9.0] - 2026-11-23
 
 ### Added
 
@@ -25,6 +25,16 @@ All notable changes to Linux Doctor are documented here. The format follows
   `/usr/bin/linux-doctor`, depends on `nodejs`). It is not in a public Alpine
   repository; building it from the tree is documented in `packaging/README.md`.
   Verified in `alpine:3.22`: build, `apk add`, `--version`, `--check memory`.
+- **`vm.max_map_count` is checked on gaming machines.** Proton/Wine games can
+  need more memory-map areas than the distribution default (65530), and the
+  failure is a crash that never mentions the limit. The new `max-map-count`
+  check only speaks when games are actually present (Steam, Lutris, Heroic,
+  Bottles, or a running Proton/Wine process), so a work laptop is not nagged
+  about a sysctl that does not concern it.
+- **Repeated WiFi disconnections are reported.** `wifi` now counts
+  deauthentications from the kernel and wpa_supplicant over 24 hours; ten or
+  more is a medium, with the signal and power-saving checks to try. A link that
+  drops ten times a day is not "connected".
 - **`--digest`: the history, read back as a story.** `--digest` folds the stored
   runs into the score trend, the findings that keep coming back (seen in at
   least half the runs), the ones that appeared, and the ones that stopped. It
@@ -68,6 +78,13 @@ All notable changes to Linux Doctor are documented here. The format follows
 
 ### Changed
 
+- **Package-manager checks no longer race each other.** `updates`, `orphans` and
+  `packages` all take the apt/dnf/zypper lock and ran in parallel; on openSUSE
+  the loser exited 7 and reported nothing, which read as "no orphans" for one
+  run. They now share a lock per run, while every other check keeps running in
+  parallel.
+- **The help dialog links to the documentation.** `?` used to list shortcuts
+  only; it now links to `docs/` and to the generated check reference.
 - **A crash in a helper process is now named after the app that owns it.** A
   coredump from `WebKitWebProcess` used to be reported as a crash of
   `WebKitWebProcess`, which is not a program anyone runs: it is the webview

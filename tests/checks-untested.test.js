@@ -560,3 +560,40 @@ test("cache: Flatpak caches count toward the size thresholds", async () => {
   const findings = await cache.run(ctx);
   assert.ok(findings.some((f) => f.code === "cache/large"), "1 GB + 6 GB is over the warn threshold");
 });
+
+test("wifi: repeated deauthentications are medium, not a healthy ok", async () => {
+  const ctx = stubCtx({
+    "rfkill list wifi 2>/dev/null; rfkill list wlan 2>/dev/null": "",
+    "nmcli radio wifi 2>/dev/null; nmcli device status 2>/dev/null | grep -i wifi": "enabled\n",
+    "lspci -nn 2>/dev/null | grep -iE 'network|wireless|wlan'": "0b:00.0 Network controller: Intel\n",
+    [`journalctl -k --since "24 hours ago" --no-pager 2>/dev/null | grep -icE "deauthenticat|disassociat"`]: "8\n",
+    [`journalctl -u wpa_supplicant --since "24 hours ago" --no-pager 2>/dev/null | grep -icE "deauthenticat|disassociated|CTRL-EVENT-DISCONNECTED"`]: "4\n",
+  });
+  const f = (await wifi.run(ctx))[0];
+  assert.equal(f.code, "wifi/deauth");
+  assert.equal(f.severity, "medium");
+  assert.match(f.title, /12 times/);
+  assert.match(f.evidence, /kernel 8, wpa_supplicant 4/);
+});
+
+test("wifi: a couple of deauth lines is not an unstable link", async () => {
+  const ctx = stubCtx({
+    "rfkill list wifi 2>/dev/null; rfkill list wlan 2>/dev/null": "",
+    "nmcli radio wifi 2>/dev/null; nmcli device status 2>/dev/null | grep -i wifi": "enabled\n",
+    "lspci -nn 2>/dev/null | grep -iE 'network|wireless|wlan'": "0b:00.0 Network controller: Intel\n",
+    [`journalctl -k --since "24 hours ago" --no-pager 2>/dev/null | grep -icE "deauthenticat|disassociat"`]: "2\n",
+    [`journalctl -u wpa_supplicant --since "24 hours ago" --no-pager 2>/dev/null | grep -icE "deauthenticat|disassociated|CTRL-EVENT-DISCONNECTED"`]: "1\n",
+  });
+  const f = (await wifi.run(ctx))[0];
+  assert.equal(f.code, "wifi/ok");
+});
+
+test("wifi: no journal means no claim about stability", async () => {
+  const ctx = stubCtx({
+    "rfkill list wifi 2>/dev/null; rfkill list wlan 2>/dev/null": "",
+    "nmcli radio wifi 2>/dev/null; nmcli device status 2>/dev/null | grep -i wifi": "enabled\n",
+    "lspci -nn 2>/dev/null | grep -iE 'network|wireless|wlan'": "0b:00.0 Network controller: Intel\n",
+  });
+  const f = (await wifi.run(ctx))[0];
+  assert.equal(f.code, "wifi/ok", "no journal is not a disconnection");
+});

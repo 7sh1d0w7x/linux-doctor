@@ -85,6 +85,32 @@ export const wifi = defineCheck({
       return findings;
     }
 
+    // Repeated deauthentications: the adapter is fine and unblocked, but the
+    // link keeps dropping. Kernel and wpa_supplicant both record it; counting
+    // both is the only way to see it on drivers that log in either place.
+    if (hasAdapter || hasWifiDevice) {
+      const [kDeauth, wDeauth] = await Promise.all([
+        ctx.run('journalctl -k --since "24 hours ago" --no-pager 2>/dev/null | grep -icE "deauthenticat|disassociat"'),
+        ctx.run('journalctl -u wpa_supplicant --since "24 hours ago" --no-pager 2>/dev/null | grep -icE "deauthenticat|disassociated|CTRL-EVENT-DISCONNECTED"'),
+      ]);
+      const kernelHits = Number(String(kDeauth.stdout || "").trim()) || 0;
+      const wpaHits = Number(String(wDeauth.stdout || "").trim()) || 0;
+      const total = kernelHits + wpaHits;
+      const limit = ctx.thresholds.wifiDeauthCount ?? 10;
+      if ((kDeauth.ok || wDeauth.ok) && total >= limit) {
+        findings.push(finding({
+          severity: "medium",
+          code: "wifi/deauth",
+          title: `WiFi disconnected ${total} times in 24 hours`,
+          detail: "The adapter is present and not blocked, but the link keeps dropping: the kernel or wpa_supplicant recorded repeated deauthentications. Weak signal, aggressive power saving, a roaming conflict with another access point, or a driver problem all look like this from the log.",
+          evidence: `deauth events in 24h: ${total} (kernel ${kernelHits}, wpa_supplicant ${wpaHits})`,
+          fix: "Check the signal where it drops (`iw dev <iface> link`), then try disabling power saving for a day (`sudo iw dev <iface> set power_save off`). If only one network drops and others do not, it is the access point, not the card.",
+          confidence: "medium",
+        }));
+        return findings;
+      }
+    }
+
     // WiFi looks healthy (adapter present, not blocked, NM enabled)
     if (hasAdapter || hasWifiDevice) {
       findings.push(finding({

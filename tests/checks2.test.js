@@ -13,6 +13,7 @@ import { kernel } from "../src/checks/kernel.js";
 import { network } from "../src/checks/network.js";
 import { inotify } from "../src/checks/inotify.js";
 import { gpuErrors } from "../src/checks/gpu-errors.js";
+import { maxMapCount } from "../src/checks/max-map-count.js";
 
 function stubCtx(map, osRelease = { id: "bazzite", id_like: "fedora" }) {
   return {
@@ -490,4 +491,39 @@ test("gpu-errors: a clean log is an explicit ok, not silence", async () => {
 test("gpu-errors: no log tools is an explicit skip", async () => {
   const f = (await gpuErrors.run(gpuCtx("", "", { bin: false })))[0];
   assert.equal(f.code, "gpu-errors/skipped");
+});
+
+// ------------------------------------------------------------- max map count --
+
+const MMC = "cat /proc/sys/vm/max_map_count 2>/dev/null";
+const GAMING_BINS = "command -v steam lutris heroic 2>/dev/null";
+const GAMING_FLATPAK = "flatpak list --app 2>/dev/null | grep -icE 'steam|lutris|heroic|bottles'";
+const GAMING_PROCS = "pgrep -c -f '[p]roton|[w]ine(64|server)?' 2>/dev/null";
+
+test("max-map-count: a high limit is silent even with games installed", async () => {
+  assert.deepEqual(await maxMapCount.run(stubCtx({ [MMC]: "2147483642\n", [GAMING_BINS]: "/usr/bin/steam\n" })), []);
+});
+
+test("max-map-count: a low limit without gaming is not a finding", async () => {
+  const ctx = stubCtx({ [MMC]: "65530\n", [GAMING_BINS]: "", [GAMING_FLATPAK]: "0\n", [GAMING_PROCS]: "0\n" });
+  assert.deepEqual(await maxMapCount.run(ctx), [], "a laptop that does not game is not at risk");
+});
+
+test("max-map-count: a low limit with Steam installed is medium", async () => {
+  const ctx = stubCtx({ [MMC]: "65530\n", [GAMING_BINS]: "/usr/bin/steam\n", [GAMING_FLATPAK]: "0\n", [GAMING_PROCS]: "0\n" });
+  const f = (await maxMapCount.run(ctx))[0];
+  assert.equal(f.code, "max-map-count/low");
+  assert.equal(f.severity, "medium");
+  assert.match(f.evidence, /65530/);
+  assert.match(f.fix, /sysctl -w vm\.max_map_count=1048576/);
+});
+
+test("max-map-count: a running Proton process is enough to flag it", async () => {
+  const ctx = stubCtx({ [MMC]: "65530\n", [GAMING_BINS]: "", [GAMING_FLATPAK]: "0\n", [GAMING_PROCS]: "2\n" });
+  const f = (await maxMapCount.run(ctx))[0];
+  assert.match(f.evidence, /Proton\/Wine/);
+});
+
+test("max-map-count: an unreadable sysctl is silence", async () => {
+  assert.deepEqual(await maxMapCount.run(stubCtx({})), []);
 });
