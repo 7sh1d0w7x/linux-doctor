@@ -57,6 +57,17 @@ for (const story of STORIES) {
   for (const check of story.checks) CHECK_TO_STORY.set(check, story);
 }
 
+/**
+ * The story a finding belongs to, whether or not it was folded: "memory",
+ * "disk", "services", or null. Exposed in the JSON so a consumer can group even
+ * when a story has one member and did not collapse.
+ */
+export function storyOf(code) {
+  const check = String(code || "").split("/")[0];
+  if (check === "story") return String(code).slice("story/".length) || null;
+  return CHECK_TO_STORY.get(check)?.id ?? null;
+}
+
 /** Severity levels that describe a problem worth correlating. */
 const PROBLEM = new Set(["high", "medium"]);
 

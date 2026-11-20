@@ -42,6 +42,7 @@ import { containerdisk } from "./containerdisk.js";
 import { crash } from "./crash.js";
 import { battery } from "./battery.js";
 import { gpu } from "./gpu.js";
+import { gpuErrors } from "./gpu-errors.js";
 import { gpuUsage } from "./gpu-usage.js";
 import { bluetooth } from "./bluetooth.js";
 import { wayland } from "./wayland.js";
@@ -70,7 +71,7 @@ export const checks = [
   // updates
   updates, snap, firmware, flatpak, reboot, packages,
   // hardware
-  battery, gpu, gpuUsage, bluetooth, wayland, smart, hardware, bringup, audio,
+  battery, gpu, gpuErrors, gpuUsage, bluetooth, wayland, smart, hardware, bringup, audio,
   // data
   backup, fstrim, orphans, boot, cache,
 ];

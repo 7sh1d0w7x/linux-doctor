@@ -24,7 +24,7 @@ import { loadThresholds, DEFAULT_THRESHOLDS, coerceThreshold } from "./threshold
 import { detectDistro } from "./distro.js";
 import { detectProfile } from "./profile.js";
 import { dedupe } from "./dedupe.js";
-import { applyStories } from "./stories.js";
+import { applyStories, storyOf } from "./stories.js";
 import { parseArgs } from "./args.js";
 import { reportSchema } from "./schema.js";
 import { loadPluginEntries } from "./plugins.js";
@@ -232,7 +232,7 @@ export async function collectReport({ checkIds, excludeCheckIds = [], checks, ig
     // Urgency is derived, but it is part of the report a consumer reads: the
     // terminal has always shown it, the JSON did not (issue #42). Attaching it
     // here gives --json, --html and the dashboard the same answer.
-    .map((f) => ({ ...f, urgency: urgencyOf(f) }));
+    .map((f) => ({ ...f, urgency: urgencyOf(f), story: storyOf(f.code) }));
   // Tell the user when an ignore pattern is stale — a silent no-op means
   // the pattern will rot unnoticed as finding titles change. Skipped in web
   // mode: the dashboard re-runs checks constantly and would spam the log.
@@ -399,6 +399,7 @@ OPTIONS
   --plugins      list loaded user plugins and the file each came from
   --check-list   list checks as JSON (id, title, category, appliesTo)
   --history-json print run history as JSON (used by the desktop app)
+  --digest       summarize the stored runs: score trend, recurring findings, what appeared or stopped
   --thresholds-json  print current thresholds + defaults as JSON
   --thresholds-set <j> merge known thresholds from a JSON payload into the config
   --json         print findings as JSON (machine-readable)
@@ -679,6 +680,13 @@ function printIgnoreLists(titles, codes) {
 
   // Machine-facing endpoints for the desktop shell (src-tauri serves them on
   // loopback). Hidden from --help: users reach these through the app UI.
+  if (args.digest) {
+    const { buildDigest, renderDigest } = await import("./digest.js");
+    const d = buildDigest(loadHistory());
+    console.log(args.json ? JSON.stringify(d, null, 2) : renderDigest(d));
+    return 0;
+  }
+
   if (args.historyJson) {
     console.log(JSON.stringify({ runs: loadHistory() }));
     return 0;

@@ -270,6 +270,7 @@ change silently.
 | `battery` | Laptop battery level and capacity wear (skipped on desktops) |
 | `gpu` | Graphics driver health (NVIDIA proprietary vs nouveau vs missing, software rendering) |
 | `gpu-usage` | GPU VRAM pressure (NVIDIA/AMD) — nearly-full VRAM flagged (AI/ML OOM risk) |
+| `gpu-errors` | GPU faults in the kernel log — NVIDIA Xid, AMDGPU ring timeouts/resets, Intel hangs |
 | `bluetooth` | Bluetooth controller presence and daemon state |
 | `wayland` | Display session type, running compositor, software rendering |
 | `audio` | Sound server (PipeWire/PulseAudio) and output device (desktop/laptop) |

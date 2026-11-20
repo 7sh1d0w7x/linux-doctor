@@ -12,6 +12,7 @@ import { fstrim } from "../src/checks/fstrim.js";
 import { kernel } from "../src/checks/kernel.js";
 import { network } from "../src/checks/network.js";
 import { inotify } from "../src/checks/inotify.js";
+import { gpuErrors } from "../src/checks/gpu-errors.js";
 
 function stubCtx(map, osRelease = { id: "bazzite", id_like: "fedora" }) {
   return {
@@ -422,4 +423,71 @@ test("inotify: instances at 90% are reported separately", async () => {
   assert.equal(findings.length, 1);
   assert.equal(findings[0].code, "inotify/instances-low");
   assert.equal(findings[0].severity, "medium");
+});
+
+// --------------------------------------------------------------- gpu errors --
+
+function gpuCtx(journal, dmesg = "", { bin = true } = {}) {
+  return {
+    dist: detectDistro({ id: "bazzite", id_like: "fedora" }),
+    thresholds: loadThresholds({}),
+    run: async (cmd) => {
+      if (cmd.includes("command -v journalctl")) return bin ? { ok: true, code: 0, stdout: "/usr/bin/journalctl\n" } : { ok: false, code: 127, stdout: "" };
+      if (cmd.includes("command -v dmesg")) return bin ? { ok: true, code: 0, stdout: "/usr/bin/dmesg\n" } : { ok: false, code: 127, stdout: "" };
+      if (cmd.includes("journalctl -k --since")) return { ok: true, code: 0, stdout: journal };
+      if (cmd.includes("dmesg 2>/dev/null | grep")) return { ok: true, code: 0, stdout: dmesg };
+      return { ok: false, code: 1, stdout: "", stderr: "" };
+    },
+  };
+}
+
+test("gpu-errors: Xid 79 is high — the card fell off the bus", async () => {
+  const f = (await gpuErrors.run(gpuCtx("Nov 18 10:00:01 host kernel: NVRM: Xid (PCI:0000:01:00): 79, pid=1234\n")))[0];
+  assert.equal(f.code, "gpu-errors/xid");
+  assert.equal(f.severity, "high");
+  assert.match(f.title, /Xid 79/);
+  assert.match(f.fix, /power|PSU|seating/i);
+});
+
+test("gpu-errors: a recoverable Xid is medium and keeps the code", async () => {
+  const f = (await gpuErrors.run(gpuCtx("Nov 18 10:00:01 host kernel: NVRM: Xid (PCI:0000:01:00): 13, pid=99\n")))[0];
+  assert.equal(f.severity, "medium");
+  assert.match(f.title, /Xid 13/);
+});
+
+test("gpu-errors: an AMDGPU ring timeout is its own finding", async () => {
+  const f = (await gpuErrors.run(gpuCtx("Nov 18 10:00:01 host kernel: amdgpu 0000:03:00.0: ring gfx_0.0.0 timeout, signaled seq=1\n")))[0];
+  assert.equal(f.code, "gpu-errors/ring");
+  assert.equal(f.severity, "medium");
+});
+
+test("gpu-errors: a failed GPU reset is reported, not hidden behind the timeout", async () => {
+  const f = (await gpuErrors.run(gpuCtx("Nov 18 10:00:02 host kernel: amdgpu: GPU reset failed\n")))[0];
+  assert.equal(f.code, "gpu-errors/reset");
+});
+
+test("gpu-errors: Intel GPU hang is caught", async () => {
+  const f = (await gpuErrors.run(gpuCtx("Nov 18 10:00:03 host kernel: i915 0000:00:02.0: GPU HANG: ecode 12:1:85dffffb\n")))[0];
+  assert.equal(f.code, "gpu-errors/hang");
+});
+
+test("gpu-errors: the same fault with a journal prefix and a dmesg prefix counts once", async () => {
+  // Real shape: journalctl prints "Nov 18 10:00:01 host kernel: ..." and dmesg
+  // prints "[  123.456] ...". Comparing raw lines would count the event twice.
+  const f = (await gpuErrors.run(gpuCtx(
+    "Nov 18 10:00:01 host kernel: NVRM: Xid (PCI:0000:01:00): 13, pid=99\n",
+    "[  123.456] NVRM: Xid (PCI:0000:01:00): 13, pid=99\n",
+  )))[0];
+  assert.match(f.title, /1 event/, `the same fault twice is one event: ${f.title}`);
+});
+
+test("gpu-errors: a clean log is an explicit ok, not silence", async () => {
+  const f = (await gpuErrors.run(gpuCtx("")))[0];
+  assert.equal(f.code, "gpu-errors/ok");
+  assert.equal(f.severity, "info");
+});
+
+test("gpu-errors: no log tools is an explicit skip", async () => {
+  const f = (await gpuErrors.run(gpuCtx("", "", { bin: false })))[0];
+  assert.equal(f.code, "gpu-errors/skipped");
 });

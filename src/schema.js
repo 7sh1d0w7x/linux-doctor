@@ -174,6 +174,10 @@ export const reportSchema = {
         fix: { type: ["string", "null"] },
         confidence: { enum: ["high", "medium", "low"] },
         isNew: { type: "boolean" },
+        story: {
+          type: ["string", "null"],
+          description: "correlation story this finding belongs to (memory, disk, services), even when it did not fold",
+        },
         urgency: {
           enum: ["now", "watch", "fyi"],
           description: "whether a human has to act now; derived from severity and code, never from wording",

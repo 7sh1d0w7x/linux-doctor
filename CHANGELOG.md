@@ -6,7 +6,7 @@ All notable changes to Linux Doctor are documented here. The format follows
 
 ## [Unreleased]
 
-## [0.9.0] - 2026-11-21
+## [0.9.0] - 2026-11-22
 
 ### Added
 
@@ -25,6 +25,23 @@ All notable changes to Linux Doctor are documented here. The format follows
   `/usr/bin/linux-doctor`, depends on `nodejs`). It is not in a public Alpine
   repository; building it from the tree is documented in `packaging/README.md`.
   Verified in `alpine:3.22`: build, `apk add`, `--version`, `--check memory`.
+- **`--digest`: the history, read back as a story.** `--digest` folds the stored
+  runs into the score trend, the findings that keep coming back (seen in at
+  least half the runs), the ones that appeared, and the ones that stopped. It
+  answers "what keeps happening", which the report never could; `--digest --json`
+  gives the same data to scripts. A recurring finding that was cleaned once and
+  came back is chronic, not new.
+- **Every finding carries its story in the JSON.** `story` (`memory`, `disk`,
+  `services`, or null) is set even when a story has a single member and did not
+  fold, so a consumer can group by problem instead of by check.
+- **GPU errors in the kernel log are reported.** `gpu` tells you whether a
+  driver is loaded and `gpu-usage` whether VRAM is full; neither notices the
+  failures a gaming or compute desktop actually feels. The new `gpu-errors`
+  check reads seven days of kernel log for NVIDIA `Xid` codes, AMDGPU ring
+  timeouts and failed GPU resets, Intel GPU hangs, and GPU memory faults, one
+  finding per class with a count. Xid 79/94/95 are graded high because they mean
+  the card stopped responding or its memory is failing, not that a driver
+  glitched. Two copies of the same fault (journal plus dmesg) count once.
 - **The kernel's taint flags are reported.** `/proc/sys/kernel/tainted` is the
   first thing a kernel developer asks for and the usual reason a bug report
   comes back "reproduce on a clean kernel". The new `kernel` check decodes the

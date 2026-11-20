@@ -3,6 +3,7 @@ complete -c linux-doctor -f
 # Flags
 complete -c linux-doctor -l check -r -d 'Run specific check(s), comma-separated'
 complete -c linux-doctor -l exclude-check -r -d 'Skip specific check(s), comma-separated'
+complete -c linux-doctor -l digest -d 'Summarize stored runs: trend, recurring findings'
 complete -c linux-doctor -l list -d 'List available checks'
 complete -c linux-doctor -l plugins -d 'List loaded user plugins and their files'
 complete -c linux-doctor -l json -d 'Print findings as JSON'

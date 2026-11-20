@@ -2,7 +2,7 @@
 
 Every finding `code` is stable — use it for `--ignore-code`, history diffing, and scripting. Generated from `src/checks/index.js` + `tests/codes-registry.test.js`; do not edit by hand.
 
-Total: **52 checks** → **183 codes**.
+Total: **53 checks** → **190 codes**.
 
 | Check | Category | Codes | Severity |
 |---|---|---|---|
@@ -46,6 +46,7 @@ Total: **52 checks** → **183 codes**.
 | `packages` — Package manager health | system | `packages/broken` (high)<br>`packages/locked` (medium)<br>`packages/ok` (info) | desktop/laptop/server |
 | `battery` — Battery | hardware | `battery/low` (medium)<br>`battery/none` (info)<br>`battery/status` (info)<br>`battery/wear` (info/medium) | laptop |
 | `gpu` — Graphics / GPU | hardware | `gpu/amd` (info)<br>`gpu/amd-missing` (medium)<br>`gpu/driver` (info)<br>`gpu/none` (info)<br>`gpu/nouveau` (medium)<br>`gpu/nvidia` (info)<br>`gpu/nvidia-missing` (medium)<br>`gpu/skipped` (info)<br>`gpu/software-rendering` (medium) | desktop/laptop |
+| `gpu-errors` — GPU errors in the log | graphics | `gpu-errors/xid` (medium/high)<br>`gpu-errors/ring` (medium)<br>`gpu-errors/reset` (medium)<br>`gpu-errors/fault` (medium)<br>`gpu-errors/hang` (medium)<br>`gpu-errors/ok` (info)<br>`gpu-errors/skipped` (info) | desktop/laptop/server |
 | `gpu-usage` — GPU memory pressure | graphics | `gpu-usage/vram-full` (medium)<br>`gpu-usage/active` (info) | desktop/laptop/server |
 | `bluetooth` — Bluetooth | hardware | `bluetooth/failed` (medium)<br>`bluetooth/none` (info)<br>`bluetooth/ok` (info)<br>`bluetooth/stopped` (medium) | desktop/laptop |
 | `wayland` — Wayland / display session | hardware | `wayland/healthy` (info)<br>`wayland/loginctl-missing` (info)<br>`wayland/no-compositor` (medium)<br>`wayland/no-session` (info)<br>`wayland/not-graphical` (info)<br>`wayland/software-rendering` (medium)<br>`wayland/x11` (info) | desktop/laptop |

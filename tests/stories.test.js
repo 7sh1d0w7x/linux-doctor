@@ -8,7 +8,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { applyStories, STORIES } from "../src/stories.js";
+import { applyStories, STORIES, storyOf } from "../src/stories.js";
 import { urgencyOf } from "../src/severities.js";
 
 const f = (id, code, severity, extra = {}) => ({
@@ -103,4 +103,14 @@ test("stories: every story id maps to at least two checks", () => {
     assert.ok(s.checks.length >= 2, `${s.id} can never fire with fewer than two checks`);
     assert.match(s.id, /^[a-z0-9-]+$/);
   }
+});
+
+test("storyOf: maps codes to their story, folded or not", () => {
+  assert.equal(storyOf("memory/low"), "memory");
+  assert.equal(storyOf("zram/ok"), "memory", "an ok finding still belongs to its area");
+  assert.equal(storyOf("disk/full"), "disk");
+  assert.equal(storyOf("services/failed"), "services");
+  assert.equal(storyOf("story/memory"), "memory", "a folded story reports its own id");
+  assert.equal(storyOf("fs/ok"), null);
+  assert.equal(storyOf(undefined), null);
 });

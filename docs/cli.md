@@ -33,6 +33,7 @@ STATUS (`SCORE 77/100 = 100 −15 disk/full …`), pinned by tests so
 --plugins         list loaded user plugins and the file each came from
 --check-list      list checks as JSON (id, title, category, appliesTo)
 --history-json    print run history as JSON (used by the desktop app)
+  --digest          summarize the stored runs: score trend, recurring findings, what appeared or stopped
 --thresholds-json print current thresholds + defaults as JSON
 --thresholds-set <j> merge thresholds from JSON into config
 --json            machine-readable JSON output (great for scripting)
