@@ -122,8 +122,11 @@ async function load({ saveHistory = false } = {}) {
     // Explicit load (first paint / Re-run) asks for a fresh scan; only an
     // explicit Re-run records the run in history — background polling never
     // does (it would churn the trend).
-    render(await fetchReport({ refresh: true, save: saveHistory }));
+    const first = await fetchReport({ refresh: true, save: saveHistory });
+    render(first);
     if (saveHistory) showToast("\u2713 Run recorded in history");
+    // Fire and forget: a failed version check must never affect the report.
+    showUpdateIndicator(first && first.version).catch(() => {});
   } catch (err) {
     status.className = "status warn";
     status.innerHTML = "";

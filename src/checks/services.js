@@ -11,6 +11,47 @@ export const services = defineCheck({
   category: "software",
   async run(ctx) {
     const findings = [];
+    const init = ctx.dist?.init || "systemd";
+
+    // OpenRC (Alpine, Gentoo): `rc-status --crashed` names the services that
+    // died, and `rc-status --all` is the fallback when the running OpenRC is
+    // old enough to lack the flag. The systemd branch below cannot answer here.
+    if (init === "openrc") {
+      const crashed = await ctx.run("rc-status --crashed 2>/dev/null");
+      const fromCrashed = lines(crashed.stdout)
+        .map((l) => l.trim().split(/\s+/)[0])
+        .filter((n) => n && !n.startsWith("*"));
+      let names = fromCrashed;
+      if (names.length === 0) {
+        const all = await ctx.run("rc-status --all 2>/dev/null | grep -i crashed");
+        names = lines(all.stdout).map((l) => l.trim().split(/\s+/)[0]).filter(Boolean);
+      }
+      if (names.length === 0) {
+        if (!crashed.ok && !crashed.stdout.trim()) {
+          findings.push(finding({
+            severity: "info",
+            code: "services/skipped",
+            title: "OpenRC service state could not be read",
+            detail: "`rc-status` did not return anything, so the failed-services check could not run.",
+            evidence: "rc-status: no output",
+            fix: null,
+            confidence: "medium",
+          }));
+        }
+        return findings;
+      }
+      findings.push(finding({
+        severity: "high",
+        code: "services/failed",
+        title: `${names.length} service${names.length > 1 ? "s" : ""} failed to start`,
+        detail: `OpenRC reports ${names.length === 1 ? "a crashed service" : "crashed services"}: ${names.map((n) => `\`${n}\``).join(", ")}. A crashed service stopped and did not come back; read its log before deciding whether it matters.`,
+        evidence: names.map((n) => `${n}\topenrc`).join("\n"),
+        fix: `Read why: \`${svcLogs(ctx.dist, names[0])}\`, then \`${svcCmd(ctx.dist, "status", names[0])}\`. Restart it with \`${svcCmd(ctx.dist, "restart", names[0])}\` once the cause is clear.`,
+        confidence: "high",
+      }));
+      return findings;
+    }
+
     const [sys, user] = await Promise.all([
       ctx.run("systemctl --failed --no-legend --plain"),
       ctx.run("systemctl --user --failed --no-legend --plain"),

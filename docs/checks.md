@@ -2,7 +2,7 @@
 
 Every finding `code` is stable — use it for `--ignore-code`, history diffing, and scripting. Generated from `src/checks/index.js` + `tests/codes-registry.test.js`; do not edit by hand.
 
-Total: **54 checks** → **192 codes**.
+Total: **55 checks** → **194 codes**.
 
 | Check | Category | Codes | Severity |
 |---|---|---|---|
@@ -40,6 +40,7 @@ Total: **54 checks** → **192 codes**.
 | `ntp` — Time synchronization | network | `ntp/ok` (info)<br>`ntp/pending` (medium)<br>`ntp/skipped` (info)<br>`ntp/unsynced` (medium) | desktop/laptop/server |
 | `wifi` — WiFi | network | `wifi/blocked` (medium)<br>`wifi/deauth` (medium)<br>`wifi/disabled` (medium)<br>`wifi/no-adapter` (info)<br>`wifi/ok` (info) | desktop/laptop |
 | `updates` — Pending updates | updates | `updates/none` (info)<br>`updates/pending` (info/medium)<br>`updates/stale` (info)<br>`updates/skipped` (info) | desktop/laptop/server |
+| `ostree` — Image deployment health | updates | `ostree/staged` (info)<br>`ostree/stale` (medium) | desktop/laptop/server |
 | `snap` — Snap updates and refresh timer | updates | `snap/no-timer` (medium)<br>`snap/ok` (info)<br>`snap/pending` (info/medium) | desktop/laptop/server |
 | `firmware` — Firmware updates (fwupd) | updates | `firmware/none` (info)<br>`firmware/not-checked` (info)<br>`firmware/pending` (medium) | desktop/laptop/server |
 | `flatpak` — Flatpak app updates | updates | `flatpak/none` (info)<br>`flatpak/pending` (info/medium) | desktop/laptop/server |

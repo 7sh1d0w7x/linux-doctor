@@ -20,6 +20,7 @@ import { locales } from "./locales.js";
 import { kernel } from "./kernel.js";
 import { inotify } from "./inotify.js";
 import { maxMapCount } from "./max-map-count.js";
+import { ostree } from "./ostree.js";
 import { services } from "./services.js";
 import { timers } from "./timers.js";
 import { journal } from "./journal.js";
@@ -70,7 +71,7 @@ export const checks = [
   // network
   network, ntp, wifi,
   // updates
-  updates, snap, firmware, flatpak, reboot, packages,
+  updates, ostree, snap, firmware, flatpak, reboot, packages,
   // hardware
   battery, gpu, gpuErrors, gpuUsage, bluetooth, wayland, smart, hardware, bringup, audio,
   // data

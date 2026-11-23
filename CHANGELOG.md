@@ -6,7 +6,7 @@ All notable changes to Linux Doctor are documented here. The format follows
 
 ## [Unreleased]
 
-## [0.9.0] - 2026-11-23
+## [0.9.0] - 2026-11-24
 
 ### Added
 
@@ -25,6 +25,19 @@ All notable changes to Linux Doctor are documented here. The format follows
   `/usr/bin/linux-doctor`, depends on `nodejs`). It is not in a public Alpine
   repository; building it from the tree is documented in `packaging/README.md`.
   Verified in `alpine:3.22`: build, `apk add`, `--version`, `--check memory`.
+- **OpenRC services are checked.** Alpine, Gentoo and Void users got "services
+  check skipped" because the check only spoke `systemctl`. It now reads
+  `rc-status --crashed` on OpenRC systems (with `rc-status --all` as the fallback
+  for older versions) and reports crashed services with the `rc-service` commands
+  to inspect and restart them.
+- **Image deployments are checked.** On rpm-ostree systems (Silverblue, Kinoite,
+  Bazzite, CoreOS) the new `ostree` check reports an update that is **staged and
+  waiting for a reboot** — the case where "up to date" and "fix not active" are
+  both true — and a booted image older than 30 days, which is what a machine that
+  never reboots silently becomes.
+- **The dashboard says when a newer release exists.** The tray did; the
+  dashboard and the `--web` page did not. One GitHub API call per page load adds
+  a `vX.Y.Z available` link next to the version, and any failure is silent.
 - **`vm.max_map_count` is checked on gaming machines.** Proton/Wine games can
   need more memory-map areas than the distribution default (65530), and the
   failure is a crash that never mentions the limit. The new `max-map-count`

@@ -14,6 +14,8 @@ import { network } from "../src/checks/network.js";
 import { inotify } from "../src/checks/inotify.js";
 import { gpuErrors } from "../src/checks/gpu-errors.js";
 import { maxMapCount } from "../src/checks/max-map-count.js";
+import { services } from "../src/checks/services.js";
+import { ostree } from "../src/checks/ostree.js";
 
 function stubCtx(map, osRelease = { id: "bazzite", id_like: "fedora" }) {
   return {
@@ -526,4 +528,78 @@ test("max-map-count: a running Proton process is enough to flag it", async () =>
 
 test("max-map-count: an unreadable sysctl is silence", async () => {
   assert.deepEqual(await maxMapCount.run(stubCtx({})), []);
+});
+
+// --------------------------------------------------------- services: OpenRC --
+
+const ALPINE = { id: "alpine", id_like: "" };
+
+test("services: OpenRC crashed services are high, with rc-service instructions", async () => {
+  const ctx = stubCtx({
+    "rc-status --crashed 2>/dev/null": "crond\n",
+  }, ALPINE);
+  const f = (await services.run(ctx))[0];
+  assert.equal(f.code, "services/failed");
+  assert.equal(f.severity, "high");
+  assert.match(f.evidence, /crond\topenrc/);
+  assert.match(f.fix, /rc-service crond status/);
+  assert.match(f.fix, /rc-service crond restart/);
+});
+
+test("services: an OpenRC system with nothing crashed is silent", async () => {
+  const ctx = stubCtx({ "rc-status --crashed 2>/dev/null": "" }, ALPINE);
+  assert.deepEqual(await services.run(ctx), []);
+});
+
+test("services: the --all fallback catches a crash on older OpenRC", async () => {
+  const ctx = stubCtx({
+    "rc-status --crashed 2>/dev/null": "",
+    "rc-status --all 2>/dev/null | grep -i crashed": " sshd [  crashed  ]\n",
+  }, ALPINE);
+  const f = (await services.run(ctx))[0];
+  assert.equal(f.code, "services/failed");
+  assert.match(f.evidence, /sshd/);
+});
+
+// ------------------------------------------------------------------ ostree --
+
+function ostreeCtx(deployments) {
+  return {
+    dist: detectDistro({ id: "bazzite", id_like: "fedora" }),
+    thresholds: loadThresholds({}),
+    run: async (cmd) => {
+      if (cmd.includes("command -v rpm-ostree")) return { ok: true, code: 0, stdout: "/usr/bin/rpm-ostree\n" };
+      if (cmd.includes("rpm-ostree status --json")) return { ok: true, code: 0, stdout: JSON.stringify({ deployments }), stderr: "" };
+      return { ok: false, code: 1, stdout: "", stderr: "" };
+    },
+  };
+}
+
+test("ostree: a staged deployment is reported as waiting for reboot", async () => {
+  const f = (await ostree.run(ostreeCtx([
+    { booted: true, staged: false, version: "45.1", timestamp: Math.floor(Date.now() / 1000) - 86400 },
+    { booted: false, staged: true, version: "45.2", timestamp: Math.floor(Date.now() / 1000) },
+  ])))[0];
+  assert.equal(f.code, "ostree/staged");
+  assert.equal(f.severity, "info");
+  assert.match(f.title, /45\.2/);
+  assert.match(f.evidence, /booted: 45\.1/);
+});
+
+test("ostree: a booted image older than the limit is medium", async () => {
+  const old = Math.floor(Date.now() / 1000) - 40 * 86400;
+  const f = (await ostree.run(ostreeCtx([{ booted: true, staged: false, version: "45.1", timestamp: old }])))[0];
+  assert.equal(f.code, "ostree/stale");
+  assert.equal(f.severity, "medium");
+  assert.match(f.title, /40 days/);
+});
+
+test("ostree: a fresh booted image with nothing staged is silent", async () => {
+  const fresh = Math.floor(Date.now() / 1000) - 2 * 86400;
+  assert.deepEqual(await ostree.run(ostreeCtx([{ booted: true, staged: false, version: "45.1", timestamp: fresh }])), []);
+});
+
+test("ostree: a classic system has no rpm-ostree and no finding", async () => {
+  const ctx = stubCtx({});
+  assert.deepEqual(await ostree.run(ctx), []);
 });

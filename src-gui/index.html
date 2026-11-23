@@ -131,6 +131,8 @@ h1 { font-size: 13.5px; font-weight: 600; letter-spacing: -.005em; line-height: 
 .sysinfo .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--green); vertical-align: 1px; margin-right: 5px; }
 .sysinfo .dot.stale { background: var(--yellow); }
 .sysinfo .ver { font-family: var(--mono); font-size: 11px; color: var(--muted2); }
+.sysinfo .updatechip { font-family: var(--mono); font-size: 11px; color: var(--accent, var(--blue)); text-decoration: none; border-bottom: 1px dotted currentColor; }
+.sysinfo .updatechip:hover { color: var(--text); }
 .actions { margin-left: auto; display: flex; gap: 6px; align-items: center; }
 
 /* === Dropdown menu === */
@@ -4186,6 +4188,63 @@ function render(data) {
 }
 
 
+/* ── update-check.js ── */
+/* === Update indicator ===
+   The desktop tray says when a release exists; the dashboard and the --web page
+   did not. One unauthenticated GitHub API call per page load (60/hour per IP,
+   and this runs once, not on every poll). Any failure is silent: a version
+   check must never take the dashboard down with it. */
+function versionParts(v) {
+  return String(v || "")
+    .replace(/^v/, "")
+    .split(".")
+    .map((n) => parseInt(n, 10) || 0);
+}
+
+function isNewerVersion(candidate, current) {
+  const a = versionParts(candidate);
+  const b = versionParts(current);
+  for (let i = 0; i < Math.max(a.length, b.length); i += 1) {
+    const x = a[i] || 0;
+    const y = b[i] || 0;
+    if (x !== y) return x > y;
+  }
+  return false;
+}
+
+async function fetchLatestRelease() {
+  try {
+    const r = await fetch("https://api.github.com/repos/7sh1d0w7x/linux-doctor/releases/latest", {
+      headers: { Accept: "application/vnd.github+json" },
+    });
+    if (!r.ok) return null;
+    const j = await r.json();
+    const version = String(j.tag_name || "").replace(/^v/, "");
+    if (!version) return null;
+    return { version, url: j.html_url };
+  } catch {
+    return null;
+  }
+}
+
+async function showUpdateIndicator(currentVersion) {
+  if (!currentVersion) return;
+  const latest = await fetchLatestRelease();
+  if (!latest || !isNewerVersion(latest.version, currentVersion)) return;
+  const info = document.querySelector(".sysinfo");
+  if (!info || info.querySelector(".updatechip")) return;
+  const a = document.createElement("a");
+  a.className = "updatechip";
+  a.href = latest.url;
+  a.target = "_blank";
+  a.rel = "noopener";
+  a.title = "A newer release is available";
+  a.textContent = "v" + latest.version + " available";
+  info.appendChild(document.createTextNode(" · "));
+  info.appendChild(a);
+}
+
+
 /* ── init.js ── */
 // SPDX-License-Identifier: GPL-3.0-or-later
 /* === Entry point: load, bind, start === */
@@ -4311,8 +4370,11 @@ async function load({ saveHistory = false } = {}) {
     // Explicit load (first paint / Re-run) asks for a fresh scan; only an
     // explicit Re-run records the run in history — background polling never
     // does (it would churn the trend).
-    render(await fetchReport({ refresh: true, save: saveHistory }));
+    const first = await fetchReport({ refresh: true, save: saveHistory });
+    render(first);
     if (saveHistory) showToast("\u2713 Run recorded in history");
+    // Fire and forget: a failed version check must never affect the report.
+    showUpdateIndicator(first && first.version).catch(() => {});
   } catch (err) {
     status.className = "status warn";
     status.innerHTML = "";

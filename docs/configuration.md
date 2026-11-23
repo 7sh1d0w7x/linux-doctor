@@ -81,6 +81,7 @@ in the same config file:
     "inotifyHighRatio": 0.95,    // inotify watches/instances above → high
     "maxMapCount": 1048576,      // below → medium, only on machines that game
     "wifiDeauthCount": 10,       // deauth events in 24h above → medium
+    "ostreeStaleDays": 30,       // booted image older than → medium
     "certWarnDays": 30,     // TLS cert lifetime below → medium (days)
     "certCritDays": 7,      // TLS cert lifetime below → high (days)
     "backupStaleDays": 30   // scheduled backup not run for → medium (days)

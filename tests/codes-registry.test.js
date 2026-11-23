@@ -177,6 +177,8 @@ export const REGISTRY = {
   "network/dns": { sev: ["medium"], cat: "network" },
   "network/dns-slow": { sev: ["medium"], cat: "network" },
   "network/conntrack": { sev: ["medium", "high"], cat: "network" },
+  "ostree/staged": { sev: ["info"], cat: "updates" },
+  "ostree/stale": { sev: ["medium"], cat: "updates" },
   "network/no-route": { sev: ["medium"], cat: "network" },
   "network/ok": { sev: ["info"], cat: "network" },
   "network/skipped": { sev: ["info"], cat: "network" },

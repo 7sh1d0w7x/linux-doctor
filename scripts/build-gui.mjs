@@ -58,6 +58,7 @@ const JS_ORDER = [
   "render-status.js",
   "ui-system.js",      // System view (machine facts from the payload)
   "render.js",         // render orchestrator
+  "update-check.js",   // version indicator (one API call per load)
   "init.js",           // entry point (runs at load) — MUST be last
 ];
 

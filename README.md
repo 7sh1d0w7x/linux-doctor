@@ -242,6 +242,7 @@ change silently.
 | `kernel` | Kernel taint flags — why a kernel bug report would be refused |
 | `inotify` | inotify watch/instance limits — watchers failing silently |
 | `max-map-count` | `vm.max_map_count` too low for Proton/Wine games (only on gaming machines) |
+| `ostree` | Image deployments: a staged update waiting for reboot, or a booted image gone stale |
 | `locales` | System locale — missing/broken locale generation |
 | `services` | Failed systemd services (system + user); services stuck in a restart loop |
 | `certs` | TLS certificate expiry (certbot state + actually-deployed certs on local TLS ports) |

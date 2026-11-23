@@ -32,6 +32,8 @@ h1 { font-size: 13.5px; font-weight: 600; letter-spacing: -.005em; line-height: 
 .sysinfo .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--green); vertical-align: 1px; margin-right: 5px; }
 .sysinfo .dot.stale { background: var(--yellow); }
 .sysinfo .ver { font-family: var(--mono); font-size: 11px; color: var(--muted2); }
+.sysinfo .updatechip { font-family: var(--mono); font-size: 11px; color: var(--accent, var(--blue)); text-decoration: none; border-bottom: 1px dotted currentColor; }
+.sysinfo .updatechip:hover { color: var(--text); }
 .actions { margin-left: auto; display: flex; gap: 6px; align-items: center; }
 
 /* === Dropdown menu === */
