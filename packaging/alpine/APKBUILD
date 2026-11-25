@@ -18,7 +18,7 @@ license="GPL-3.0-or-later"
 depends="nodejs"
 makedepends=""
 source="$pkgname-$pkgver.tgz::https://github.com/7sh1d0w7x/linux-doctor/releases/download/v$pkgver/$pkgname-$pkgver.tgz"
-sha512sums="TODO-compute-after-tag  linux-doctor-0.9.0.tgz"
+sha512sums="2c4417fd01e68eb185274fe036d9f24a0033f59eac3876b4b8d528a8d91f5dfca1a56d2c5bddd89527bfe3563bffb18c5755ff7409d46286dc07f5a4af82be37  linux-doctor-0.9.0.tgz"
 builddir="$srcdir/package"
 options="!check"  # the suite needs npm dev dependencies; CI already runs it on Alpine
 
